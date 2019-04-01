@@ -1,0 +1,10 @@
+[package]
+name = "pangu"
+version = "0.1.0"
+authors = ["Diego Garcia Gangl <diego@sinestesia.co>"]
+edition = "2018"
+publish = false
+license = 'GPL-3.0-or-later'
+description = 'Landscape generation library for Mirage'
+
+[dependencies]
