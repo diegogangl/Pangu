@@ -7,4 +7,11 @@ publish = false
 license = 'GPL-3.0-or-later'
 description = 'Landscape generation library for Mirage'
 
+[dev-dependencies]
+criterion = "0.2"
+
 [dependencies]
+
+[[bench]]
+name = "main_bench"
+harness = false
