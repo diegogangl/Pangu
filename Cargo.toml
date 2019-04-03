@@ -8,11 +8,8 @@ license = 'GPL-3.0-or-later'
 description = 'Landscape generation library for Mirage'
 
 [lib]
-name = "string_sum"
+name = "pangu"
 crate-type = ["cdylib"]
-
-[dev-dependencies]
-criterion = "0.2"
 
 [dependencies]
 noise = "0.5.1"
@@ -21,6 +18,3 @@ noise = "0.5.1"
 version = "0.6.0-alpha.4"
 features = ["extension-module"]
 
-[[bench]]
-name = "main_bench"
-harness = false
