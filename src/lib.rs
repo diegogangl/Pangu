@@ -35,12 +35,12 @@ fn grid_faces(columns: u32, rows: u32) -> Faces {
 /// * `z - Function to generate Z values
 ///
 fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
-    let half_x = ((columns - 1) as f64) / 2.0;
-    let half_y = ((rows - 1) as f64) / 2.0;
+    let half_x = f64::from(columns - 1) / 2.0;
+    let half_y = f64::from(rows - 1) / 2.0;
 
     (0..columns).flat_map(|x| {
                     (0..rows).map(move |y| {
-                                 ((x as f64) - half_x, (y as f64) - half_y, z(x, y))
+                                 (f64::from(x) - half_x, f64::from(y) - half_y, z(x, y))
                              })
                 })
                 .collect::<Vertices>()
