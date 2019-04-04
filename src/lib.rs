@@ -40,7 +40,7 @@ fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
 
     (0..columns).flat_map(|x| {
                     (0..rows).map(move |y| {
-                                 ((x as f64) - half_x, (y as f64) - half_y, z(x as u32, y as u32))
+                                 ((x as f64) - half_x, (y as f64) - half_y, z(x, y))
                              })
                 })
                 .collect::<Vertices>()
