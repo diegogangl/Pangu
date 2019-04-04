@@ -8,7 +8,7 @@ extern crate test;
 ///
 /// * `columns` - Columns for the grid
 /// * `rows - Rows for the grid
-pub fn grid_faces(columns: u32, rows: u32) -> Vec<(u32, u32, u32, u32)> {
+fn grid_faces(columns: u32, rows: u32) -> Vec<(u32, u32, u32, u32)> {
     (0..columns - 1).flat_map(|x| {
                         (0..rows - 1).map(move |y| {
                                          (x * rows + y,
