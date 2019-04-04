@@ -8,6 +8,7 @@ extern crate test;
 ///
 /// * `columns` - Columns for the grid
 /// * `rows - Rows for the grid
+///
 fn grid_faces(columns: u32, rows: u32) -> Vec<(u32, u32, u32, u32)> {
     (0..columns - 1).flat_map(|x| {
                         (0..rows - 1).map(move |y| {
@@ -18,6 +19,27 @@ fn grid_faces(columns: u32, rows: u32) -> Vec<(u32, u32, u32, u32)> {
                                      })
                     })
                     .collect::<Vec<(u32, u32, u32, u32)>>()
+}
+
+
+/// Returns a vector of tuples containing coordinates for vertices
+///
+/// # Arguments
+///
+/// * `columns` - Columns for the grid
+/// * `rows - Rows for the grid
+/// * `z - Function to generate Z values
+///
+fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vec<(f64, f64, f64)> {
+    let half_x = ((columns - 1) as f64) / 2.0;
+    let half_y = ((rows - 1) as f64) / 2.0;
+
+    (0..columns).flat_map(|x| {
+                    (0..rows).map(move |y| {
+                                 ((x as f64) - half_x, (y as f64) - half_y, z(x as u32, y as u32))
+                             })
+                })
+                .collect::<Vec<(f64, f64, f64)>>()
 }
 
 
@@ -43,6 +65,7 @@ mod tests {
         assert_eq!(faces, expected);
     }
 
+
     #[bench]
     fn bench_faces(b: &mut Bencher) {
         b.iter(|| {
@@ -51,4 +74,42 @@ mod tests {
              }
          });
     }
+
+
+    #[test]
+    fn test_vertices() {
+        let z = |_, _| 0.0;
+        let verts = grid_vertices(4, 4, &z);
+
+        let expected = vec![(-1.5, -1.5, 0.0),
+                            (-1.5, -0.5, 0.0),
+                            (-1.5, 0.5, 0.0),
+                            (-1.5, 1.5, 0.0),
+                            (-0.5, -1.5, 0.0),
+                            (-0.5, -0.5, 0.0),
+                            (-0.5, 0.5, 0.0),
+                            (-0.5, 1.5, 0.0),
+                            (0.5, -1.5, 0.0),
+                            (0.5, -0.5, 0.0),
+                            (0.5, 0.5, 0.0),
+                            (0.5, 1.5, 0.0),
+                            (1.5, -1.5, 0.0),
+                            (1.5, -0.5, 0.0),
+                            (1.5, 0.5, 0.0),
+                            (1.5, 1.5, 0.0)];
+
+        assert_eq!(verts, expected);
+    }
+
+    #[bench]
+    fn bench_verts(b: &mut Bencher) {
+        let z = |_, _| 0.0;
+
+        b.iter(|| {
+             for _ in 1..100 {
+                 grid_vertices(128, 128, &z);
+             }
+         });
+    }
+
 }
