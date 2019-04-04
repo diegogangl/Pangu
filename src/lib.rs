@@ -2,6 +2,10 @@
 
 extern crate test;
 
+type Faces = Vec<(u32, u32, u32, u32)>;
+type Vertices = Vec<(f64, f64, f64)>;
+
+
 /// Returns a vector of tuples containing indices for vertices
 ///
 /// # Arguments
@@ -9,7 +13,7 @@ extern crate test;
 /// * `columns` - Columns for the grid
 /// * `rows - Rows for the grid
 ///
-fn grid_faces(columns: u32, rows: u32) -> Vec<(u32, u32, u32, u32)> {
+fn grid_faces(columns: u32, rows: u32) -> Faces {
     (0..columns - 1).flat_map(|x| {
                         (0..rows - 1).map(move |y| {
                                          (x * rows + y,
@@ -18,7 +22,7 @@ fn grid_faces(columns: u32, rows: u32) -> Vec<(u32, u32, u32, u32)> {
                                           x * rows + 1 + y)
                                      })
                     })
-                    .collect::<Vec<(u32, u32, u32, u32)>>()
+                    .collect::<Faces>()
 }
 
 
@@ -30,7 +34,7 @@ fn grid_faces(columns: u32, rows: u32) -> Vec<(u32, u32, u32, u32)> {
 /// * `rows - Rows for the grid
 /// * `z - Function to generate Z values
 ///
-fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vec<(f64, f64, f64)> {
+fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
     let half_x = ((columns - 1) as f64) / 2.0;
     let half_y = ((rows - 1) as f64) / 2.0;
 
@@ -39,7 +43,7 @@ fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vec<(f64, 
                                  ((x as f64) - half_x, (y as f64) - half_y, z(x as u32, y as u32))
                              })
                 })
-                .collect::<Vec<(f64, f64, f64)>>()
+                .collect::<Vertices>()
 }
 
 
