@@ -14,15 +14,15 @@ type Vertices = Vec<(f64, f64, f64)>;
 /// * `rows - Rows for the grid
 ///
 fn grid_faces(columns: u32, rows: u32) -> Faces {
-    (0..columns - 1).flat_map(|x| {
-                        (0..rows - 1).map(move |y| {
-                                         (x * rows + y,
-                                          (x + 1) * rows + y,
-                                          (x + 1) * rows + 1 + y,
-                                          x * rows + 1 + y)
-                                     })
-                    })
-                    .collect::<Faces>()
+    let mut faces: Faces = Vec::with_capacity((columns * rows) as usize);
+
+    for x in 0..columns - 1 {
+        for y in 0..rows - 1 {
+            faces.push((x * rows + y, (x + 1) * rows + y, (x + 1) * rows + 1 + y, x * rows + 1 + y))
+        }
+    }
+
+    faces
 }
 
 
@@ -39,9 +39,7 @@ fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
     let half_y = f64::from(rows - 1) / 2.0;
 
     (0..columns).flat_map(|x| {
-                    (0..rows).map(move |y| {
-                                 (f64::from(x) - half_x, f64::from(y) - half_y, z(x, y))
-                             })
+                    (0..rows).map(move |y| (f64::from(x) - half_x, f64::from(y) - half_y, z(x, y)))
                 })
                 .collect::<Vertices>()
 }
