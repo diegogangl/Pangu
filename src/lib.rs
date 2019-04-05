@@ -1,6 +1,10 @@
 #![feature(test)]
 
 extern crate test;
+extern crate noise;
+
+use noise::{SuperSimplex, Seedable, NoiseFn};
+use std::num::ParseIntError;
 
 type Faces = Vec<(u32, u32, u32, u32)>;
 type Vertices = Vec<(f64, f64, f64)>;
@@ -46,6 +50,40 @@ fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
     }
 
     verts
+}
+
+
+fn get_z(x: u32, y:u32, source: &NoiseFn<[f64; 3]>) -> f64 {
+    let bound_low =  0.0;
+    let bound_high =  1.0;
+    let width = 128.0;
+    let height = 128.0;
+
+    let x_step = (bound_high - bound_low) / width;
+    let y_step = (bound_high - bound_low) / height;
+
+    let current_x = (bound_low + x_step) * x as f64;
+    let current_y = (bound_low + y_step) * y as f64;
+
+    source.get([current_x, current_y, 0.0])
+}
+
+
+fn terrain() -> Result<(Faces, Vertices), ParseIntError> {
+
+    let rows = 128;
+    let columns = 128;
+    let seed = 1;
+    let simplex_base = SuperSimplex::new().set_seed(seed);
+
+    let z = |x, y| get_z(x, y, &simplex_base);
+
+    let faces = grid_faces(columns, rows);
+    let verts = grid_vertices(columns, rows, &z);
+
+    println!("{:?}", verts);
+
+    Ok((faces, verts))
 }
 
 
@@ -103,11 +141,18 @@ mod tests {
         assert_eq!(verts, expected);
     }
 
+
     #[bench]
     fn bench_verts(b: &mut Bencher) {
         let z = |_, _| 0.0;
 
         b.iter(|| grid_vertices(128, 128, &z));
+     }
+
+
+    #[bench]
+    fn bench_terrain(b: &mut Bencher) {
+        b.iter(|| terrain());
      }
 
 }
