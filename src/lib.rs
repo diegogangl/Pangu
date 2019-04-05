@@ -37,11 +37,15 @@ fn grid_faces(columns: u32, rows: u32) -> Faces {
 fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
     let half_x = f64::from(columns - 1) / 2.0;
     let half_y = f64::from(rows - 1) / 2.0;
+    let mut verts: Vertices = Vec::with_capacity((columns * rows) as usize);
 
-    (0..columns).flat_map(|x| {
-                    (0..rows).map(move |y| (f64::from(x) - half_x, f64::from(y) - half_y, z(x, y)))
-                })
-                .collect::<Vertices>()
+    for x in 0..columns {
+        for y in 0..rows {
+            verts.push((f64::from(x) - half_x, f64::from(y) - half_y, z(x, y)))
+        }
+    }
+
+    verts
 }
 
 
@@ -113,5 +117,4 @@ mod tests {
              }
          });
     }
-
 }
