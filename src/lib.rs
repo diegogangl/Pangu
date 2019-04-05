@@ -74,11 +74,7 @@ mod tests {
 
     #[bench]
     fn bench_faces(b: &mut Bencher) {
-        b.iter(|| {
-             for _ in 1..100 {
-                 grid_faces(128, 128);
-             }
-         });
+        b.iter(|| grid_faces(128, 128));
     }
 
 
@@ -111,10 +107,7 @@ mod tests {
     fn bench_verts(b: &mut Bencher) {
         let z = |_, _| 0.0;
 
-        b.iter(|| {
-             for _ in 1..100 {
-                 grid_vertices(128, 128, &z);
-             }
-         });
-    }
+        b.iter(|| grid_vertices(128, 128, &z));
+     }
+
 }
