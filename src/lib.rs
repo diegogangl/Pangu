@@ -1,10 +1,10 @@
 #![feature(test)]
 #![allow(dead_code)]
 
-extern crate test;
 extern crate noise;
+extern crate test;
 
-use noise::{SuperSimplex, Seedable, NoiseFn};
+use noise::{NoiseFn, Seedable, SuperSimplex};
 use std::num::ParseIntError;
 
 type Faces = Vec<(u32, u32, u32, u32)>;
@@ -12,42 +12,57 @@ type Vertices = Vec<(f64, f64, f64)>;
 
 
 /// Representation of a terrain
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 struct Terrain {
-
-    rows: u16,
-    columns: u16,
+    rows: u32,
+    columns: u32,
     seed: u32,
-
 }
 
 impl Terrain {
-    pub const DEFAULT_ROWS: u16 = 64;
-    pub const DEFAULT_COLUMNS: u16 = 64;
+    pub const DEFAULT_ROWS: u32 = 64;
+    pub const DEFAULT_COLUMNS: u32 = 64;
     pub const DEFAULT_SEED: u32 = 0;
 
     pub fn new() -> Self {
-        Terrain {
-            rows: Self::DEFAULT_ROWS,
-            columns: Self::DEFAULT_COLUMNS,
-            seed: Self::DEFAULT_SEED,
-        }
+        Terrain { rows: Self::DEFAULT_ROWS,
+                  columns: Self::DEFAULT_COLUMNS,
+                  seed: Self::DEFAULT_SEED }
     }
 
 
     /// Sets the rows of the terrain grid.
-    pub fn set_rows(self, rows: u16) -> Self {
+    pub fn set_rows(self, rows: u32) -> Self {
         Terrain { rows, ..self }
     }
 
 
     /// Sets the columns of the terrain grid.
-    pub fn set_columns(self, columns: u16) -> Self {
+    pub fn set_columns(self, columns: u32) -> Self {
         Terrain { columns, ..self }
     }
 
 
+    /// Returns the faces of the terrain mesh as a vector of tuples
+    /// containing four vertex indices.
+    fn faces(&self) -> Faces {
+        let capacity = (self.columns * self.rows) as usize;
+        let mut faces: Faces = Vec::with_capacity(capacity);
+
+        for x in 0..self.columns - 1 {
+            for y in 0..self.rows - 1 {
+                faces.push((x * self.rows + y,
+                            (x + 1) * self.rows + y,
+                            (x + 1) * self.rows + 1 + y,
+                            x * self.rows + 1 + y))
+            }
+        }
+
+        faces
+    }
 }
+
+
 /// Returns a vector of tuples containing indices for vertices
 ///
 /// # Arguments
@@ -91,7 +106,6 @@ fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
 }
 
 
-
 #[cfg(test)]
 mod tests {
 
@@ -100,7 +114,8 @@ mod tests {
 
     #[test]
     fn test_faces() {
-        let faces = grid_faces(4, 4);
+        let faces = Terrain::new().set_rows(4).set_columns(4).faces();
+
         let expected = vec![(0, 4, 5, 1),
                             (1, 5, 6, 2),
                             (2, 6, 7, 3),
@@ -151,5 +166,5 @@ mod tests {
         let z = |_, _| 0.0;
 
         b.iter(|| grid_vertices(128, 128, &z));
-     }
+    }
 }
