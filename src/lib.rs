@@ -4,7 +4,7 @@
 extern crate noise;
 extern crate test;
 
-use noise::{NoiseFn, Seedable, SuperSimplex};
+use noise::{NoiseFn, Seedable, SuperSimplex, Constant};
 use std::num::ParseIntError;
 
 type Faces = Vec<(u32, u32, u32, u32)>;
@@ -19,10 +19,6 @@ struct Terrain {
     seed: u32,
 }
 
-// TODO: Agregar pointer en struct a funcion de noise
-// TODO: Hacer q se genere esa funcion de noise en new
-// TODO: Hacer que verts use esa funcion para generar Z
-// TODO: Setter para la noisefn
 
 impl Terrain {
     pub const DEFAULT_ROWS: u32 = 64;
@@ -75,7 +71,7 @@ impl Terrain {
 
     /// Returns the 3D coordinates for the terrain mesh as a vector
     /// of tuples.
-    fn vertices(&self, z: &Fn(u32, u32) -> f64) -> Vertices {
+    fn vertices(&self, z: &NoiseFn<[f64; 3]>) -> Vertices {
         let half_x = f64::from(self.columns - 1) / 2.0;
         let half_y = f64::from(self.rows - 1) / 2.0;
 
@@ -84,7 +80,10 @@ impl Terrain {
 
         for x in 0..self.columns {
             for y in 0..self.rows {
-                verts.push((f64::from(x) - half_x, f64::from(y) - half_y, z(x, y)))
+                let x = f64::from(x);
+                let y = f64::from(y);
+
+                verts.push((x - half_x, y - half_y, z.get([x, y, 0.0])));
             }
         }
 
@@ -95,7 +94,7 @@ impl Terrain {
     /// Build and return a plane mesh. This is a grid with Z coordinates
     /// set to zero). Useful for testing and benching.
     pub fn build_plane(&self) -> (Faces, Vertices) {
-        let z = |_, _| 0.0;
+        let z = Constant::new(0.0);
         (self.faces(), self.vertices(&z))
     }
 
@@ -135,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_vertices() {
-        let z = |_, _| 0.0;
+        let z = Constant::new(0.0);
         let verts = Terrain::new().set_rows(4).set_columns(4).vertices(&z);
 
         let expected = vec![(-1.5, -1.5, 0.0),
@@ -161,7 +160,7 @@ mod tests {
 
     #[bench]
     fn bench_verts(b: &mut Bencher) {
-        let z = |_, _| 0.0;
+        let z = Constant::new(0.0);
 
         let terrain = Terrain::new().set_rows(128).set_columns(128);
         b.iter(|| terrain.vertices(&z));
