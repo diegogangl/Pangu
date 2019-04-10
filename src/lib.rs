@@ -1,4 +1,5 @@
 #![feature(test)]
+#![allow(dead_code)]
 
 extern crate test;
 extern crate noise;
@@ -8,6 +9,33 @@ use std::num::ParseIntError;
 
 type Faces = Vec<(u32, u32, u32, u32)>;
 type Vertices = Vec<(f64, f64, f64)>;
+
+
+/// Representation of a terrain
+#[derive(Clone, Copy, Debug)]
+struct Terrain {
+
+    rows: u16,
+    columns: u16,
+    seed: u32,
+
+}
+
+impl Terrain {
+    pub const DEFAULT_ROWS: u16 = 64;
+    pub const DEFAULT_COLUMNS: u16 = 64;
+    pub const DEFAULT_SEED: u32 = 0;
+
+    pub fn new() -> Self {
+        Terrain {
+            rows: Self::DEFAULT_ROWS,
+            columns: Self::DEFAULT_COLUMNS,
+            seed: Self::DEFAULT_SEED,
+        }
+    }
+}
+
+
 
 
 /// Returns a vector of tuples containing indices for vertices
@@ -53,39 +81,6 @@ fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
 }
 
 
-fn get_z(x: u32, y:u32, source: &NoiseFn<[f64; 3]>) -> f64 {
-    let bound_low =  0.0;
-    let bound_high =  1.0;
-    let width = 128.0;
-    let height = 128.0;
-
-    let x_step = (bound_high - bound_low) / width;
-    let y_step = (bound_high - bound_low) / height;
-
-    let current_x = (bound_low + x_step) * x as f64;
-    let current_y = (bound_low + y_step) * y as f64;
-
-    source.get([current_x, current_y, 0.0])
-}
-
-
-fn terrain() -> Result<(Faces, Vertices), ParseIntError> {
-
-    let rows = 128;
-    let columns = 128;
-    let seed = 1;
-    let simplex_base = SuperSimplex::new().set_seed(seed);
-
-    let z = |x, y| get_z(x, y, &simplex_base);
-
-    let faces = grid_faces(columns, rows);
-    let verts = grid_vertices(columns, rows, &z);
-
-    println!("{:?}", verts);
-
-    Ok((faces, verts))
-}
-
 
 #[cfg(test)]
 mod tests {
@@ -114,7 +109,6 @@ mod tests {
     fn bench_faces(b: &mut Bencher) {
         b.iter(|| grid_faces(128, 128));
     }
-
 
     #[test]
     fn test_vertices() {
@@ -148,11 +142,4 @@ mod tests {
 
         b.iter(|| grid_vertices(128, 128, &z));
      }
-
-
-    #[bench]
-    fn bench_terrain(b: &mut Bencher) {
-        b.iter(|| terrain());
-     }
-
 }
