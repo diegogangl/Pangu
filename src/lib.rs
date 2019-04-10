@@ -19,6 +19,7 @@ struct Terrain {
     seed: u32,
 }
 
+
 impl Terrain {
     pub const DEFAULT_ROWS: u32 = 64;
     pub const DEFAULT_COLUMNS: u32 = 64;
@@ -40,6 +41,12 @@ impl Terrain {
     /// Sets the columns of the terrain grid.
     pub fn set_columns(self, columns: u32) -> Self {
         Terrain { columns, ..self }
+    }
+
+
+    /// Sets the seed of the noise functions.
+    pub fn set_seed(self, seed: u32) -> Self {
+        Terrain { seed, ..self }
     }
 
 
