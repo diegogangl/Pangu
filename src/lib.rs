@@ -89,48 +89,6 @@ impl Terrain {
 }
 
 
-/// Returns a vector of tuples containing indices for vertices
-///
-/// # Arguments
-///
-/// * `columns` - Columns for the grid
-/// * `rows - Rows for the grid
-///
-fn grid_faces(columns: u32, rows: u32) -> Faces {
-    let mut faces: Faces = Vec::with_capacity((columns * rows) as usize);
-
-    for x in 0..columns - 1 {
-        for y in 0..rows - 1 {
-            faces.push((x * rows + y, (x + 1) * rows + y, (x + 1) * rows + 1 + y, x * rows + 1 + y))
-        }
-    }
-
-    faces
-}
-
-
-/// Returns a vector of tuples containing coordinates for vertices
-///
-/// # Arguments
-///
-/// * `columns` - Columns for the grid
-/// * `rows - Rows for the grid
-/// * `z - Function to generate Z values
-///
-fn grid_vertices(columns: u32, rows: u32, z: &Fn(u32, u32) -> f64) -> Vertices {
-    let half_x = f64::from(columns - 1) / 2.0;
-    let half_y = f64::from(rows - 1) / 2.0;
-    let mut verts: Vertices = Vec::with_capacity((columns * rows) as usize);
-
-    for x in 0..columns {
-        for y in 0..rows {
-            verts.push((f64::from(x) - half_x, f64::from(y) - half_y, z(x, y)))
-        }
-    }
-
-    verts
-}
-
 
 #[cfg(test)]
 mod tests {
