@@ -19,6 +19,10 @@ struct Terrain {
     seed: u32,
 }
 
+// TODO: Agregar pointer en struct a funcion de noise
+// TODO: Hacer q se genere esa funcion de noise en new
+// TODO: Hacer que verts use esa funcion para generar Z
+// TODO: Setter para la noisefn
 
 impl Terrain {
     pub const DEFAULT_ROWS: u32 = 64;
@@ -86,6 +90,16 @@ impl Terrain {
 
         verts
     }
+
+
+    /// Build and return a plane mesh. This is a grid with Z coordinates
+    /// set to zero). Useful for testing and benching.
+    pub fn build_plane(&self) -> (Faces, Vertices) {
+        let z = |_, _| 0.0;
+        (self.faces(), self.vertices(&z))
+    }
+
+
 }
 
 
