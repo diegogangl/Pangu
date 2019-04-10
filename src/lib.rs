@@ -33,11 +33,21 @@ impl Terrain {
             seed: Self::DEFAULT_SEED,
         }
     }
+
+
+    /// Sets the rows of the terrain grid.
+    pub fn set_rows(self, rows: u16) -> Self {
+        Terrain { rows, ..self }
+    }
+
+
+    /// Sets the columns of the terrain grid.
+    pub fn set_columns(self, columns: u16) -> Self {
+        Terrain { columns, ..self }
+    }
+
+
 }
-
-
-
-
 /// Returns a vector of tuples containing indices for vertices
 ///
 /// # Arguments
