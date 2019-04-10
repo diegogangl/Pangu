@@ -4,7 +4,10 @@
 extern crate noise;
 extern crate test;
 
-use noise::{NoiseFn, Seedable, SuperSimplex, Constant};
+use noise::{
+    Blend, Cache, Constant, Displace, Fbm, Multiply, NoiseFn, RidgedMulti, RotatePoint, ScaleBias,
+    Seedable, SuperSimplex, TranslatePoint,
+};
 use std::num::ParseIntError;
 
 type Faces = Vec<(u32, u32, u32, u32)>;
@@ -71,7 +74,7 @@ impl Terrain {
 
     /// Returns the 3D coordinates for the terrain mesh as a vector
     /// of tuples.
-    fn vertices(&self, z: &NoiseFn<[f64; 3]>) -> Vertices {
+    fn vertices(&self, z: &NoiseFn<[f64; 2]>) -> Vertices {
         let half_x = f64::from(self.columns - 1) / 2.0;
         let half_y = f64::from(self.rows - 1) / 2.0;
 
@@ -83,7 +86,7 @@ impl Terrain {
                 let x = f64::from(x);
                 let y = f64::from(y);
 
-                verts.push((x - half_x, y - half_y, z.get([x, y, 0.0])));
+                verts.push((x - half_x, y - half_y, z.get([x, y])));
             }
         }
 
@@ -99,6 +102,28 @@ impl Terrain {
     }
 
 
+    /// Build and return a terrain mesh. The return is a tuple of Faces
+    /// and Vertices.
+    pub fn build_mesh(&self) -> (Faces, Vertices) {
+        let simplex = SuperSimplex::new().set_seed(self.seed);
+        let ridged = RidgedMulti::new().set_seed(self.seed);
+
+        let fbm = Fbm::new().set_seed(self.seed);
+        let fbm_cache = Cache::new(&fbm);
+
+        let blend = Blend::new(&simplex, &ridged, &fbm_cache);
+        let blend_cache = Cache::new(&blend);
+
+        let constant = Constant::new(1.0);
+        let displacer = Multiply::new(&fbm_cache, &constant);
+
+        let nulled = Constant::new(1.0);
+        let displace = Displace::new(&blend_cache, &displacer, &fbm_cache, &nulled, &nulled);
+
+        let rotation = RotatePoint::new(&displace).set_z_angle(0.0);
+
+        (self.faces(), self.vertices(&rotation))
+    }
 }
 
 
@@ -164,5 +189,12 @@ mod tests {
 
         let terrain = Terrain::new().set_rows(128).set_columns(128);
         b.iter(|| terrain.vertices(&z));
+    }
+
+
+    #[bench]
+    fn bench_terrain(b: &mut Bencher) {
+        let terrain = Terrain::new().set_rows(128).set_columns(128);
+        b.iter(|| terrain.build_mesh());
     }
 }
