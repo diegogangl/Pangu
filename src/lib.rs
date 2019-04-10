@@ -68,6 +68,7 @@ impl Terrain {
         faces
     }
 
+
     /// Returns the 3D coordinates for the terrain mesh as a vector
     /// of tuples.
     fn vertices(&self, z: &Fn(u32, u32) -> f64) -> Vertices {
@@ -84,10 +85,8 @@ impl Terrain {
         }
 
         verts
-        }
-
+    }
 }
-
 
 
 #[cfg(test)]
@@ -117,7 +116,7 @@ mod tests {
     #[bench]
     fn bench_faces(b: &mut Bencher) {
         let terrain = Terrain::new().set_rows(128).set_columns(128);
-        b.iter(|| terrain.faces() );
+        b.iter(|| terrain.faces());
     }
 
     #[test]
