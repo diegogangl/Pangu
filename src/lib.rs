@@ -132,7 +132,8 @@ mod tests {
 
     #[bench]
     fn bench_faces(b: &mut Bencher) {
-        b.iter(|| grid_faces(128, 128));
+        let terrain = Terrain::new().set_rows(128).set_columns(128);
+        b.iter(|| terrain.faces() );
     }
 
     #[test]
