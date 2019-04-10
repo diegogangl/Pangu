@@ -67,6 +67,25 @@ impl Terrain {
 
         faces
     }
+
+    /// Returns the 3D coordinates for the terrain mesh as a vector
+    /// of tuples.
+    fn vertices(&self, z: &Fn(u32, u32) -> f64) -> Vertices {
+        let half_x = f64::from(self.columns - 1) / 2.0;
+        let half_y = f64::from(self.rows - 1) / 2.0;
+
+        let capacity = (self.columns * self.rows) as usize;
+        let mut verts: Vertices = Vec::with_capacity(capacity);
+
+        for x in 0..self.columns {
+            for y in 0..self.rows {
+                verts.push((f64::from(x) - half_x, f64::from(y) - half_y, z(x, y)))
+            }
+        }
+
+        verts
+        }
+
 }
 
 
@@ -146,7 +165,7 @@ mod tests {
     #[test]
     fn test_vertices() {
         let z = |_, _| 0.0;
-        let verts = grid_vertices(4, 4, &z);
+        let verts = Terrain::new().set_rows(4).set_columns(4).vertices(&z);
 
         let expected = vec![(-1.5, -1.5, 0.0),
                             (-1.5, -0.5, 0.0),
@@ -173,6 +192,7 @@ mod tests {
     fn bench_verts(b: &mut Bencher) {
         let z = |_, _| 0.0;
 
-        b.iter(|| grid_vertices(128, 128, &z));
+        let terrain = Terrain::new().set_rows(128).set_columns(128);
+        b.iter(|| terrain.vertices(&z));
     }
 }
