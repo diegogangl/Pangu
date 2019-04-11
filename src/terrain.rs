@@ -8,13 +8,13 @@ use noise::{
     SuperSimplex,
 };
 
-type Faces = Vec<(u32, u32, u32, u32)>;
-type Vertices = Vec<(f64, f64, f64)>;
+pub type Faces = Vec<(u32, u32, u32, u32)>;
+pub type Vertices = Vec<(f64, f64, f64)>;
 
 
 /// Representation of a terrain
 #[derive(Clone, Copy, Debug, Default)]
-struct Procedural {
+pub struct Procedural {
     rows: u32,
     columns: u32,
     seed: u32,
@@ -174,6 +174,7 @@ mod tests {
     }
 
 }
+
 
 mod benches {
     use super::*;
