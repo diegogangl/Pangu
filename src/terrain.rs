@@ -28,8 +28,8 @@ impl Procedural {
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
-                  columns: Self::DEFAULT_COLUMNS,
-                  seed: Self::DEFAULT_SEED }
+                     columns: Self::DEFAULT_COLUMNS,
+                     seed: Self::DEFAULT_SEED }
     }
 
 
@@ -129,10 +129,9 @@ impl Procedural {
 mod tests {
 
     use super::*;
-    use test::Bencher;
 
     #[test]
-    fn test_faces() {
+    fn faces() {
         let faces = Procedural::new().set_rows(4).set_columns(4).faces();
 
         let expected = vec![(0, 4, 5, 1),
@@ -149,14 +148,8 @@ mod tests {
     }
 
 
-    #[bench]
-    fn bench_faces(b: &mut Bencher) {
-        let terrain = Procedural::new().set_rows(128).set_columns(128);
-        b.iter(|| terrain.faces());
-    }
-
     #[test]
-    fn test_vertices() {
+    fn vertices() {
         let z = Constant::new(0.0);
         let verts = Procedural::new().set_rows(4).set_columns(4).vertices(&z);
 
@@ -180,9 +173,22 @@ mod tests {
         assert_eq!(verts, expected);
     }
 
+}
+
+mod benches {
+    use super::*;
+    use test::Bencher;
+
 
     #[bench]
-    fn bench_verts(b: &mut Bencher) {
+    fn faces(b: &mut Bencher) {
+        let terrain = Procedural::new().set_rows(128).set_columns(128);
+        b.iter(|| terrain.faces());
+    }
+
+
+    #[bench]
+    fn verts(b: &mut Bencher) {
         let z = Constant::new(0.0);
 
         let terrain = Procedural::new().set_rows(128).set_columns(128);
@@ -191,9 +197,8 @@ mod tests {
 
 
     #[bench]
-    fn bench_terrain(b: &mut Bencher) {
+    fn terrain(b: &mut Bencher) {
         let terrain = Procedural::new().set_rows(128).set_columns(128);
         b.iter(|| terrain.build_mesh());
     }
 }
-
