@@ -5,10 +5,9 @@ extern crate noise;
 extern crate test;
 
 use noise::{
-    Blend, Cache, Constant, Displace, Fbm, Multiply, NoiseFn, RidgedMulti, RotatePoint, ScaleBias,
-    Seedable, SuperSimplex, TranslatePoint,
+    Blend, Cache, Constant, Displace, Fbm, Multiply, NoiseFn, RidgedMulti, RotatePoint, Seedable,
+    SuperSimplex,
 };
-use std::num::ParseIntError;
 
 type Faces = Vec<(u32, u32, u32, u32)>;
 type Vertices = Vec<(f64, f64, f64)>;
