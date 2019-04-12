@@ -79,12 +79,26 @@ impl Procedural {
         let capacity = (self.columns * self.rows) as usize;
         let mut verts: Vertices = Vec::with_capacity(capacity);
 
+        let x_bounds = (0.0, 2.0);
+        let y_bounds = (0.0, 2.0);
+
+        let x_step = (x_bounds.1 - x_bounds.0) / f64::from(self.columns);
+        let y_step = (y_bounds.1 - y_bounds.0) / f64::from(self.rows);
+
+        let x_offset = 0.0;
+        let y_offset = 0.0;
+
         for x in 0..self.columns {
             for y in 0..self.rows {
                 let x = f64::from(x);
                 let y = f64::from(y);
 
-                verts.push((x - half_x, y - half_y, z.get([x, y])));
+                let x_for_noise = x_bounds.0 + x_step * (x + x_offset);
+                let y_for_noise = y_bounds.0 + y_step * (y + y_offset);
+                let z_scale = 15.0;
+
+                verts.push((x - half_x, y - half_y,
+                            z.get([x_for_noise, y_for_noise]) * z_scale));
             }
         }
 

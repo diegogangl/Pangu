@@ -11,7 +11,11 @@ use pyo3::wrap_pyfunction;
 #[pyfunction]
 fn procedural_terrain() -> (terrain::Faces, terrain::Vertices) {
 
-    terrain::Procedural::new().build_mesh()
+    terrain::Procedural::new()
+                    .set_rows(128)
+                    .set_columns(128)
+                    .set_seed(20)
+                    .build_mesh()
 
 }
 
