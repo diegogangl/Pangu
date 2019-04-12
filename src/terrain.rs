@@ -5,7 +5,7 @@ extern crate test;
 
 use noise::{
     Blend, Cache, Constant, Displace, Fbm, Multiply, NoiseFn, RidgedMulti, RotatePoint, Seedable,
-    SuperSimplex,
+    Perlin,
 };
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -117,13 +117,13 @@ impl Procedural {
     /// Build and return a terrain mesh. The return is a tuple of Faces
     /// and Vertices.
     pub fn build_mesh(&self) -> (Faces, Vertices) {
-        let simplex = SuperSimplex::new().set_seed(self.seed);
+        let perlin = Perlin::new().set_seed(self.seed);
         let ridged = RidgedMulti::new().set_seed(self.seed);
 
         let fbm = Fbm::new().set_seed(self.seed);
         let fbm_cache = Cache::new(&fbm);
 
-        let blend = Blend::new(&simplex, &ridged, &fbm_cache);
+        let blend = Blend::new(&perlin, &ridged, &fbm_cache);
         let blend_cache = Cache::new(&blend);
 
         let constant = Constant::new(1.0);
