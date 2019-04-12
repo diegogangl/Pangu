@@ -177,8 +177,9 @@ mod tests {
 
 
 mod benches {
-    use super::*;
+    #[allow(unused_imports)]
     use test::Bencher;
+    use super::*;
 
 
     #[bench]
