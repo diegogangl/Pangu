@@ -63,7 +63,7 @@ impl NoiseFn<Point2<f64>> for LandFractal {
         // Octave 0 - The basic shape of the terrain
         let base = self.sources[0].get(point);
 
-        result = base;
+        result = base * 1.5;
 
         // Octave 1 - Large details
         let point2 =  [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY];
@@ -81,21 +81,21 @@ impl NoiseFn<Point2<f64>> for LandFractal {
         // Octave 3 - Medium details
         let point4 =  [point3[0] * Self::LACUNARITY, point3[1] * Self::LACUNARITY];
         let mut octave3 = self.sources[3].get(point4);
-        octave3 *= Self::PERSISTENCE.powi(3);
+        octave3 *= Self::PERSISTENCE.powi(4);
 
         result += octave3;
 
         // Octave 4 - Smaller details
         let point5 =  [point4[0] * Self::LACUNARITY, point4[1] * Self::LACUNARITY];
         let mut octave4 = self.sources[4].get(point5);
-        octave4 *= Self::PERSISTENCE.powi(4);
+        octave4 *= Self::PERSISTENCE.powi(6);
 
         result += octave4;
 
         // Octave 5 - Fine details
         let point6 =  [point5[0] * Self::LACUNARITY, point5[1] * Self::LACUNARITY];
         let mut octave5 = self.sources[5].get(point6);
-        octave5 *= Self::PERSISTENCE.powi(5);
+        octave5 *= Self::PERSISTENCE.powi(7);
 
         result += octave5;
 
