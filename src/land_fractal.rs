@@ -113,6 +113,6 @@ impl NoiseFn<Point2<f64>> for LandFractal {
 
         result += octave7;
 
-        result / self.scale
+        (result / self.scale) + 0.5
     }
 }
