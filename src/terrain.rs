@@ -3,10 +3,9 @@
 extern crate noise;
 extern crate test;
 
-use noise::{
-    Blend, Cache, Constant, Displace, Fbm, Multiply, NoiseFn, RidgedMulti, RotatePoint, Seedable,
-    Perlin,
-};
+use noise::{NoiseFn,  Seedable, Constant};
+
+use super::land_fractal::LandFractal;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
@@ -117,24 +116,9 @@ impl Procedural {
     /// Build and return a terrain mesh. The return is a tuple of Faces
     /// and Vertices.
     pub fn build_mesh(&self) -> (Faces, Vertices) {
-        let perlin = Perlin::new().set_seed(self.seed);
-        let ridged = RidgedMulti::new().set_seed(self.seed);
 
-        let fbm = Fbm::new().set_seed(self.seed);
-        let fbm_cache = Cache::new(&fbm);
-
-        let blend = Blend::new(&perlin, &ridged, &fbm_cache);
-        let blend_cache = Cache::new(&blend);
-
-        let constant = Constant::new(1.0);
-        let displacer = Multiply::new(&fbm_cache, &constant);
-
-        let nulled = Constant::new(1.0);
-        let displace = Displace::new(&blend_cache, &displacer, &fbm_cache, &nulled, &nulled);
-
-        let rotation = RotatePoint::new(&displace).set_z_angle(0.0);
-
-        (self.faces(), self.vertices(&rotation))
+        let noise = LandFractal::new().set_seed(self.seed);
+        (self.faces(), self.vertices(&noise)
     }
 }
 

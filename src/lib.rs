@@ -1,6 +1,7 @@
 #![feature(test)]
 
 mod terrain;
+mod land_fractal;
 
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
