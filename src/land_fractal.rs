@@ -48,7 +48,7 @@ impl Seedable for LandFractal {
         }
 
         LandFractal { seed: seed,
-                      sources: Self::build_sources(Self::DEFAULT_SEED),
+                      sources: Self::build_sources(seed),
                       ..self }
     }
 
