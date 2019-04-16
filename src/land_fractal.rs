@@ -29,6 +29,9 @@ impl LandFractal {
         sources
     }
 
+    fn scale_point(&self, point: Point2<f64>) -> Point2<f64> {
+        [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY]
+    }
 
     pub fn new() -> Self {
         LandFractal { seed: Self::DEFAULT_SEED,
@@ -55,9 +58,8 @@ impl Seedable for LandFractal {
 }
 
 
-
 impl NoiseFn<Point2<f64>> for LandFractal {
-    fn get(&self, point: Point2<f64>) -> f64 {
+    fn get(&self, mut point: Point2<f64>) -> f64 {
         let mut result;
 
         // Octave 0 - The basic shape of the terrain
@@ -66,35 +68,35 @@ impl NoiseFn<Point2<f64>> for LandFractal {
         result = base * 1.5;
 
         // Octave 1 - Large details
-        let point2 =  [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY];
-        let octave1 = self.sources[1].get(point2) * Self::PERSISTENCE;
+        point = self.scale_point(point);
+        let octave1 = self.sources[1].get(point) * Self::PERSISTENCE;
 
         result += octave1;
 
         // Octave 2 - Large details breakup
-        let point3 =  [point2[0] * Self::LACUNARITY, point2[1] * Self::LACUNARITY];
-        let mut octave2 = self.sources[2].get(point3);
+        point = self.scale_point(point);
+        let mut octave2 = self.sources[2].get(point);
         octave2 *= Self::PERSISTENCE.powi(2);
 
         result += octave2;
 
         // Octave 3 - Medium details
-        let point4 =  [point3[0] * Self::LACUNARITY, point3[1] * Self::LACUNARITY];
-        let mut octave3 = self.sources[3].get(point4);
+        point = self.scale_point(point);
+        let mut octave3 = self.sources[3].get(point);
         octave3 *= Self::PERSISTENCE.powi(4);
 
         result += octave3;
 
         // Octave 4 - Smaller details
-        let point5 =  [point4[0] * Self::LACUNARITY, point4[1] * Self::LACUNARITY];
-        let mut octave4 = self.sources[4].get(point5);
+        point = self.scale_point(point);
+        let mut octave4 = self.sources[4].get(point);
         octave4 *= Self::PERSISTENCE.powi(6);
 
         result += octave4;
 
         // Octave 5 - Fine details
-        let point6 =  [point5[0] * Self::LACUNARITY, point5[1] * Self::LACUNARITY];
-        let mut octave5 = self.sources[5].get(point6);
+        point = self.scale_point(point);
+        let mut octave5 = self.sources[5].get(point);
         octave5 *= Self::PERSISTENCE.powi(7);
 
         result += octave5;
