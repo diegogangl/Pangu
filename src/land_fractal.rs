@@ -18,6 +18,12 @@ impl LandFractal {
     const LACUNARITY: f64 = std::f64::consts::PI * 2.0 / 3.0;
     const PERSISTENCE: f64 = 0.5;
 
+    pub fn new() -> Self {
+        LandFractal { seed: Self::DEFAULT_SEED,
+                      scale: 2.0 - Self::PERSISTENCE.powi(Self::OCTAVES as i32 - 1),
+                      sources: Self::build_sources(Self::DEFAULT_SEED) }
+    }
+
 
     fn build_sources(seed: u32) -> Vec<Perlin> {
         let mut sources = Vec::with_capacity(Self::OCTAVES);
@@ -29,15 +35,11 @@ impl LandFractal {
         sources
     }
 
+
     fn scale_point(&self, point: Point2<f64>) -> Point2<f64> {
         [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY]
     }
 
-    pub fn new() -> Self {
-        LandFractal { seed: Self::DEFAULT_SEED,
-                      scale: 2.0 - Self::PERSISTENCE.powi(Self::OCTAVES as i32 - 1),
-                      sources: Self::build_sources(Self::DEFAULT_SEED) }
-    }
 }
 
 
