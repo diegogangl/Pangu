@@ -23,11 +23,11 @@ pub struct Procedural {
 
 
 impl Procedural {
-    pub const DEFAULT_ROWS: u32 = 64;
-    pub const DEFAULT_COLUMNS: u32 = 64;
-    pub const DEFAULT_SEED: u32 = 0;
-    pub const DEFAULT_OFFSET_X: f64 = 0.0;
-    pub const DEFAULT_OFFSET_Y: f64 = 0.0;
+    const DEFAULT_ROWS: u32 = 64;
+    const DEFAULT_COLUMNS: u32 = 64;
+    const DEFAULT_SEED: u32 = 0;
+    const DEFAULT_OFFSET_X: f64 = 0.0;
+    const DEFAULT_OFFSET_Y: f64 = 0.0;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,

@@ -39,7 +39,6 @@ impl LandFractal {
     fn scale_point(&self, point: Point2<f64>) -> Point2<f64> {
         [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY]
     }
-
 }
 
 
