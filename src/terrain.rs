@@ -16,6 +16,8 @@ pub type Vertices = Vec<(f64, f64, f64)>;
 pub struct Procedural {
     rows: u32,
     columns: u32,
+    offset_x: f64,
+    offset_y: f64,
     seed: u32,
 }
 
@@ -24,10 +26,14 @@ impl Procedural {
     pub const DEFAULT_ROWS: u32 = 64;
     pub const DEFAULT_COLUMNS: u32 = 64;
     pub const DEFAULT_SEED: u32 = 0;
+    pub const DEFAULT_OFFSET_X: f64 = 0.0;
+    pub const DEFAULT_OFFSET_Y: f64 = 0.0;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
                      columns: Self::DEFAULT_COLUMNS,
+                     offset_x: Self::DEFAULT_OFFSET_X,
+                     offset_y: Self::DEFAULT_OFFSET_Y,
                      seed: Self::DEFAULT_SEED }
     }
 
@@ -47,6 +53,18 @@ impl Procedural {
     /// Sets the seed of the noise functions.
     pub fn set_seed(self, seed: u32) -> Self {
         Procedural { seed, ..self }
+    }
+
+
+    /// Sets the offset for the X axis
+    pub fn set_offset_x(self, offset_x: f64) -> Self {
+        Procedural { offset_x, ..self }
+    }
+
+
+    /// Sets the offset for the Y axis
+    pub fn set_offset_y(self, offset_y: f64) -> Self {
+        Procedural { offset_y, ..self }
     }
 
 
@@ -84,16 +102,14 @@ impl Procedural {
         let x_step = (x_bounds.1 - x_bounds.0) / f64::from(self.columns);
         let y_step = (y_bounds.1 - y_bounds.0) / f64::from(self.rows);
 
-        let x_offset = 0.0;
-        let y_offset = 0.0;
 
         for x in 0..self.columns {
             for y in 0..self.rows {
                 let x = f64::from(x);
                 let y = f64::from(y);
 
-                let x_for_noise = x_bounds.0 + x_step * (x + x_offset);
-                let y_for_noise = y_bounds.0 + y_step * (y + y_offset);
+                let x_for_noise = x_bounds.0 + x_step * (x + self.offset_x);
+                let y_for_noise = y_bounds.0 + y_step * (y + self.offset_y);
                 let z_scale = 15.0;
 
                 verts.push((x - half_x, y - half_y,
