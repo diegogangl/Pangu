@@ -20,8 +20,19 @@ fn procedural_terrain(params: &PyDict) -> PyMesh {
         None => 0,
     };
 
-    Ok(terrain::Procedural::new().set_rows(128)
-                                 .set_columns(128)
+    let rows = match params.get_item("rows") {
+        Some(item) => item.extract()?,
+        None => 64,
+    };
+
+    let columns = match params.get_item("columns") {
+        Some(item) => item.extract()?,
+        None => 64,
+    };
+
+
+    Ok(terrain::Procedural::new().set_rows(rows)
+                                 .set_columns(columns)
                                  .set_seed(seed)
                                  .build_mesh())
 }
