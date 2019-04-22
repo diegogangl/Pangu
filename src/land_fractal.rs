@@ -56,7 +56,7 @@ impl Seedable for LandFractal {
             return self;
         }
 
-        LandFractal { seed: seed,
+        LandFractal { seed,
                       sources: Self::build_sources(seed),
                       ..self }
     }
