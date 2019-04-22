@@ -23,6 +23,7 @@ pub struct Procedural {
     step_x: f64,
     step_y: f64,
     size: f64,
+    scale: f64,
 }
 
 
@@ -34,6 +35,7 @@ impl Procedural {
     const DEFAULT_OFFSET_Y: f64 = 0.0;
     const DEFAULT_STEP: f64 = 1.0;
     const DEFAULT_SIZE: f64 = 20.0;
+    const DEFAULT_SCALE: f64 = 2.0;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
@@ -43,6 +45,7 @@ impl Procedural {
                      step_x: Self::DEFAULT_STEP,
                      step_y: Self::DEFAULT_STEP,
                      size: Self::DEFAULT_SIZE,
+                     scale: Self::DEFAULT_SCALE,
                      seed: Self::DEFAULT_SEED }
     }
 
@@ -80,6 +83,12 @@ impl Procedural {
     /// Sets the object size
     pub fn set_size(self, size: f64) -> Self {
         Procedural { size, ..self }
+    }
+
+
+    /// Sets the real world scale of the terrain
+    pub fn set_scale(self, scale: f64) -> Self {
+        Procedural { scale, ..self }
     }
 
 
@@ -137,8 +146,8 @@ impl Procedural {
 
         let ratio = columns / rows;
 
-        let x_bounds = if columns > rows { 2.0 } else { 2.0 * ratio };
-        let y_bounds = if columns > rows { 2.0 / ratio } else { 2.0 };
+        let x_bounds = if columns > rows { self.scale } else { self.scale * ratio };
+        let y_bounds = if columns > rows { self.scale / ratio } else { self.scale };
 
         let step_x = x_bounds / columns;
         let step_y = y_bounds / rows;
