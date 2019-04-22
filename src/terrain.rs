@@ -19,6 +19,8 @@ pub struct Procedural {
     offset_x: f64,
     offset_y: f64,
     seed: u32,
+    step_x: f64,
+    step_y: f64,
 }
 
 
@@ -28,12 +30,15 @@ impl Procedural {
     const DEFAULT_SEED: u32 = 0;
     const DEFAULT_OFFSET_X: f64 = 0.0;
     const DEFAULT_OFFSET_Y: f64 = 0.0;
+    const DEFAULT_STEP: f64 = 1.0;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
                      columns: Self::DEFAULT_COLUMNS,
                      offset_x: Self::DEFAULT_OFFSET_X,
                      offset_y: Self::DEFAULT_OFFSET_Y,
+                     step_x: Self::DEFAULT_STEP,
+                     step_y: Self::DEFAULT_STEP,
                      seed: Self::DEFAULT_SEED }
     }
 
@@ -96,20 +101,13 @@ impl Procedural {
         let capacity = (self.columns * self.rows) as usize;
         let mut verts: Vertices = Vec::with_capacity(capacity);
 
-        let x_bounds = (0.0, 2.0);
-        let y_bounds = (0.0, 2.0);
-
-        let x_step = (x_bounds.1 - x_bounds.0) / f64::from(self.columns);
-        let y_step = (y_bounds.1 - y_bounds.0) / f64::from(self.rows);
-
-
         for x in 0..self.columns {
             for y in 0..self.rows {
                 let x = f64::from(x);
                 let y = f64::from(y);
 
-                let x_for_noise = x_bounds.0 + x_step * (x + self.offset_x);
-                let y_for_noise = y_bounds.0 + y_step * (y + self.offset_y);
+                let x_for_noise = self.step_x * (x + self.offset_x);
+                let y_for_noise = self.step_y * (y + self.offset_y);
 
                 verts.push((x - half_x, y - half_y,
                             z.get([x_for_noise, y_for_noise])));
@@ -117,6 +115,18 @@ impl Procedural {
         }
 
         verts
+    }
+
+
+    /// Pre-calculate useful numbers for noise generation
+    pub fn setup(self) -> Self {
+        let x_bounds = (0.0, 2.0);
+        let y_bounds = (0.0, 2.0);
+
+        let step_x = x_bounds.0 + (x_bounds.1 - x_bounds.0) / f64::from(self.columns);
+        let step_y = y_bounds.0 + (y_bounds.1 - y_bounds.0) / f64::from(self.rows);
+
+        Procedural { step_x, step_y, ..self }
     }
 
 

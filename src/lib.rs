@@ -45,6 +45,7 @@ fn procedural_terrain(params: &PyDict) -> PyMesh {
                                  .set_offset_x(offset_x)
                                  .set_offset_y(offset_y)
                                  .set_seed(seed)
+                                 .setup()
                                  .build_mesh())
 }
 
