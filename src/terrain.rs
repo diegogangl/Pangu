@@ -132,11 +132,16 @@ impl Procedural {
 
     /// Pre-calculate useful numbers for noise generation
     pub fn setup(self) -> Self {
-        let x_bounds = 2.0;
-        let y_bounds = 2.0;
+        let columns = f64::from(self.columns);
+        let rows = f64::from(self.rows);
 
-        let step_x = x_bounds / f64::from(self.columns);
-        let step_y = y_bounds / f64::from(self.rows);
+        let ratio = columns / rows;
+
+        let x_bounds = if columns > rows { 2.0 } else { 2.0 * ratio };
+        let y_bounds = if columns > rows { 2.0 / ratio } else { 2.0 };
+
+        let step_x = x_bounds / columns;
+        let step_y = y_bounds / rows;
 
         Procedural { step_x, step_y, ..self }
     }
