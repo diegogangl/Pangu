@@ -6,6 +6,7 @@ extern crate test;
 use noise::{NoiseFn,  Seedable, Constant};
 
 use super::land_fractal::LandFractal;
+use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
@@ -21,6 +22,7 @@ pub struct Procedural {
     seed: u32,
     step_x: f64,
     step_y: f64,
+    size: f64,
 }
 
 
@@ -31,6 +33,7 @@ impl Procedural {
     const DEFAULT_OFFSET_X: f64 = 0.0;
     const DEFAULT_OFFSET_Y: f64 = 0.0;
     const DEFAULT_STEP: f64 = 1.0;
+    const DEFAULT_SIZE: f64 = 20.0;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
@@ -39,6 +42,7 @@ impl Procedural {
                      offset_y: Self::DEFAULT_OFFSET_Y,
                      step_x: Self::DEFAULT_STEP,
                      step_y: Self::DEFAULT_STEP,
+                     size: Self::DEFAULT_SIZE,
                      seed: Self::DEFAULT_SEED }
     }
 
@@ -73,6 +77,12 @@ impl Procedural {
     }
 
 
+    /// Sets the object size
+    pub fn set_size(self, size: f64) -> Self {
+        Procedural { size, ..self }
+    }
+
+
     /// Returns the faces of the terrain mesh as a vector of tuples
     /// containing four vertex indices.
     fn faces(&self) -> Faces {
@@ -101,6 +111,8 @@ impl Procedural {
         let capacity = (self.columns * self.rows) as usize;
         let mut verts: Vertices = Vec::with_capacity(capacity);
 
+        let scale = f64::from(max(self.rows, self.columns)) * (1.0 / self.size);
+
         for x in 0..self.columns {
             for y in 0..self.rows {
                 let x = f64::from(x);
@@ -109,7 +121,7 @@ impl Procedural {
                 let x_for_noise = self.step_x * (x + self.offset_x);
                 let y_for_noise = self.step_y * (y + self.offset_y);
 
-                verts.push((x - half_x, y - half_y,
+                verts.push(((x - half_x) / scale, (y - half_y) / scale,
                             z.get([x_for_noise, y_for_noise])));
             }
         }
@@ -142,7 +154,9 @@ impl Procedural {
     /// and Vertices.
     pub fn build_mesh(&self) -> (Faces, Vertices) {
 
-        let noise = LandFractal::new().set_seed(self.seed).set_z_scale(15.0);
+        let z_scale = self.size / 10.0;
+
+        let noise = LandFractal::new().set_seed(self.seed).set_z_scale(z_scale);
         (self.faces(), self.vertices(&noise)
     }
 }
@@ -174,7 +188,7 @@ mod tests {
     #[test]
     fn vertices() {
         let z = Constant::new(0.0);
-        let verts = Procedural::new().set_rows(4).set_columns(4).vertices(&z);
+        let verts = Procedural::new().set_rows(4).set_columns(4).set_size(4.0).vertices(&z);
 
         let expected = vec![(-1.5, -1.5, 0.0),
                             (-1.5, -0.5, 0.0),
