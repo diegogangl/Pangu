@@ -110,10 +110,9 @@ impl Procedural {
 
                 let x_for_noise = x_bounds.0 + x_step * (x + self.offset_x);
                 let y_for_noise = y_bounds.0 + y_step * (y + self.offset_y);
-                let z_scale = 15.0;
 
                 verts.push((x - half_x, y - half_y,
-                            z.get([x_for_noise, y_for_noise]) * z_scale));
+                            z.get([x_for_noise, y_for_noise])));
             }
         }
 
@@ -133,7 +132,7 @@ impl Procedural {
     /// and Vertices.
     pub fn build_mesh(&self) -> (Faces, Vertices) {
 
-        let noise = LandFractal::new().set_seed(self.seed);
+        let noise = LandFractal::new().set_seed(self.seed).set_z_scale(15.0);
         (self.faces(), self.vertices(&noise)
     }
 }

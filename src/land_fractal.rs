@@ -8,11 +8,13 @@ pub struct LandFractal {
     seed: u32,
     scale: f64,
     sources: Vec<Perlin>,
+    z_scale: f64,
 }
 
 
 impl LandFractal {
     pub const DEFAULT_SEED: u32 = 0;
+    pub const DEFAULT_Z_SCALE: f64 = 15.0;
 
     const OCTAVES: usize = 6;
     const LACUNARITY: f64 = std::f64::consts::PI * 2.0 / 3.0;
@@ -21,6 +23,7 @@ impl LandFractal {
     pub fn new() -> Self {
         LandFractal { seed: Self::DEFAULT_SEED,
                       scale: 2.0 - Self::PERSISTENCE.powi(Self::OCTAVES as i32 - 1),
+                      z_scale: Self::DEFAULT_Z_SCALE,
                       sources: Self::build_sources(Self::DEFAULT_SEED) }
     }
 
@@ -38,6 +41,11 @@ impl LandFractal {
 
     fn scale_point(&self, point: Point2<f64>) -> Point2<f64> {
         [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY]
+    }
+
+
+    pub fn set_z_scale(self, z_scale: f64) -> Self {
+        LandFractal { z_scale, ..self }
     }
 }
 
@@ -102,6 +110,6 @@ impl NoiseFn<Point2<f64>> for LandFractal {
 
         result += octave5;
 
-        (result / self.scale) + 0.5
+        (result / self.scale) * self.z_scale
     }
 }
