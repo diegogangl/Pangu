@@ -2,13 +2,16 @@ extern crate noise;
 
 use noise::{NoiseFn, Perlin, Point2, Seedable};
 
-
+/// Noise function that outputs custom fractal noise
+///
+/// Landfractal is based on fBm but allows for tweaking
+/// each octave independently.
 #[derive(Clone, Debug, Default)]
 pub struct LandFractal {
-    seed: u32,
-    scale: f64,
-    sources: Vec<Perlin>,
     z_scale: f64,
+    scale: f64,
+    seed: u32,
+    sources: Vec<Perlin>,
 }
 
 
@@ -28,6 +31,11 @@ impl LandFractal {
     }
 
 
+    /// Setup the Perlin noise functions for the octaves
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - The base seed for the noises
     fn build_sources(seed: u32) -> Vec<Perlin> {
         let mut sources = Vec::with_capacity(Self::OCTAVES);
 
@@ -39,6 +47,16 @@ impl LandFractal {
     }
 
 
+    /// Scale the coordinates for the next octave
+    ///
+    /// Each octave in the fractal increases its frequency
+    /// by multiplying its coordinates by the lacunarity value.
+    /// This results in smaller, more detailed noise for each
+    /// octave.
+    ///
+    /// # Arguments
+    ///
+    /// * `point` - Coordinates to scale
     fn scale_point(&self, point: Point2<f64>) -> Point2<f64> {
         [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY]
     }
