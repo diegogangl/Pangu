@@ -433,11 +433,4 @@ mod benches {
         let terrain = Procedural::new().set_rows(128).set_columns(128);
         b.iter(|| terrain.build_mesh());
     }
-
-
-    #[bench]
-    fn steps_calculation(b: &mut Bencher) {
-        let terrain = Procedural::new().set_rows(128).set_columns(128);
-        b.iter(|| terrain.calculate_steps());
-    }
 }
