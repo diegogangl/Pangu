@@ -20,8 +20,6 @@ pub struct Procedural {
     offset_x: f64,
     offset_y: f64,
     seed: u32,
-    step_x: f64,
-    step_y: f64,
     size: f64,
     scale: f64,
 }
@@ -33,7 +31,6 @@ impl Procedural {
     const DEFAULT_SEED: u32 = 0;
     const DEFAULT_OFFSET_X: f64 = 0.0;
     const DEFAULT_OFFSET_Y: f64 = 0.0;
-    const DEFAULT_STEP: f64 = 1.0;
     const DEFAULT_SIZE: f64 = 20.0;
     const DEFAULT_SCALE: f64 = 2.0;
 
@@ -42,8 +39,6 @@ impl Procedural {
                      columns: Self::DEFAULT_COLUMNS,
                      offset_x: Self::DEFAULT_OFFSET_X,
                      offset_y: Self::DEFAULT_OFFSET_Y,
-                     step_x: Self::DEFAULT_STEP,
-                     step_y: Self::DEFAULT_STEP,
                      size: Self::DEFAULT_SIZE,
                      scale: Self::DEFAULT_SCALE,
                      seed: Self::DEFAULT_SEED }
