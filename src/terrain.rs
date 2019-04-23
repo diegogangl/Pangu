@@ -51,44 +51,51 @@ impl Procedural {
 
 
     /// Sets the rows of the terrain grid.
-    pub fn set_rows(self, rows: u32) -> Self {
-        Procedural { rows, ..self }
+    pub fn set_rows(mut self, rows: u32) -> Self {
+        self.rows = rows;
+        self
     }
 
 
     /// Sets the columns of the terrain grid.
-    pub fn set_columns(self, columns: u32) -> Self {
-        Procedural { columns, ..self }
+    pub fn set_columns(mut self, columns: u32) -> Self {
+        self.columns = columns;
+        self
     }
 
 
     /// Sets the seed of the noise functions.
-    pub fn set_seed(self, seed: u32) -> Self {
-        Procedural { seed, ..self }
+    pub fn set_seed(mut self, seed: u32) -> Self {
+        self.seed = seed;
+        self
     }
 
 
     /// Sets the offset for the X axis
-    pub fn set_offset_x(self, offset_x: f64) -> Self {
-        Procedural { offset_x, ..self }
+    pub fn set_offset_x(mut self, offset_x: f64) -> Self {
+        self.offset_x = offset_x;
+        self
     }
 
 
     /// Sets the offset for the Y axis
-    pub fn set_offset_y(self, offset_y: f64) -> Self {
-        Procedural { offset_y, ..self }
+    pub fn set_offset_y(mut self, offset_y: f64) -> Self {
+        self.offset_y = offset_y;
+        self
     }
 
 
     /// Sets the object size
-    pub fn set_size(self, size: f64) -> Self {
-        Procedural { size, ..self }
+    pub fn set_size(mut self, size: f64) -> Self {
+        self.size = size;
+        self
     }
 
 
     /// Sets the real world scale of the terrain
-    pub fn set_scale(self, scale: f64) -> Self {
-        Procedural { scale, ..self }
+    pub fn set_scale(mut self, scale: f64) -> Self {
+        self.scale = scale;
+        self
     }
 
 
@@ -140,7 +147,7 @@ impl Procedural {
 
 
     /// Pre-calculate useful numbers for noise generation
-    pub fn setup(self) -> Self {
+    fn setup(&mut self) {
         let columns = f64::from(self.columns);
         let rows = f64::from(self.rows);
 
@@ -149,10 +156,8 @@ impl Procedural {
         let x_bounds = if columns > rows { self.scale } else { self.scale * ratio };
         let y_bounds = if columns > rows { self.scale / ratio } else { self.scale };
 
-        let step_x = x_bounds / columns;
-        let step_y = y_bounds / rows;
-
-        Procedural { step_x, step_y, ..self }
+        self.step_x = x_bounds / columns;
+        self.step_y = y_bounds / rows;
     }
 
 
@@ -166,11 +171,12 @@ impl Procedural {
 
     /// Build and return a terrain mesh. The return is a tuple of Faces
     /// and Vertices.
-    pub fn build_mesh(&self) -> (Faces, Vertices) {
+    pub fn build_mesh(&mut self) -> (Faces, Vertices) {
 
+        self.setup();
         let z_scale = self.size / 10.0;
-
         let noise = LandFractal::new().set_seed(self.seed).set_z_scale(z_scale);
+
         (self.faces(), self.vertices(&noise)
     }
 }
@@ -251,7 +257,7 @@ mod benches {
 
     #[bench]
     fn terrain(b: &mut Bencher) {
-        let terrain = Procedural::new().set_rows(128).set_columns(128);
+        let mut terrain = Procedural::new().set_rows(128).set_columns(128);
         b.iter(|| terrain.build_mesh());
     }
 }
