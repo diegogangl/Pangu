@@ -128,14 +128,15 @@ impl Procedural {
         let mut verts: Vertices = Vec::with_capacity(capacity);
 
         let scale = f64::from(max(self.rows, self.columns)) * (1.0 / self.size);
+        let steps = self.calculate_steps();
 
         for x in 0..self.columns {
             for y in 0..self.rows {
                 let x = f64::from(x);
                 let y = f64::from(y);
 
-                let x_for_noise = self.step_x * (x + self.offset_x);
-                let y_for_noise = self.step_y * (y + self.offset_y);
+                let x_for_noise = steps.0 * (x + self.offset_x);
+                let y_for_noise = steps.1 * (y + self.offset_y);
 
                 verts.push(((x - half_x) / scale, (y - half_y) / scale,
                             z.get([x_for_noise, y_for_noise])));
@@ -146,8 +147,9 @@ impl Procedural {
     }
 
 
-    /// Pre-calculate useful numbers for noise generation
-    fn setup(&mut self) {
+    /// Calculate correct boundaries for the noise, and the steps
+    /// to make coordinates fit in.
+    fn calculate_steps(self) -> (f64, f64) {
         let columns = f64::from(self.columns);
         let rows = f64::from(self.rows);
 
@@ -156,8 +158,7 @@ impl Procedural {
         let x_bounds = if columns > rows { self.scale } else { self.scale * ratio };
         let y_bounds = if columns > rows { self.scale / ratio } else { self.scale };
 
-        self.step_x = x_bounds / columns;
-        self.step_y = y_bounds / rows;
+        (x_bounds / columns, y_bounds / rows)
     }
 
 
@@ -171,9 +172,8 @@ impl Procedural {
 
     /// Build and return a terrain mesh. The return is a tuple of Faces
     /// and Vertices.
-    pub fn build_mesh(&mut self) -> (Faces, Vertices) {
+    pub fn build_mesh(self) -> (Faces, Vertices) {
 
-        self.setup();
         let z_scale = self.size / 10.0;
         let noise = LandFractal::new().set_seed(self.seed).set_z_scale(z_scale);
 
@@ -257,7 +257,7 @@ mod benches {
 
     #[bench]
     fn terrain(b: &mut Bencher) {
-        let mut terrain = Procedural::new().set_rows(128).set_columns(128);
+        let terrain = Procedural::new().set_rows(128).set_columns(128);
         b.iter(|| terrain.build_mesh());
     }
 }
