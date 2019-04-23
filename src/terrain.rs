@@ -26,6 +26,9 @@ pub struct Procedural {
     offset_x: f64,
     offset_y: f64,
 
+    /// Z Rotation angle (in radians) for the noise
+    rotation: f64,
+
     /// Scale for the noise function. Larger scales create
     /// smaller, more detailed noise while smaller values
     /// create larger, less detailed terrains.
@@ -47,12 +50,14 @@ impl Procedural {
     const DEFAULT_OFFSET_Y: f64 = 0.0;
     const DEFAULT_SIZE: f64 = 20.0;
     const DEFAULT_SCALE: f64 = 2.0;
+    const DEFAULT_ROTATION: f64 = 0.0;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
                      columns: Self::DEFAULT_COLUMNS,
                      offset_x: Self::DEFAULT_OFFSET_X,
                      offset_y: Self::DEFAULT_OFFSET_Y,
+                     rotation: Self::DEFAULT_ROTATION,
                      size: Self::DEFAULT_SIZE,
                      scale: Self::DEFAULT_SCALE,
                      seed: Self::DEFAULT_SEED }
@@ -108,6 +113,13 @@ impl Procedural {
     }
 
 
+    /// Sets the rotation angle
+    pub fn set_rotation(mut self, rotation: f64) -> Self {
+        self.rotation = rotation;
+        self
+    }
+
+
     /// Generate list of faces for the terrain mesh
     ///
     /// Returns the a vector of tuples containing the indices
@@ -152,16 +164,44 @@ impl Procedural {
                 let x = f64::from(x);
                 let y = f64::from(y);
 
-                let x_for_noise = steps.0 * (x + self.offset_x);
-                let y_for_noise = steps.1 * (y + self.offset_y);
+                let noise_coords = self.coords_for_noise(x, y, steps);
 
                 verts.push(((x - half_x) / scale,
                             (y - half_y) / scale,
-                            z.get([x_for_noise, y_for_noise])));
+                            z.get([noise_coords.0, noise_coords.1])));
             }
         }
 
         verts
+    }
+
+
+    /// Adjust X, Y coordinates for the noise function
+    ///
+    /// Takes care of rotating, offsetting and scaling the
+    /// coordinates to the noise bounds.
+    ///
+    /// # Arguments
+    ///
+    /// * `x`: Value for X axis
+    /// * `y`: Value for y axis
+    /// * `steps`: Steps to scale the coordinates for X and Y
+    fn coords_for_noise(self, x: f64, y: f64, steps: (f64, f64)) -> (f64, f64) {
+        let x2 = if self.rotation > 0.0 {
+            let rotated = x * self.rotation.cos() - y * self.rotation.sin();
+            steps.0 * (rotated + self.offset_x)
+        } else {
+            steps.0 * (x + self.offset_x)
+        };
+
+        let y2 = if self.rotation > 0.0 {
+            let rotated = x * self.rotation.sin() + y * self.rotation.cos();
+            steps.1 * (rotated + self.offset_y)
+        } else {
+            steps.1 * (y + self.offset_y)
+        };
+
+        (x2, y2)
     }
 
 
@@ -344,6 +384,25 @@ mod tests {
         assert_eq!((0.25, 0.25), taller.calculate_steps());
     }
 
+
+    #[test]
+    fn rotation() {
+        let terrain = Procedural::new().set_rows(4)
+                                       .set_columns(4)
+                                       .set_rotation(0.0);
+
+        let values = terrain.coords_for_noise(1.0, 1.0, terrain.calculate_steps());
+        assert_eq!((0.5, 0.5), values);
+
+        let terrain = Procedural::new().set_rows(4)
+                                       .set_columns(4)
+                                       .set_rotation(1.0);
+
+        let values = terrain.coords_for_noise(1.0, 1.0, terrain.calculate_steps());
+
+        assert!(values.0.fract() - (1505.0) < 1e-10);
+        assert!(values.1.fract() - (69088.0) < 1e-10);
+    }
 }
 
 
