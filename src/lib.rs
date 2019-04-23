@@ -39,6 +39,7 @@ fn procedural_terrain(params: &PyDict) -> PyMesh {
     let scale = get_param!(params, "scale", 2.0);
     let offset_x = get_param!(params, "offset_x", 0.0);
     let offset_y = get_param!(params, "offset_y", 0.0);
+    let rotation = get_param!(params, "rotation", 0.0);
 
     Ok(terrain::Procedural::new().set_rows(rows)
                                  .set_columns(columns)
@@ -46,6 +47,7 @@ fn procedural_terrain(params: &PyDict) -> PyMesh {
                                  .set_scale(scale)
                                  .set_offset_x(offset_x)
                                  .set_offset_y(offset_y)
+                                 .set_rotation(rotation)
                                  .set_seed(seed)
                                  .build_mesh())
 }
