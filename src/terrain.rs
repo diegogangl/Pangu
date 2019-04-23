@@ -15,13 +15,27 @@ pub type Vertices = Vec<(f64, f64, f64)>;
 /// Representation of a terrain
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Procedural {
+    /// The number of rows to use in the mesh grid
     rows: u32,
+
+    /// The number of columns to use in the mesh grid
     columns: u32,
+
+    /// Offsets for the coordinates passed to the noise
+    /// function
     offset_x: f64,
     offset_y: f64,
-    seed: u32,
-    size: f64,
+
+    /// Scale for the noise function. Larger scales create
+    /// smaller, more detailed noise while smaller values
+    /// create larger, less detailed terrains.
     scale: f64,
+
+    /// Size of the mesh object in scene units
+    size: f64,
+
+    /// Base seed for the noise function
+    seed: u32,
 }
 
 
@@ -94,8 +108,10 @@ impl Procedural {
     }
 
 
-    /// Returns the faces of the terrain mesh as a vector of tuples
-    /// containing four vertex indices.
+    /// Generate list of faces for the terrain mesh
+    ///
+    /// Returns the a vector of tuples containing the indices
+    /// for the four vertices of each face.
     fn faces(&self) -> Faces {
         let capacity = (self.columns * self.rows) as usize;
         let mut faces: Faces = Vec::with_capacity(capacity);
@@ -113,7 +129,13 @@ impl Procedural {
     }
 
 
-    /// Returns the 3D coordinates for the terrain mesh as a vector
+    /// Generate list of vertices for the terrain mesh
+    ///
+    /// # Arguments
+    ///
+    /// * `z` - Noise function to generate the terrain
+    ///
+    /// Returns the 3D coordinates for the mesh as a vector
     /// of tuples.
     fn vertices(&self, z: &NoiseFn<[f64; 2]>) -> Vertices {
         let half_x = f64::from(self.columns - 1) / 2.0;
@@ -143,8 +165,11 @@ impl Procedural {
     }
 
 
-    /// Calculate correct boundaries for the noise, and the steps
-    /// to make coordinates fit in.
+    /// Calculate correct boundaries for the noise and the steps
+    /// to make coordinates fit in the bounds. Boundaries are
+    /// calculated from the ratio between rows and columns as
+    /// well as the scale field.
+    /// Returns a tuple with the X and Y steps.
     fn calculate_steps(self) -> (f64, f64) {
         let columns = f64::from(self.columns);
         let rows = f64::from(self.rows);
@@ -168,16 +193,16 @@ impl Procedural {
     }
 
 
-    /// Build and return a plane mesh. This is a grid with Z coordinates
-    /// set to zero). Useful for testing and benching.
+    /// Build a plane mesh. This is a grid with Z coordinates
+    /// set to zero. Only useful for testing and benching.
     pub fn build_plane(&self) -> (Faces, Vertices) {
         let z = Constant::new(0.0);
         (self.faces(), self.vertices(&z))
     }
 
 
-    /// Build and return a terrain mesh. The return is a tuple of Faces
-    /// and Vertices.
+    /// Build a terrain mesh.
+    /// Returns a tuple of Faces and Vertices.
     pub fn build_mesh(self) -> (Faces, Vertices) {
         let z_scale = self.size / 10.0;
         let noise = LandFractal::new().set_seed(self.seed).set_z_scale(z_scale);

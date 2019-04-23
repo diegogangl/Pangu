@@ -36,6 +36,9 @@ impl LandFractal {
     /// # Arguments
     ///
     /// * `seed` - The base seed for the noises
+    ///
+    /// Returns a vector of Perlin noise functions with
+    /// different seeds
     fn build_sources(seed: u32) -> Vec<Perlin> {
         let mut sources = Vec::with_capacity(Self::OCTAVES);
 
@@ -57,11 +60,14 @@ impl LandFractal {
     /// # Arguments
     ///
     /// * `point` - Coordinates to scale
+    ///
+    /// Returns the scaled point
     fn scale_point(&self, point: Point2<f64>) -> Point2<f64> {
         [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY]
     }
 
 
+    /// Set the Z multiplier
     pub fn set_z_scale(self, z_scale: f64) -> Self {
         LandFractal { z_scale, ..self }
     }
@@ -85,6 +91,7 @@ impl Seedable for LandFractal {
 }
 
 
+/// Get noise value for 2D coordinates
 impl NoiseFn<Point2<f64>> for LandFractal {
     fn get(&self, mut point: Point2<f64>) -> f64 {
         let mut result;
