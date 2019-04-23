@@ -36,12 +36,14 @@ fn procedural_terrain(params: &PyDict) -> PyMesh {
     let seed = get_param!(params, "seed", 0);
     let rows = get_param!(params, "rows", 64);
     let columns = get_param!(params, "columns", 64);
+    let size = get_param!(params, "size", 5.0);
     let offset_x = get_param!(params, "offset_x", 0.0);
     let offset_y = get_param!(params, "offset_y", 0.0);
 
 
     Ok(terrain::Procedural::new().set_rows(rows)
                                  .set_columns(columns)
+                                 .set_size(size)
                                  .set_offset_x(offset_x)
                                  .set_offset_y(offset_y)
                                  .set_seed(seed)
