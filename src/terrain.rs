@@ -3,7 +3,7 @@
 extern crate noise;
 extern crate test;
 
-use noise::{NoiseFn,  Seedable, Constant};
+use noise::{Constant, NoiseFn, Seedable};
 
 use super::land_fractal::LandFractal;
 use std::cmp::max;
@@ -138,7 +138,8 @@ impl Procedural {
                 let x_for_noise = steps.0 * (x + self.offset_x);
                 let y_for_noise = steps.1 * (y + self.offset_y);
 
-                verts.push(((x - half_x) / scale, (y - half_y) / scale,
+                verts.push(((x - half_x) / scale,
+                            (y - half_y) / scale,
                             z.get([x_for_noise, y_for_noise])));
             }
         }
@@ -155,8 +156,18 @@ impl Procedural {
 
         let ratio = columns / rows;
 
-        let x_bounds = if columns > rows { self.scale } else { self.scale * ratio };
-        let y_bounds = if columns > rows { self.scale / ratio } else { self.scale };
+        let x_bounds = if columns > rows {
+            self.scale
+        } else {
+            self.scale * ratio
+        };
+
+
+        let y_bounds = if columns > rows {
+            self.scale / ratio
+        } else {
+            self.scale
+        };
 
         (x_bounds / columns, y_bounds / rows)
     }
@@ -173,11 +184,10 @@ impl Procedural {
     /// Build and return a terrain mesh. The return is a tuple of Faces
     /// and Vertices.
     pub fn build_mesh(self) -> (Faces, Vertices) {
-
         let z_scale = self.size / 10.0;
         let noise = LandFractal::new().set_seed(self.seed).set_z_scale(z_scale);
 
-        (self.faces(), self.vertices(&noise)
+        (self.faces(), self.vertices(&noise))
     }
 }
 
@@ -189,7 +199,7 @@ mod tests {
 
     #[test]
     fn faces() {
-        let faces = Procedural::new().set_rows(4).set_columns(4).faces();
+        let terrain = Procedural::new().set_rows(4).set_columns(4);
 
         let expected = vec![(0, 4, 5, 1),
                             (1, 5, 6, 2),
@@ -201,15 +211,14 @@ mod tests {
                             (9, 13, 14, 10),
                             (10, 14, 15, 11)];
 
-        assert_eq!(faces, expected);
+        assert_eq!(expected, terrain.faces());
     }
 
 
     #[test]
     fn vertices() {
         let z = Constant::new(0.0);
-        let verts = Procedural::new().set_rows(4).set_columns(4).set_size(4.0).vertices(&z);
-
+        let terrain = Procedural::new().set_rows(4).set_columns(4).set_size(4.0);
         let expected = vec![(-1.5, -1.5, 0.0),
                             (-1.5, -0.5, 0.0),
                             (-1.5, 0.5, 0.0),
@@ -227,7 +236,79 @@ mod tests {
                             (1.5, 0.5, 0.0),
                             (1.5, 1.5, 0.0)];
 
-        assert_eq!(verts, expected);
+        assert_eq!(expected, terrain.vertices(&z));
+
+        let longer = terrain.set_rows(8);
+        let expected = vec![(-0.75, -1.75, 0.0),
+                            (-0.75, -1.25, 0.0),
+                            (-0.75, -0.75, 0.0),
+                            (-0.75, -0.25, 0.0),
+                            (-0.75, 0.25, 0.0),
+                            (-0.75, 0.75, 0.0),
+                            (-0.75, 1.25, 0.0),
+                            (-0.75, 1.75, 0.0),
+                            (-0.25, -1.75, 0.0),
+                            (-0.25, -1.25, 0.0),
+                            (-0.25, -0.75, 0.0),
+                            (-0.25, -0.25, 0.0),
+                            (-0.25, 0.25, 0.0),
+                            (-0.25, 0.75, 0.0),
+                            (-0.25, 1.25, 0.0),
+                            (-0.25, 1.75, 0.0),
+                            (0.25, -1.75, 0.0),
+                            (0.25, -1.25, 0.0),
+                            (0.25, -0.75, 0.0),
+                            (0.25, -0.25, 0.0),
+                            (0.25, 0.25, 0.0),
+                            (0.25, 0.75, 0.0),
+                            (0.25, 1.25, 0.0),
+                            (0.25, 1.75, 0.0),
+                            (0.75, -1.75, 0.0),
+                            (0.75, -1.25, 0.0),
+                            (0.75, -0.75, 0.0),
+                            (0.75, -0.25, 0.0),
+                            (0.75, 0.25, 0.0),
+                            (0.75, 0.75, 0.0),
+                            (0.75, 1.25, 0.0),
+                            (0.75, 1.75, 0.0)];
+
+        assert_eq!(expected, longer.vertices(&z));
+
+        let taller = terrain.set_columns(8);
+        let expected = vec![(-1.75, -0.75, 0.0),
+                            (-1.75, -0.25, 0.0),
+                            (-1.75, 0.25, 0.0),
+                            (-1.75, 0.75, 0.0),
+                            (-1.25, -0.75, 0.0),
+                            (-1.25, -0.25, 0.0),
+                            (-1.25, 0.25, 0.0),
+                            (-1.25, 0.75, 0.0),
+                            (-0.75, -0.75, 0.0),
+                            (-0.75, -0.25, 0.0),
+                            (-0.75, 0.25, 0.0),
+                            (-0.75, 0.75, 0.0),
+                            (-0.25, -0.75, 0.0),
+                            (-0.25, -0.25, 0.0),
+                            (-0.25, 0.25, 0.0),
+                            (-0.25, 0.75, 0.0),
+                            (0.25, -0.75, 0.0),
+                            (0.25, -0.25, 0.0),
+                            (0.25, 0.25, 0.0),
+                            (0.25, 0.75, 0.0),
+                            (0.75, -0.75, 0.0),
+                            (0.75, -0.25, 0.0),
+                            (0.75, 0.25, 0.0),
+                            (0.75, 0.75, 0.0),
+                            (1.25, -0.75, 0.0),
+                            (1.25, -0.25, 0.0),
+                            (1.25, 0.25, 0.0),
+                            (1.25, 0.75, 0.0),
+                            (1.75, -0.75, 0.0),
+                            (1.75, -0.25, 0.0),
+                            (1.75, 0.25, 0.0),
+                            (1.75, 0.75, 0.0)];
+
+        assert_eq!(expected, taller.vertices(&z));
     }
 
 
@@ -247,9 +328,9 @@ mod tests {
 
 
 mod benches {
+    use super::*;
     #[allow(unused_imports)]
     use test::Bencher;
-    use super::*;
 
 
     #[bench]
