@@ -230,6 +230,19 @@ mod tests {
         assert_eq!(verts, expected);
     }
 
+
+    #[test]
+    fn steps_calculation() {
+        let terrain = Procedural::new().set_rows(4).set_columns(4).set_size(4.0);
+        assert_eq!((0.5, 0.5), terrain.calculate_steps());
+
+        let longer = terrain.set_rows(8);
+        assert_eq!((0.25, 0.25), longer.calculate_steps());
+
+        let taller = terrain.set_columns(8);
+        assert_eq!((0.25, 0.25), taller.calculate_steps());
+    }
+
 }
 
 
@@ -259,5 +272,12 @@ mod benches {
     fn terrain(b: &mut Bencher) {
         let terrain = Procedural::new().set_rows(128).set_columns(128);
         b.iter(|| terrain.build_mesh());
+    }
+
+
+    #[bench]
+    fn steps_calculation(b: &mut Bencher) {
+        let terrain = Procedural::new().set_rows(128).set_columns(128);
+        b.iter(|| terrain.calculate_steps());
     }
 }
