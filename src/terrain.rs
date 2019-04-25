@@ -233,6 +233,13 @@ impl Procedural {
     }
 
 
+    /// Get the noise function with the right settings
+    fn get_noise_fn(self) -> LandFractal {
+        LandFractal::new().set_seed(self.seed)
+                          .set_z_scale(self.size / 10.0)
+    }
+
+
     /// Build a plane mesh. This is a grid with Z coordinates
     /// set to zero. Only useful for testing and benching.
     pub fn build_plane(&self) -> (Faces, Vertices) {
@@ -244,10 +251,7 @@ impl Procedural {
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
     pub fn build_mesh(self) -> (Faces, Vertices) {
-        let z_scale = self.size / 10.0;
-        let noise = LandFractal::new().set_seed(self.seed).set_z_scale(z_scale);
-
-        (self.faces(), self.vertices(&noise))
+        (self.faces(), self.vertices(&self.get_noise_fn()))
     }
 }
 
