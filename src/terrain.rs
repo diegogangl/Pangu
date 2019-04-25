@@ -257,10 +257,9 @@ impl Procedural {
 
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
-    pub fn build_vertices(self) ->  Vertices {
+    pub fn build_vertices(self) -> Vertices {
         self.vertices(&self.get_noise_fn())
     }
-
 }
 
 
