@@ -6,8 +6,10 @@ mod terrain;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::wrap_pyfunction;
+use pyo3::PyErr;
 
 type PyMesh = PyResult<(terrain::Faces, terrain::Vertices)>;
+type PyVerts = PyResult<terrain::Vertices>;
 
 
 /// Macro to extract item values from Python dictionary as simple
@@ -28,10 +30,8 @@ macro_rules! get_param {
 }
 
 
-/// Glue function to generate a terrain. Builds a terrain::Procedural
-/// and calls its build_mesh() function.
-#[pyfunction]
-fn procedural_terrain(params: &PyDict) -> PyMesh {
+/// Setup and return terrain
+fn procedural_terrain(params: &PyDict) -> Result<terrain::Procedural, PyErr> {
     let seed = get_param!(params, "seed", 0);
     let rows = get_param!(params, "rows", 64);
     let columns = get_param!(params, "columns", 64);
@@ -48,15 +48,32 @@ fn procedural_terrain(params: &PyDict) -> PyMesh {
                                  .set_offset_x(offset_x)
                                  .set_offset_y(offset_y)
                                  .set_rotation(rotation)
-                                 .set_seed(seed)
-                                 .build_mesh())
+                                 .set_seed(seed))
+}
+
+
+/// Glue function to generate a terrain. Builds a terrain::Procedural
+/// and calls its build_mesh() function.
+#[pyfunction]
+fn terrain_mesh(params: &PyDict) -> PyMesh {
+    let terrain = procedural_terrain(params)?;
+    Ok(terrain.build_mesh())
+}
+
+
+/// Glue function to generate a terrain's vertices. Builds a
+/// terrain::Procedural and calls its build_vertices() function.
+#[pyfunction]
+fn terrain_vertices(params: &PyDict) -> PyVerts {
+    let terrain = procedural_terrain(params)?;
+    Ok(terrain.build_vertices())
 }
 
 
 /// The pangu module to be used in Python
 #[pymodule]
 fn pangu(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(procedural_terrain))?;
-
+    m.add_wrapped(wrap_pyfunction!(terrain_mesh))?;
+    m.add_wrapped(wrap_pyfunction!(terrain_vertices))?;
     Ok(())
 }
