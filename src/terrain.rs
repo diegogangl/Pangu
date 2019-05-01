@@ -187,14 +187,14 @@ impl Procedural {
     /// * `y`: Value for y axis
     /// * `steps`: Steps to scale the coordinates for X and Y
     fn coords_for_noise(self, x: f64, y: f64, steps: (f64, f64)) -> (f64, f64) {
-        let x2 = if self.rotation > 0.0 {
+        let x2 = if self.rotation != 0.0 {
             let rotated = x * self.rotation.cos() - y * self.rotation.sin();
             steps.0 * (rotated + self.offset_x)
         } else {
             steps.0 * (x + self.offset_x)
         };
 
-        let y2 = if self.rotation > 0.0 {
+        let y2 = if self.rotation != 0.0 {
             let rotated = x * self.rotation.sin() + y * self.rotation.cos();
             steps.1 * (rotated + self.offset_y)
         } else {
