@@ -161,13 +161,13 @@ impl Procedural {
 
         for x in 0..self.columns {
             for y in 0..self.rows {
-                let x = f64::from(x);
-                let y = f64::from(y);
+                let x = f64::from(x) - half_x;
+                let y = f64::from(y) - half_y;
 
                 let noise_coords = self.coords_for_noise(x, y, steps);
 
-                verts.push(((x - half_x) / scale,
-                            (y - half_y) / scale,
+                verts.push((x / scale,
+                            y / scale,
                             z.get([noise_coords.0, noise_coords.1])));
             }
         }
