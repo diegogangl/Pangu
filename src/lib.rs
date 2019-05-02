@@ -39,6 +39,7 @@ fn procedural_terrain(params: &PyDict) -> Result<terrain::Procedural, PyErr> {
     let scale = get_param!(params, "scale", 2.0);
     let offset_x = get_param!(params, "offset_x", 0.0);
     let offset_y = get_param!(params, "offset_y", 0.0);
+    let offset_z = get_param!(params, "offset_z", 0.0);
     let rotation = get_param!(params, "rotation", 0.0);
 
     Ok(terrain::Procedural::new().set_rows(rows)
@@ -47,6 +48,7 @@ fn procedural_terrain(params: &PyDict) -> Result<terrain::Procedural, PyErr> {
                                  .set_scale(scale)
                                  .set_offset_x(offset_x)
                                  .set_offset_y(offset_y)
+                                 .set_offset_z(offset_z)
                                  .set_rotation(rotation)
                                  .set_seed(seed))
 }

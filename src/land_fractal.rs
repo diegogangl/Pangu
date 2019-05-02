@@ -1,6 +1,6 @@
 extern crate noise;
 
-use noise::{NoiseFn, Perlin, Point2, Seedable};
+use noise::{NoiseFn, Perlin, Point3, Seedable};
 
 /// Noise function that outputs custom fractal noise
 ///
@@ -62,8 +62,10 @@ impl LandFractal {
     /// * `point` - Coordinates to scale
     ///
     /// Returns the scaled point
-    fn scale_point(&self, point: Point2<f64>) -> Point2<f64> {
-        [point[0] * Self::LACUNARITY, point[1] * Self::LACUNARITY]
+    fn scale_point(&self, point: Point3<f64>) -> Point3<f64> {
+        [point[0] * Self::LACUNARITY,
+         point[1] * Self::LACUNARITY,
+         point[2] * Self::LACUNARITY]
     }
 
 
@@ -92,8 +94,8 @@ impl Seedable for LandFractal {
 
 
 /// Get noise value for 2D coordinates
-impl NoiseFn<Point2<f64>> for LandFractal {
-    fn get(&self, mut point: Point2<f64>) -> f64 {
+impl NoiseFn<Point3<f64>> for LandFractal {
+    fn get(&self, mut point: Point3<f64>) -> f64 {
         let mut result;
 
         // Octave 0 - The basic shape of the terrain

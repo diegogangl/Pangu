@@ -25,6 +25,7 @@ pub struct Procedural {
     /// function
     offset_x: f64,
     offset_y: f64,
+    offset_z: f64,
 
     /// Z Rotation angle (in radians) for the noise
     rotation: f64,
@@ -46,8 +47,7 @@ impl Procedural {
     const DEFAULT_ROWS: u32 = 64;
     const DEFAULT_COLUMNS: u32 = 64;
     const DEFAULT_SEED: u32 = 0;
-    const DEFAULT_OFFSET_X: f64 = 0.0;
-    const DEFAULT_OFFSET_Y: f64 = 0.0;
+    const DEFAULT_OFFSET: f64 = 0.0;
     const DEFAULT_SIZE: f64 = 20.0;
     const DEFAULT_SCALE: f64 = 2.0;
     const DEFAULT_ROTATION: f64 = 0.0;
@@ -55,8 +55,9 @@ impl Procedural {
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
                      columns: Self::DEFAULT_COLUMNS,
-                     offset_x: Self::DEFAULT_OFFSET_X,
-                     offset_y: Self::DEFAULT_OFFSET_Y,
+                     offset_x: Self::DEFAULT_OFFSET,
+                     offset_y: Self::DEFAULT_OFFSET,
+                     offset_z: Self::DEFAULT_OFFSET,
                      rotation: Self::DEFAULT_ROTATION,
                      size: Self::DEFAULT_SIZE,
                      scale: Self::DEFAULT_SCALE,
@@ -95,6 +96,13 @@ impl Procedural {
     /// Sets the offset for the Y axis
     pub fn set_offset_y(mut self, offset_y: f64) -> Self {
         self.offset_y = offset_y;
+        self
+    }
+
+
+    /// Sets the offset for the Z axis
+    pub fn set_offset_z(mut self, offset_z: f64) -> Self {
+        self.offset_z = offset_z;
         self
     }
 
@@ -149,7 +157,7 @@ impl Procedural {
     ///
     /// Returns the 3D coordinates for the mesh as a vector
     /// of tuples.
-    fn vertices(&self, z: &NoiseFn<[f64; 2]>) -> Vertices {
+    fn vertices(&self, z: &NoiseFn<[f64; 3]>) -> Vertices {
         let half_x = f64::from(self.columns - 1) / 2.0;
         let half_y = f64::from(self.rows - 1) / 2.0;
 
@@ -168,7 +176,7 @@ impl Procedural {
 
                 verts.push((x / scale,
                             y / scale,
-                            z.get([noise_coords.0, noise_coords.1])));
+                            z.get([noise_coords.0, noise_coords.1, self.offset_z])));
             }
         }
 
