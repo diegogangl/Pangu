@@ -97,46 +97,135 @@ impl Seedable for LandFractal {
 impl NoiseFn<Point3<f64>> for LandFractal {
     fn get(&self, mut point: Point3<f64>) -> f64 {
         let mut result;
+        let mut domain_point;
+        let mut original_point = point;
+        let mask_point;
 
-        // Octave 0 - The basic shape of the terrain
-        let base = self.sources[0].get(point);
 
-        result = base * 1.5;
+        //------------------------------------------------------------------------------------------
+        // BLEND MASK
+        //------------------------------------------------------------------------------------------
+        let mask_control = 1.1;
+        mask_point = [point[0] * mask_control, point[1] * mask_control,
+                        point[2] * mask_control];
+        let mask = self.sources[0].get(mask_point);
 
-        // Octave 1 - Large details
-        point = self.scale_point(point);
-        let octave1 = self.sources[1].get(point) * Self::PERSISTENCE;
 
+
+
+        //------------------------------------------------------------------------------------------
+        // DOMAIN WARPING
+        //------------------------------------------------------------------------------------------
+
+        let domain_base = 1.5;
+        domain_point = [point[0] * domain_base, point[1] * domain_base,
+                        point[2] * domain_base];
+
+        let mut domain = self.sources[0].get(domain_point);
+
+        domain_point = [domain_point[0] * domain_base, domain_point[1] * domain_base,
+                        domain_point[2] * domain_base];
+
+        domain += self.sources[1].get(domain_point) * 0.5;
+        domain_point = [domain_point[0] * domain_base, domain_point[1] * domain_base,
+                        domain_point[2] * domain_base];
+
+        domain += self.sources[2].get(domain_point) * 0.25;
+        domain *= 0.10;
+
+
+        //------------------------------------------------------------------------------------------
+        // BASE FRACTAL NOISE
+        //------------------------------------------------------------------------------------------
+
+        //------------------------------------------------------------------------------------------
+        // Basic shape of the terrain
+        let base_control = 1.5;
+        result = self.sources[0].get(point) * base_control;
+
+        //------------------------------------------------------------------------------------------
+        // Basic features of the terrain
+        let octave1_scale = 1.4;
+        let octave1_persistence = 0.9;
+        point = [point[0] * octave1_scale + domain, point[1] * octave1_scale + domain,
+                 point[2] * octave1_scale];
+
+        let octave1 = self.sources[1].get(point) * octave1_persistence;
         result += octave1;
 
-        // Octave 2 - Large details breakup
-        point = self.scale_point(point);
-        let mut octave2 = self.sources[2].get(point);
-        octave2 *= Self::PERSISTENCE.powi(2);
 
+        //------------------------------------------------------------------------------------------
+        // Larger details
+
+        let octave2_scale = 2.0;
+        let octave2_persistence = 0.4;
+        point = [point[0] * octave2_scale + domain, point[1] * octave2_scale + domain,
+                 point[2] * octave2_scale];
+
+        let octave2 = self.sources[2].get(point) * octave2_persistence;
         result += octave2;
 
-        // Octave 3 - Medium details
-        point = self.scale_point(point);
-        let mut octave3 = self.sources[3].get(point);
-        octave3 *= Self::PERSISTENCE.powi(4);
 
+        //------------------------------------------------------------------------------------------
+        // Larger details
+
+        let octave3_scale = 2.0;
+        let octave3_persistence = 0.25;
+        point = [point[0] * octave3_scale + domain, point[1] * octave3_scale + domain,
+                 point[2] * octave3_scale];
+
+        let octave3 = self.sources[3].get(point) * octave3_persistence;
         result += octave3;
 
-        // Octave 4 - Smaller details
-        point = self.scale_point(point);
-        let mut octave4 = self.sources[4].get(point);
-        octave4 *= Self::PERSISTENCE.powi(6);
 
+        //------------------------------------------------------------------------------------------
+        // Larger details
+
+        let octave4_scale = 2.0;
+        let octave4_persistence = 0.1;
+        point = [point[0] * octave4_scale + domain, point[1] * octave4_scale + domain,
+                 point[2] * octave4_scale];
+
+        let octave4 = self.sources[4].get(point) * octave4_persistence;
         result += octave4;
 
-        // Octave 5 - Fine details
-        point = self.scale_point(point);
-        let mut octave5 = self.sources[5].get(point);
-        octave5 *= Self::PERSISTENCE.powi(7);
+        //------------------------------------------------------------------------------------------
+        // Larger details
+        let octave5_scale = 2.0;
+        let octave5_persistence = 0.01;
+        point = [point[0] * octave5_scale + domain, point[1] * octave5_scale + domain,
+                 point[2] * octave5_scale];
 
+        let octave5 = self.sources[5].get(point) * octave5_persistence;
         result += octave5;
 
+
+        //------------------------------------------------------------------------------------------
+        // BLEND NOISE
+        //------------------------------------------------------------------------------------------
+
+        //------------------------------------------------------------------------------------------
+        // Basic shape of the terrain
+        let base_control = 0.1;
+        let mut blend;
+        blend = self.sources[3].get(original_point) * base_control;
+
+
+        //------------------------------------------------------------------------------------------
+        // Basic features of the terrain
+        let blend1_scale = 2.0;
+        let blend1_persistence = 0.2;
+        original_point = [original_point[0] * blend1_scale + domain,
+                          original_point[1] * blend1_scale + domain,
+                          original_point[2] * blend1_scale];
+
+        let blend1 = self.sources[1].get(original_point) * blend1_persistence;
+        blend += blend1;
+
+        result = mask.mul_add(result - blend, blend);
+
+
         (result / self.scale) * self.z_scale
+
     }
 }
