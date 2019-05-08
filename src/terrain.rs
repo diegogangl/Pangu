@@ -29,7 +29,6 @@ macro_rules! setter {
 }
 
 
-
 /// Representation of a terrain
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Procedural {
@@ -58,6 +57,9 @@ pub struct Procedural {
 
     /// Base seed for the noise function
     seed: u32,
+
+    /// Make grid flat. Used for testing
+    flat: bool,
 }
 
 
@@ -69,6 +71,7 @@ impl Procedural {
     const DEFAULT_SIZE: f64 = 20.0;
     const DEFAULT_SCALE: f64 = 2.0;
     const DEFAULT_ROTATION: f64 = 0.0;
+    const DEFAULT_FLAT: bool = false;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
@@ -79,7 +82,8 @@ impl Procedural {
                      rotation: Self::DEFAULT_ROTATION,
                      size: Self::DEFAULT_SIZE,
                      scale: Self::DEFAULT_SCALE,
-                     seed: Self::DEFAULT_SEED }
+                     seed: Self::DEFAULT_SEED,
+                     flat: Self::DEFAULT_FLAT }
     }
 
 
@@ -92,6 +96,7 @@ impl Procedural {
     setter!(set_size, size, f64);
     setter!(set_scale, scale, f64);
     setter!(set_rotation, rotation, f64);
+    setter!(set_flat, flat, bool);
 
 
     /// Generate list of faces for the terrain mesh
@@ -123,7 +128,7 @@ impl Procedural {
     ///
     /// Returns the 3D coordinates for the mesh as a vector
     /// of tuples.
-    fn vertices(&self, z: &NoiseFn<[f64; 3]>) -> Vertices {
+    fn vertices(&self) -> Vertices {
         let half_x = f64::from(self.columns - 1) / 2.0;
         let half_y = f64::from(self.rows - 1) / 2.0;
 
@@ -132,6 +137,7 @@ impl Procedural {
 
         let scale = f64::from(max(self.rows, self.columns)) * (1.0 / self.size);
         let steps = self.calculate_steps();
+        let z_fn = self.get_noise_fn();
 
         for x in 0..self.columns {
             for y in 0..self.rows {
@@ -139,10 +145,13 @@ impl Procedural {
                 let y = f64::from(y) - half_y;
 
                 let noise_coords = self.coords_for_noise(x, y, steps);
+                let z = if self.flat {
+                    0.0
+                } else {
+                    z_fn.get([noise_coords.0, noise_coords.1, self.offset_z])
+                };
 
-                verts.push((x / scale,
-                            y / scale,
-                            z.get([noise_coords.0, noise_coords.1, self.offset_z])));
+                verts.push((x / scale, y / scale, z));
             }
         }
 
@@ -213,26 +222,17 @@ impl Procedural {
                           .set_z_scale(self.size / 10.0)
     }
 
-
-    /// Build a plane mesh. This is a grid with Z coordinates
-    /// set to zero. Only useful for testing and benching.
-    pub fn build_plane(&self) -> (Faces, Vertices) {
-        let z = Constant::new(0.0);
-        (self.faces(), self.vertices(&z))
-    }
-
-
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
     pub fn build_mesh(self) -> (Faces, Vertices) {
-        (self.faces(), self.vertices(&self.get_noise_fn()))
+        (self.faces(), self.vertices())
     }
 
 
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
     pub fn build_vertices(self) -> Vertices {
-        self.vertices(&self.get_noise_fn())
+        self.vertices()
     }
 }
 
@@ -262,8 +262,11 @@ mod tests {
 
     #[test]
     fn vertices() {
-        let z = Constant::new(0.0);
-        let terrain = Procedural::new().set_rows(4).set_columns(4).set_size(4.0);
+        let terrain = Procedural::new().set_rows(4)
+                                       .set_columns(4)
+                                       .set_size(4.0)
+                                       .set_flat(true);
+
         let expected = vec![(-1.5, -1.5, 0.0),
                             (-1.5, -0.5, 0.0),
                             (-1.5, 0.5, 0.0),
@@ -281,9 +284,10 @@ mod tests {
                             (1.5, 0.5, 0.0),
                             (1.5, 1.5, 0.0)];
 
-        assert_eq!(expected, terrain.vertices(&z));
+        assert_eq!(expected, terrain.vertices());
 
-        let longer = terrain.set_rows(8);
+        let longer = terrain.set_rows(8).set_flat(true);
+
         let expected = vec![(-0.75, -1.75, 0.0),
                             (-0.75, -1.25, 0.0),
                             (-0.75, -0.75, 0.0),
@@ -317,9 +321,10 @@ mod tests {
                             (0.75, 1.25, 0.0),
                             (0.75, 1.75, 0.0)];
 
-        assert_eq!(expected, longer.vertices(&z));
+        assert_eq!(expected, longer.vertices());
 
-        let taller = terrain.set_columns(8);
+        let taller = terrain.set_columns(8).set_flat(true);
+
         let expected = vec![(-1.75, -0.75, 0.0),
                             (-1.75, -0.25, 0.0),
                             (-1.75, 0.25, 0.0),
@@ -353,7 +358,7 @@ mod tests {
                             (1.75, 0.25, 0.0),
                             (1.75, 0.75, 0.0)];
 
-        assert_eq!(expected, taller.vertices(&z));
+        assert_eq!(expected, taller.vertices());
     }
 
 
@@ -406,10 +411,11 @@ mod benches {
 
     #[bench]
     fn verts(b: &mut Bencher) {
-        let z = Constant::new(0.0);
+        let terrain = Procedural::new().set_rows(128)
+                                       .set_columns(128)
+                                       .set_flat(true);
 
-        let terrain = Procedural::new().set_rows(128).set_columns(128);
-        b.iter(|| terrain.vertices(&z));
+        b.iter(|| terrain.vertices());
     }
 
 
