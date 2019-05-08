@@ -12,6 +12,24 @@ pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
 
 
+/// Macro to generate public setter methods
+///
+/// # Arguments
+///
+/// * `name` - Name of the setter function
+/// * `attr` - Name of the field to set
+/// * `attr_type` - Expected type for the field
+macro_rules! setter {
+    ($name:ident, $attr:ident, $attr_type:ty) => {
+        pub fn $name(mut self, value: $attr_type) -> Self {
+            self.$attr = value;
+            self
+        }
+    }
+}
+
+
+
 /// Representation of a terrain
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Procedural {
@@ -65,67 +83,15 @@ impl Procedural {
     }
 
 
-    /// Sets the rows of the terrain grid.
-    pub fn set_rows(mut self, rows: u32) -> Self {
-        self.rows = rows;
-        self
-    }
-
-
-    /// Sets the columns of the terrain grid.
-    pub fn set_columns(mut self, columns: u32) -> Self {
-        self.columns = columns;
-        self
-    }
-
-
-    /// Sets the seed of the noise functions.
-    pub fn set_seed(mut self, seed: u32) -> Self {
-        self.seed = seed;
-        self
-    }
-
-
-    /// Sets the offset for the X axis
-    pub fn set_offset_x(mut self, offset_x: f64) -> Self {
-        self.offset_x = offset_x;
-        self
-    }
-
-
-    /// Sets the offset for the Y axis
-    pub fn set_offset_y(mut self, offset_y: f64) -> Self {
-        self.offset_y = offset_y;
-        self
-    }
-
-
-    /// Sets the offset for the Z axis
-    pub fn set_offset_z(mut self, offset_z: f64) -> Self {
-        self.offset_z = offset_z;
-        self
-    }
-
-
-    /// Sets the object size
-    pub fn set_size(mut self, size: f64) -> Self {
-        self.size = size;
-        self
-    }
-
-
-    /// Sets the real world scale of the terrain
-    pub fn set_scale(mut self, scale: f64) -> Self {
-        self.scale = scale;
-        self
-    }
-
-
-    /// Sets the rotation angle
-    pub fn set_rotation(mut self, rotation: f64) -> Self {
-        self.rotation = rotation;
-        self
-    }
+    setter!(set_rows, rows, u32);
+    setter!(set_columns, columns, u32);
+    setter!(set_seed, seed, u32);
+    setter!(set_offset_x, offset_x, f64);
+    setter!(set_offset_y, offset_y, f64);
+    setter!(set_offset_z, offset_z, f64);
+    setter!(set_size, size, f64);
+    setter!(set_scale, scale, f64);
+    setter!(set_rotation, rotation, f64);
 
 
     /// Generate list of faces for the terrain mesh
