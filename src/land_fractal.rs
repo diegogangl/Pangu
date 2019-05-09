@@ -9,7 +9,6 @@ use noise::{NoiseFn, Perlin, Point3, Seedable};
 #[derive(Clone, Debug, Default)]
 pub struct LandFractal {
     z_scale: f64,
-    scale: f64,
     seed: u32,
     sources: Vec<Perlin>,
 }
@@ -19,13 +18,8 @@ impl LandFractal {
     pub const DEFAULT_SEED: u32 = 0;
     pub const DEFAULT_Z_SCALE: f64 = 15.0;
 
-    const OCTAVES: usize = 6;
-    const LACUNARITY: f64 = std::f64::consts::PI * 2.0 / 3.0;
-    const PERSISTENCE: f64 = 0.5;
-
     pub fn new() -> Self {
         LandFractal { seed: Self::DEFAULT_SEED,
-                      scale: 2.0 - Self::PERSISTENCE.powi(Self::OCTAVES as i32 - 1),
                       z_scale: Self::DEFAULT_Z_SCALE,
                       sources: Self::build_sources(Self::DEFAULT_SEED) }
     }
@@ -40,32 +34,13 @@ impl LandFractal {
     /// Returns a vector of Perlin noise functions with
     /// different seeds
     fn build_sources(seed: u32) -> Vec<Perlin> {
-        let mut sources = Vec::with_capacity(Self::OCTAVES);
+        let mut sources = Vec::with_capacity(6);
 
-        for x in 0..Self::OCTAVES {
+        for x in 0..6 {
             sources.push(Perlin::new().set_seed(seed + x as u32));
         }
 
         sources
-    }
-
-
-    /// Scale the coordinates for the next octave
-    ///
-    /// Each octave in the fractal increases its frequency
-    /// by multiplying its coordinates by the lacunarity value.
-    /// This results in smaller, more detailed noise for each
-    /// octave.
-    ///
-    /// # Arguments
-    ///
-    /// * `point` - Coordinates to scale
-    ///
-    /// Returns the scaled point
-    fn scale_point(&self, point: Point3<f64>) -> Point3<f64> {
-        [point[0] * Self::LACUNARITY,
-         point[1] * Self::LACUNARITY,
-         point[2] * Self::LACUNARITY]
     }
 
 
@@ -225,7 +200,7 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         result = mask.mul_add(result - blend, blend);
 
 
-        (result / self.scale) * self.z_scale
+        (result / 2.0) * self.z_scale
 
     }
 }
