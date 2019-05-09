@@ -75,19 +75,20 @@ macro_rules! scale {
 impl NoiseFn<Point3<f64>> for LandFractal {
 
 
-    fn get(&self, mut point: Point3<f64>) -> f64 {
+    fn get(&self, point: Point3<f64>) -> f64 {
         let mut result;
-        let mut domain_point;
-        let mut original_point = point;
-        let mask_point;
+        let mut domain;
+        let mut blend;
+        let mut current_point;
 
 
         //------------------------------------------------------------------------------------------
         // BLEND MASK
         //------------------------------------------------------------------------------------------
         let mask_control = 1.1;
-        mask_point = scale!(point, mask_control);
-        let mask = self.sources[0].get(mask_point);
+        current_point = scale!(point, mask_control);
+
+        let mask = self.sources[0].get(current_point);
 
 
         //------------------------------------------------------------------------------------------
@@ -95,14 +96,14 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         //------------------------------------------------------------------------------------------
 
         let domain_base = 1.5;
-        domain_point = scale!(point, domain_base);
-        let mut domain = self.sources[0].get(domain_point);
+        current_point = scale!(point, domain_base);
+        domain = self.sources[0].get(current_point);
 
-        domain_point = scale!(point, domain_base);
-        domain += self.sources[1].get(domain_point) * 0.5;
+        current_point = scale!(current_point, domain_base);
+        domain += self.sources[1].get(current_point) * 0.5;
 
-        domain_point = scale!(point, domain_base);
-        domain += self.sources[2].get(domain_point) * 0.25;
+        current_point = scale!(current_point, domain_base);
+        domain += self.sources[2].get(current_point) * 0.25;
 
         domain *= 0.10;
 
@@ -120,9 +121,9 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         // Basic features of the terrain
         let octave1_scale = 1.4;
         let octave1_persistence = 0.9;
-        point = scale!(point, octave1_scale, domain);
+        current_point = scale!(point, octave1_scale, domain);
 
-        let octave1 = self.sources[1].get(point) * octave1_persistence;
+        let octave1 = self.sources[1].get(current_point) * octave1_persistence;
         result += octave1;
 
 
@@ -131,9 +132,9 @@ impl NoiseFn<Point3<f64>> for LandFractal {
 
         let octave2_scale = 2.0;
         let octave2_persistence = 0.4;
-        point = scale!(point, octave2_scale, domain);
+        current_point = scale!(current_point, octave2_scale, domain);
 
-        let octave2 = self.sources[2].get(point) * octave2_persistence;
+        let octave2 = self.sources[2].get(current_point) * octave2_persistence;
         result += octave2;
 
 
@@ -142,9 +143,9 @@ impl NoiseFn<Point3<f64>> for LandFractal {
 
         let octave3_scale = 2.0;
         let octave3_persistence = 0.25;
-        point = scale!(point, octave3_scale, domain);
+        current_point = scale!(current_point, octave3_scale, domain);
 
-        let octave3 = self.sources[3].get(point) * octave3_persistence;
+        let octave3 = self.sources[3].get(current_point) * octave3_persistence;
         result += octave3;
 
 
@@ -153,18 +154,18 @@ impl NoiseFn<Point3<f64>> for LandFractal {
 
         let octave4_scale = 2.0;
         let octave4_persistence = 0.1;
-        point = scale!(point, octave4_scale, domain);
+        current_point = scale!(current_point, octave4_scale, domain);
 
-        let octave4 = self.sources[4].get(point) * octave4_persistence;
+        let octave4 = self.sources[4].get(current_point) * octave4_persistence;
         result += octave4;
 
         //------------------------------------------------------------------------------------------
         // Larger details
         let octave5_scale = 2.0;
         let octave5_persistence = 0.01;
-        point = scale!(point, octave5_scale, domain);
+        current_point = scale!(current_point, octave5_scale, domain);
 
-        let octave5 = self.sources[5].get(point) * octave5_persistence;
+        let octave5 = self.sources[5].get(current_point) * octave5_persistence;
         result += octave5;
 
 
@@ -175,17 +176,16 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         //------------------------------------------------------------------------------------------
         // Basic shape of the terrain
         let base_control = 0.1;
-        let mut blend;
-        blend = self.sources[3].get(original_point) * base_control;
+        blend = self.sources[3].get(point) * base_control;
 
 
         //------------------------------------------------------------------------------------------
         // Basic features of the terrain
         let blend1_scale = 2.0;
         let blend1_persistence = 0.2;
-        original_point = scale!(original_point, blend1_scale, domain);
+        current_point = scale!(point, blend1_scale, domain);
 
-        let blend1 = self.sources[1].get(original_point) * blend1_persistence;
+        let blend1 = self.sources[1].get(current_point) * blend1_persistence;
         blend += blend1;
 
         result = mask.mul_add(result - blend, blend);
