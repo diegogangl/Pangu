@@ -35,8 +35,8 @@ impl LandFractal {
     fn build_sources(seed: u32) -> Vec<Perlin> {
         let mut sources = Vec::with_capacity(6);
 
-        for x in 0..6 {
-            sources.push(Perlin::new().set_seed(seed + x as u32));
+        for i in 0..6 {
+            sources.push(Perlin::new().set_seed(seed + i));
         }
 
         sources
@@ -178,7 +178,7 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         result = mask.mul_add(result - blend, blend);
 
 
-        (result / 2.0) * self.z_scale
+        result * self.z_scale
 
     }
 }
