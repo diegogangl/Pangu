@@ -218,8 +218,7 @@ impl Procedural {
 
     /// Get the noise function with the right settings
     fn get_noise_fn(self) -> LandFractal {
-        LandFractal::new().set_seed(self.seed)
-                          .set_z_scale(self.size / 10.0)
+        LandFractal::new(self.seed).set_z_scale(self.size / 10.0)
     }
 
     /// Build a terrain mesh.

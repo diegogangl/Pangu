@@ -15,13 +15,12 @@ pub struct LandFractal {
 
 
 impl LandFractal {
-    pub const DEFAULT_SEED: u32 = 0;
     pub const DEFAULT_Z_SCALE: f64 = 15.0;
 
-    pub fn new() -> Self {
-        LandFractal { seed: Self::DEFAULT_SEED,
+    pub fn new(seed: u32) -> Self {
+        LandFractal { seed: seed,
                       z_scale: Self::DEFAULT_Z_SCALE,
-                      sources: Self::build_sources(Self::DEFAULT_SEED) }
+                      sources: Self::build_sources(seed) }
     }
 
 
@@ -47,23 +46,6 @@ impl LandFractal {
     /// Set the Z multiplier
     pub fn set_z_scale(self, z_scale: f64) -> Self {
         LandFractal { z_scale, ..self }
-    }
-}
-
-
-impl Seedable for LandFractal {
-    fn set_seed(self, seed: u32) -> Self {
-        if self.seed == seed {
-            return self;
-        }
-
-        LandFractal { seed,
-                      sources: Self::build_sources(seed),
-                      ..self }
-    }
-
-    fn seed(&self) -> u32 {
-        self.seed
     }
 }
 
