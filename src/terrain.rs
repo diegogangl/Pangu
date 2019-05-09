@@ -3,7 +3,7 @@
 extern crate noise;
 extern crate test;
 
-use noise::{Constant, NoiseFn, Seedable};
+use noise::{NoiseFn, Seedable};
 
 use super::land_fractal::LandFractal;
 use std::cmp::max;
