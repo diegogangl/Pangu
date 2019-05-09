@@ -3,26 +3,32 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
 
+
 /// Noise function that outputs custom fractal noise
 ///
-/// Landfractal is based on fBm but allows for tweaking
-/// each octave independently.
+/// The noise function generate 6 octaves of Fbm noise,
+/// blended with another 2 octaves of smoother terrain.
+/// Coordinates are also warped by another small Fbm noise.
 #[derive(Clone, Debug, Default)]
 pub struct LandFractal {
+
+    /// Multiplier for the terrain height
     z_scale: f64,
+
+    /// Roughness of the terrain (last octaves)
     roughness: f64,
-    seed: u32,
+
+    /// Perlin noises for the octaves
     sources: Vec<Perlin>,
 }
 
 
 impl LandFractal {
-    pub const DEFAULT_Z_SCALE: f64 = 15.0;
-    pub const DEFAULT_ROUGHNESS: f64 = 0.5;
+    const DEFAULT_Z_SCALE: f64 = 15.0;
+    const DEFAULT_ROUGHNESS: f64 = 0.5;
 
     pub fn new(seed: u32) -> Self {
-        LandFractal { seed: seed,
-                      z_scale: Self::DEFAULT_Z_SCALE,
+        LandFractal { z_scale: Self::DEFAULT_Z_SCALE,
                       roughness: Self::DEFAULT_ROUGHNESS,
                       sources: Self::build_sources(seed) }
     }
@@ -75,10 +81,12 @@ macro_rules! scale {
 }
 
 
-/// Get noise value for 2D coordinates
 impl NoiseFn<Point3<f64>> for LandFractal {
 
-
+    /// Get noise value
+    ///
+    /// # Arguments
+    /// * `point` - The coordinates in 3D space for the noise
     fn get(&self, point: Point3<f64>) -> f64 {
         let mut result;
         let mut domain;
@@ -99,14 +107,15 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         // DOMAIN WARPING
         //------------------------------------------------------------------------------------------
 
-        let domain_base = 1.5;
-        current_point = scale!(point, domain_base);
-        domain = self.sources[0].get(current_point);
+        let domain_scale = 1.5;
 
-        current_point = scale!(current_point, domain_base);
+        current_point = scale!(point, domain_scale);
+        domain = self.sources[1].get(current_point);
+
+        current_point = scale!(current_point, domain_scale);
         domain += self.sources[1].get(current_point) * 0.5;
 
-        current_point = scale!(current_point, domain_base);
+        current_point = scale!(current_point, domain_scale);
         domain += self.sources[2].get(current_point) * 0.25;
 
         domain *= 0.10;
@@ -118,17 +127,19 @@ impl NoiseFn<Point3<f64>> for LandFractal {
 
         //------------------------------------------------------------------------------------------
         // Basic shape of the terrain
+
         let base_control = 1.5;
         result = self.sources[0].get(point) * base_control;
 
+
         //------------------------------------------------------------------------------------------
-        // Basic features of the terrain
+        // Large features of the terrain
+
         let octave1_scale = 1.4;
         let octave1_persistence = 0.9;
-        current_point = scale!(point, octave1_scale, domain);
 
-        let octave1 = self.sources[1].get(current_point) * octave1_persistence;
-        result += octave1;
+        current_point = scale!(point, octave1_scale, domain);
+        result += self.sources[1].get(current_point) * octave1_persistence;
 
 
         //------------------------------------------------------------------------------------------
@@ -136,41 +147,36 @@ impl NoiseFn<Point3<f64>> for LandFractal {
 
         let octave2_scale = 2.0;
         let octave2_persistence = 0.4;
-        current_point = scale!(current_point, octave2_scale, domain);
 
-        let octave2 = self.sources[2].get(current_point) * octave2_persistence;
-        result += octave2;
+        current_point = scale!(current_point, octave2_scale, domain);
+        result += self.sources[2].get(current_point) * octave2_persistence;
 
 
         //------------------------------------------------------------------------------------------
-        // Larger details
+        // Medium details
 
         let octave3_scale = 2.0;
         let octave3_persistence = 0.25;
-        current_point = scale!(current_point, octave3_scale, domain);
 
-        let octave3 = self.sources[3].get(current_point) * octave3_persistence;
-        result += octave3;
+        current_point = scale!(current_point, octave3_scale, domain);
+        result += self.sources[3].get(current_point) * octave3_persistence;
 
 
         //------------------------------------------------------------------------------------------
-        // Larger details
+        // Small details
 
         let octave4_scale = 2.0;
-        let octave4_persistence = self.roughness / 5.0;
-        current_point = scale!(current_point, octave4_scale, domain);
 
-        let octave4 = self.sources[4].get(current_point) * octave4_persistence;
-        result += octave4;
+        current_point = scale!(current_point, octave4_scale, domain);
+        result += self.sources[4].get(current_point) * self.roughness / 5.0;
+
 
         //------------------------------------------------------------------------------------------
-        // Larger details
+        // Fine details
         let octave5_scale = 2.0;
-        let octave5_persistence = self.roughness / 10.0;
-        current_point = scale!(current_point, octave5_scale, domain);
 
-        let octave5 = self.sources[5].get(current_point) * octave5_persistence;
-        result += octave5;
+        current_point = scale!(current_point, octave5_scale, domain);
+        result += self.sources[5].get(current_point) * self.roughness / 10.0;
 
 
         //------------------------------------------------------------------------------------------
@@ -179,21 +185,22 @@ impl NoiseFn<Point3<f64>> for LandFractal {
 
         //------------------------------------------------------------------------------------------
         // Basic shape of the terrain
+
         let base_control = 0.1;
         blend = self.sources[3].get(point) * base_control;
 
 
         //------------------------------------------------------------------------------------------
-        // Basic features of the terrain
+        // Extra-details
+
         let blend1_scale = 2.0;
         let blend1_persistence = 0.2;
-        current_point = scale!(point, blend1_scale, domain);
 
-        let blend1 = self.sources[1].get(current_point) * blend1_persistence;
-        blend += blend1;
+        current_point = scale!(point, blend1_scale, domain);
+        blend += self.sources[1].get(current_point) * blend1_persistence;
+
 
         result = mask.mul_add(result - blend, blend);
-
         result * self.z_scale
     }
 }
