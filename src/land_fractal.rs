@@ -42,11 +42,7 @@ impl LandFractal {
         sources
     }
 
-
-    /// Set the Z multiplier
-    pub fn set_z_scale(self, z_scale: f64) -> Self {
-        LandFractal { z_scale, ..self }
-    }
+    setter!(set_z_scale, z_scale, f64);
 }
 
 
