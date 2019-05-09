@@ -1,5 +1,7 @@
 #![feature(test)]
+#[macro_use]
 
+mod utils;
 mod land_fractal;
 mod terrain;
 
