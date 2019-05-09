@@ -10,6 +10,7 @@ use noise::{NoiseFn, Perlin, Point3, Seedable};
 #[derive(Clone, Debug, Default)]
 pub struct LandFractal {
     z_scale: f64,
+    roughness: f64,
     seed: u32,
     sources: Vec<Perlin>,
 }
@@ -17,10 +18,12 @@ pub struct LandFractal {
 
 impl LandFractal {
     pub const DEFAULT_Z_SCALE: f64 = 15.0;
+    pub const DEFAULT_ROUGHNESS: f64 = 0.5;
 
     pub fn new(seed: u32) -> Self {
         LandFractal { seed: seed,
                       z_scale: Self::DEFAULT_Z_SCALE,
+                      roughness: Self::DEFAULT_ROUGHNESS,
                       sources: Self::build_sources(seed) }
     }
 
@@ -44,6 +47,7 @@ impl LandFractal {
     }
 
     setter!(set_z_scale, z_scale, f64);
+    setter!(set_roughness, roughness, f64);
 }
 
 
@@ -153,7 +157,7 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         // Larger details
 
         let octave4_scale = 2.0;
-        let octave4_persistence = 0.1;
+        let octave4_persistence = self.roughness / 5.0;
         current_point = scale!(current_point, octave4_scale, domain);
 
         let octave4 = self.sources[4].get(current_point) * octave4_persistence;
@@ -162,7 +166,7 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         //------------------------------------------------------------------------------------------
         // Larger details
         let octave5_scale = 2.0;
-        let octave5_persistence = 0.01;
+        let octave5_persistence = self.roughness / 10.0;
         current_point = scale!(current_point, octave5_scale, domain);
 
         let octave5 = self.sources[5].get(current_point) * octave5_persistence;

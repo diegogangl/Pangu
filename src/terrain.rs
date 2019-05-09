@@ -43,6 +43,9 @@ pub struct Procedural {
 
     /// Make grid flat. Used for testing
     flat: bool,
+
+    /// Roughness for the terrain
+    roughness: f64,
 }
 
 
@@ -55,6 +58,7 @@ impl Procedural {
     const DEFAULT_SCALE: f64 = 2.0;
     const DEFAULT_ROTATION: f64 = 0.0;
     const DEFAULT_FLAT: bool = false;
+    const DEFAULT_ROUGHNESS: f64 = 0.5;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
@@ -66,7 +70,8 @@ impl Procedural {
                      size: Self::DEFAULT_SIZE,
                      scale: Self::DEFAULT_SCALE,
                      seed: Self::DEFAULT_SEED,
-                     flat: Self::DEFAULT_FLAT }
+                     flat: Self::DEFAULT_FLAT,
+                     roughness: Self::DEFAULT_ROUGHNESS, }
     }
 
 
@@ -80,6 +85,7 @@ impl Procedural {
     setter!(set_scale, scale, f64);
     setter!(set_rotation, rotation, f64);
     setter!(set_flat, flat, bool);
+    setter!(set_roughness, roughness, f64);
 
 
     /// Generate list of faces for the terrain mesh
@@ -201,7 +207,8 @@ impl Procedural {
 
     /// Get the noise function with the right settings
     fn get_noise_fn(self) -> LandFractal {
-        LandFractal::new(self.seed).set_z_scale(self.size / 20.0)
+        LandFractal::new(self.seed).set_roughness(self.roughness)
+                                   .set_z_scale(self.size / 20.0)
     }
 
     /// Build a terrain mesh.
