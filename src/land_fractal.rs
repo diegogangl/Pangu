@@ -1,4 +1,5 @@
 extern crate noise;
+extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
 
@@ -190,5 +191,18 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         result = mask.mul_add(result - blend, blend);
 
         result * self.z_scale
+    }
+}
+
+
+mod benches {
+    use super::*;
+    #[allow(unused_imports)]
+    use test::Bencher;
+
+    #[bench]
+    fn get(b: &mut Bencher) {
+        let noise_fn = LandFractal::new(0);
+        b.iter(|| noise_fn.get([0.0, 0.0, 0.0]));
     }
 }
