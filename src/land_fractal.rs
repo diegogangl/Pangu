@@ -2,7 +2,7 @@ extern crate noise;
 extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
-
+use crate::utils::linear_interp;
 
 /// Noise function that outputs custom fractal noise
 ///
@@ -200,7 +200,7 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         blend += self.sources[1].get(current_point) * blend1_persistence;
 
 
-        result = mask.mul_add(result - blend, blend);
+        result = linear_interp(result, blend, mask);
         result * self.z_scale
     }
 }
