@@ -46,6 +46,7 @@ fn procedural_terrain(params: &PyDict) -> Result<terrain::Procedural, PyErr> {
     let roughness = get_param!(params, "roughness", 0.5);
     let plains = get_param!(params, "plains", 0.5);
     let plateau = get_param!(params, "plateau", 10.0);
+    let deformation = get_param!(params, "deformation", 0.1);
 
     Ok(terrain::Procedural::new().set_rows(rows)
                                  .set_columns(columns)
@@ -58,6 +59,7 @@ fn procedural_terrain(params: &PyDict) -> Result<terrain::Procedural, PyErr> {
                                  .set_roughness(roughness)
                                  .set_plains(plains)
                                  .set_plateau(plateau)
+                                 .set_deformation(deformation)
                                  .set_seed(seed))
 }
 

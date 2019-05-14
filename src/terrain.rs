@@ -52,6 +52,9 @@ pub struct Procedural {
 
     /// At which height to clamp to generate a plateau
     plateau: f64,
+
+    /// Intensity of domain warping
+    deformation: f64,
 }
 
 
@@ -67,6 +70,7 @@ impl Procedural {
     const DEFAULT_ROUGHNESS: f64 = 0.5;
     const DEFAULT_PLAINS: f64 = 0.5;
     const DEFAULT_PLATEAU: f64 = 0.5;
+    const DEFAULT_DEFORMATION: f64 = 0.1;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
@@ -81,6 +85,7 @@ impl Procedural {
                      flat: Self::DEFAULT_FLAT,
                      plains: Self::DEFAULT_PLAINS,
                      plateau: Self::DEFAULT_PLATEAU,
+                     deformation: Self::DEFAULT_DEFORMATION,
                      roughness: Self::DEFAULT_ROUGHNESS, }
     }
 
@@ -98,6 +103,7 @@ impl Procedural {
     setter!(set_roughness, roughness, f64);
     setter!(set_plains, plains, f64);
     setter!(set_plateau, plateau, f64);
+    setter!(set_deformation, deformation, f64);
 
 
     /// Generate list of faces for the terrain mesh
@@ -222,6 +228,7 @@ impl Procedural {
     fn get_noise_fn(self) -> LandFractal {
         LandFractal::new(self.seed).set_base_persistence(1.0 - self.plains)
                                    .set_roughness(self.roughness)
+                                   .set_dw_intensity(self.deformation)
                                    .set_z_scale(self.size / 20.0)
     }
 

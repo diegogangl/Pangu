@@ -21,6 +21,9 @@ pub struct LandFractal {
     /// How plain the base terrain is
     base_persistence: f64,
 
+    /// Intensity of the domain warping
+    dw_intensity: f64,
+
     /// Perlin noises for the octaves
     sources: Vec<Perlin>,
 }
@@ -30,10 +33,12 @@ impl LandFractal {
     const DEFAULT_Z_SCALE: f64 = 15.0;
     const DEFAULT_ROUGHNESS: f64 = 0.5;
     const DEFAULT_BASE_PERSISTENCE: f64 = 0.0;
+    const DEFAULT_DW_INTENSITY: f64 = 0.1;
 
     pub fn new(seed: u32) -> Self {
         LandFractal { z_scale: Self::DEFAULT_Z_SCALE,
                       roughness: Self::DEFAULT_ROUGHNESS,
+                      dw_intensity: Self::DEFAULT_DW_INTENSITY,
                       base_persistence: Self::DEFAULT_BASE_PERSISTENCE,
                       sources: Self::build_sources(seed) }
     }
@@ -60,6 +65,7 @@ impl LandFractal {
     setter!(set_z_scale, z_scale, f64);
     setter!(set_roughness, roughness, f64);
     setter!(set_base_persistence, base_persistence, f64);
+    setter!(set_dw_intensity, dw_intensity, f64);
 }
 
 
@@ -124,7 +130,7 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         current_point = scale!(current_point, domain_scale);
         domain += self.sources[2].get(current_point) * 0.25;
 
-        domain *= 0.10;
+        domain *= self.dw_intensity;
 
 
         //------------------------------------------------------------------------------------------
