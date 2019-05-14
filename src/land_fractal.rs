@@ -18,6 +18,9 @@ pub struct LandFractal {
     /// Roughness of the terrain (last octaves)
     roughness: f64,
 
+    /// How plain the base terrain is
+    base_persistence: f64,
+
     /// Perlin noises for the octaves
     sources: Vec<Perlin>,
 }
@@ -26,10 +29,12 @@ pub struct LandFractal {
 impl LandFractal {
     const DEFAULT_Z_SCALE: f64 = 15.0;
     const DEFAULT_ROUGHNESS: f64 = 0.5;
+    const DEFAULT_BASE_PERSISTENCE: f64 = 0.0;
 
     pub fn new(seed: u32) -> Self {
         LandFractal { z_scale: Self::DEFAULT_Z_SCALE,
                       roughness: Self::DEFAULT_ROUGHNESS,
+                      base_persistence: Self::DEFAULT_BASE_PERSISTENCE,
                       sources: Self::build_sources(seed) }
     }
 
@@ -54,6 +59,7 @@ impl LandFractal {
 
     setter!(set_z_scale, z_scale, f64);
     setter!(set_roughness, roughness, f64);
+    setter!(set_base_persistence, base_persistence, f64);
 }
 
 
@@ -128,18 +134,16 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         //------------------------------------------------------------------------------------------
         // Basic shape of the terrain
 
-        let base_control = 1.5;
-        result = self.sources[0].get(point) * base_control;
+        result = self.sources[0].get(point) * self.base_persistence;
 
 
         //------------------------------------------------------------------------------------------
         // Large features of the terrain
 
         let octave1_scale = 1.4;
-        let octave1_persistence = 0.9;
 
         current_point = scale!(point, octave1_scale, domain);
-        result += self.sources[1].get(current_point) * octave1_persistence;
+        result += self.sources[1].get(current_point) * self.base_persistence;
 
 
         //------------------------------------------------------------------------------------------
@@ -186,18 +190,16 @@ impl NoiseFn<Point3<f64>> for LandFractal {
         //------------------------------------------------------------------------------------------
         // Basic shape of the terrain
 
-        let base_control = 0.1;
-        blend = self.sources[3].get(point) * base_control;
+        blend = self.sources[3].get(point) * self.base_persistence.powi(2);
 
 
         //------------------------------------------------------------------------------------------
         // Extra-details
 
         let blend1_scale = 2.0;
-        let blend1_persistence = 0.2;
 
         current_point = scale!(point, blend1_scale, domain);
-        blend += self.sources[1].get(current_point) * blend1_persistence;
+        blend += self.sources[1].get(current_point) * self.base_persistence / 2.0;
 
 
         result = linear_interp(result, blend, mask);
