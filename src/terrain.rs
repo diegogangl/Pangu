@@ -49,6 +49,9 @@ pub struct Procedural {
 
     /// How plain the base terrain is
     plains: f64,
+
+    /// At which height to clamp to generate a plateau
+    plateau: f64,
 }
 
 
@@ -63,6 +66,7 @@ impl Procedural {
     const DEFAULT_FLAT: bool = false;
     const DEFAULT_ROUGHNESS: f64 = 0.5;
     const DEFAULT_PLAINS: f64 = 0.5;
+    const DEFAULT_PLATEAU: f64 = 0.5;
 
     pub fn new() -> Self {
         Procedural { rows: Self::DEFAULT_ROWS,
@@ -76,6 +80,7 @@ impl Procedural {
                      seed: Self::DEFAULT_SEED,
                      flat: Self::DEFAULT_FLAT,
                      plains: Self::DEFAULT_PLAINS,
+                     plateau: Self::DEFAULT_PLATEAU,
                      roughness: Self::DEFAULT_ROUGHNESS, }
     }
 
@@ -92,6 +97,7 @@ impl Procedural {
     setter!(set_flat, flat, bool);
     setter!(set_roughness, roughness, f64);
     setter!(set_plains, plains, f64);
+    setter!(set_plateau, plateau, f64);
 
 
     /// Generate list of faces for the terrain mesh
@@ -139,11 +145,12 @@ impl Procedural {
                 let x = f64::from(x) - half_x;
                 let y = f64::from(y) - half_y;
 
-                let noise_coords = self.coords_for_noise(x, y, steps);
+                let co = self.coords_for_noise(x, y, steps);
                 let z = if self.flat {
                     0.0
                 } else {
-                    z_fn.get([noise_coords.0, noise_coords.1, self.offset_z])
+                    let val = z_fn.get([co.0, co.1, self.offset_z]);
+                    if val > self.plateau { self.plateau } else { val }
                 };
 
                 verts.push((x / scale, y / scale, z));
