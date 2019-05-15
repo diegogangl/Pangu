@@ -1,2 +1,2 @@
-indent_style = "Visual"
 blank_lines_upper_bound = 2
+max_width=80
