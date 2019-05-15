@@ -2,7 +2,6 @@
 #[macro_use]
 
 mod utils;
-mod land_fractal;
 mod terrain;
 
 use pyo3::prelude::*;

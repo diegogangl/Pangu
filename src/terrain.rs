@@ -3,13 +3,37 @@
 extern crate noise;
 extern crate test;
 
-use noise::NoiseFn;
+use noise::{NoiseFn, Perlin, Seedable, Point3};
 
-use super::land_fractal::LandFractal;
+use super::utils::linear_interp;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
+
+
+/// Macro to scale a point
+///
+/// This macro can also apply Domain Warping
+/// on the X and Y axis.
+///
+/// # Arguments
+///
+/// * `var` - The Point3 variable.
+/// * `fac - The scaling factor
+/// * `warp - Domain warping value
+macro_rules! scale {
+    ($var:ident, $fac:expr) => {
+        [$var[0] * $fac, $var[1] * $fac, $var[2] * $fac]
+    };
+
+    ($var:ident, $fac:expr, $warp:expr) => {
+        [$var[0] * $fac + $warp,
+         $var[1] * $fac + $warp,
+         $var[2] * $fac]
+    };
+
+}
 
 
 #[derive(Clone, Copy, Debug)]
@@ -93,17 +117,72 @@ impl ProceduralConfig {
 
 
 /// Representation of a terrain
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Procedural {
     /// Configuration for the procedural terrain
     config: ProceduralConfig,
+
+    /// Perlin noises for the main octaves (re-used for the others)
+    noise_fns: Vec<Perlin>,
+
+    /// Scale on Z (height) of the terrain
+    z_scale: f64,
+
+    /// Persistence values
+    persistences: Vec<f64>,
 }
 
 
 impl Procedural {
     pub fn new(config: ProceduralConfig) -> Self {
-        Procedural { config: config }
+        Procedural { config: config,
+        noise_fns: Self::setup_noise_fns(config.seed),
+        persistences: Self::setup_persistences(config),
+        z_scale: config.size / 20.0,
+
+        }
     }
+
+
+    /// Setup the Perlin noise functions for the octaves
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - The base seed for the noises
+    ///
+    /// Returns a vector of Perlin noise functions with
+    /// different seeds
+    fn setup_noise_fns(seed: u32) -> Vec<Perlin> {
+        let mut noise_fns = Vec::with_capacity(6);
+
+        for i in 0..6 {
+            noise_fns.push(Perlin::new().set_seed(seed + i));
+        }
+
+        noise_fns
+    }
+
+
+    /// Setup persistence values
+    ///
+    /// # Arguments
+    ///
+    /// * `conf` - Procedural terrain configuration
+    fn setup_persistences(conf: ProceduralConfig) -> Vec<f64> {
+        let base = 1.0 - conf.plains;
+
+        let persistences = vec![
+                base,
+                conf.roughness / 5.0,
+                conf.roughness / 10.0,
+                base.powi(2),
+                base / 2.0,
+        ];
+
+
+        persistences
+    }
+
 
     /// Generate list of faces for the terrain mesh
     ///
@@ -147,7 +226,6 @@ impl Procedural {
 
         let scale = f64::from(max(conf.rows, conf.columns)) * (1.0 / conf.size);
         let steps = self.calculate_steps();
-        let z_fn = self.get_noise_fn();
 
         for x in 0..conf.columns {
             for y in 0..conf.rows {
@@ -158,7 +236,7 @@ impl Procedural {
                 let z = if conf.flat {
                     0.0
                 } else {
-                    let val = z_fn.get([co.0, co.1, conf.offset_z]);
+                    let val = self.get_z([co.0, co.1, conf.offset_z]);
                     if val > conf.plateau {
                         conf.plateau
                     } else {
@@ -184,7 +262,7 @@ impl Procedural {
     /// * `x`: Value for X axis
     /// * `y`: Value for y axis
     /// * `steps`: Steps to scale the coordinates for X and Y
-    fn coords_for_noise(self, x: f64, y: f64, steps: (f64, f64)) -> (f64, f64) {
+    fn coords_for_noise(&self, x: f64, y: f64, steps: (f64, f64)) -> (f64, f64) {
         let conf = self.config;
 
         let x2 = if conf.rotation != 0.0 {
@@ -210,7 +288,7 @@ impl Procedural {
     /// calculated from the ratio between rows and columns as
     /// well as the scale field.
     /// Returns a tuple with the X and Y steps.
-    fn calculate_steps(self) -> (f64, f64) {
+    fn calculate_steps(&self) -> (f64, f64) {
         let conf = self.config;
 
         let columns = f64::from(conf.columns);
@@ -235,25 +313,134 @@ impl Procedural {
     }
 
 
-    /// Get the noise function with the right settings
-    fn get_noise_fn(self) -> LandFractal {
-        let conf = self.config;
-        LandFractal::new(conf.seed).set_base_persistence(1.0 - conf.plains)
-                                   .set_roughness(conf.roughness)
-                                   .set_dw_intensity(conf.deformation)
-                                   .set_z_scale(conf.size / 20.0)
+    /// Get noise value
+    ///
+    /// # Arguments
+    /// * `point` - The coordinates in 3D space for the noise
+    fn get_z(&self, point: Point3<f64>) -> f64 {
+        let mut result;
+        let mut domain;
+        let mut blend;
+        let mut current_point;
+
+
+        //------------------------------------------------------------------------------------------
+        // BLEND MASK
+        //------------------------------------------------------------------------------------------
+        let mask_control = 1.1;
+        current_point = scale!(point, mask_control);
+
+        let mask = self.noise_fns[0].get(current_point);
+
+
+        //------------------------------------------------------------------------------------------
+        // DOMAIN WARPING
+        //------------------------------------------------------------------------------------------
+
+        let domain_scale = 1.5;
+
+        current_point = scale!(point, domain_scale);
+        domain = self.noise_fns[1].get(current_point);
+
+        current_point = scale!(current_point, domain_scale);
+        domain += self.noise_fns[1].get(current_point) * 0.5;
+
+        current_point = scale!(current_point, domain_scale);
+        domain += self.noise_fns[2].get(current_point) * 0.25;
+
+        domain *= self.config.deformation;
+
+
+        //------------------------------------------------------------------------------------------
+        // BASE FRACTAL NOISE
+        //------------------------------------------------------------------------------------------
+
+        //------------------------------------------------------------------------------------------
+        // Basic shape of the terrain
+
+        result = self.noise_fns[0].get(point) * self.persistences[0];
+
+
+        //------------------------------------------------------------------------------------------
+        // Large features of the terrain
+
+        let octave1_scale = 1.4;
+
+        current_point = scale!(point, octave1_scale, domain);
+        result += self.noise_fns[1].get(current_point) * self.persistences[0];
+
+
+        //------------------------------------------------------------------------------------------
+        // Larger details
+
+        let octave2_scale = 2.0;
+        let octave2_persistence = 0.4;
+
+        current_point = scale!(current_point, octave2_scale, domain);
+        result += self.noise_fns[2].get(current_point) * octave2_persistence;
+
+
+        //------------------------------------------------------------------------------------------
+        // Medium details
+
+        let octave3_scale = 2.0;
+        let octave3_persistence = 0.25;
+
+        current_point = scale!(current_point, octave3_scale, domain);
+        result += self.noise_fns[3].get(current_point) * octave3_persistence;
+
+
+        //------------------------------------------------------------------------------------------
+        // Small details
+
+        let octave4_scale = 2.0;
+
+        current_point = scale!(current_point, octave4_scale, domain);
+        result += self.noise_fns[4].get(current_point) * self.persistences[1];
+
+
+        //------------------------------------------------------------------------------------------
+        // Fine details
+        let octave5_scale = 2.0;
+
+        current_point = scale!(current_point, octave5_scale, domain);
+        result += self.noise_fns[5].get(current_point) * self.persistences[2];
+
+
+        //------------------------------------------------------------------------------------------
+        // BLEND NOISE
+        //------------------------------------------------------------------------------------------
+
+        //------------------------------------------------------------------------------------------
+        // Basic shape of the terrain
+
+        blend = self.noise_fns[3].get(point) * self.persistences[3];
+
+
+        //------------------------------------------------------------------------------------------
+        // Extra-details
+
+        let blend1_scale = 2.0;
+
+        current_point = scale!(point, blend1_scale, domain);
+        blend += self.noise_fns[1].get(current_point) * self.persistences[4];
+
+
+        result = linear_interp(result, blend, mask);
+        result * self.z_scale
     }
+
 
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
-    pub fn build_mesh(self) -> (Faces, Vertices) {
+    pub fn build_mesh(&self) -> (Faces, Vertices) {
         (self.faces(), self.vertices())
     }
 
 
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
-    pub fn build_vertices(self) -> Vertices {
+    pub fn build_vertices(&self) -> Vertices {
         self.vertices()
     }
 }
@@ -466,11 +653,19 @@ mod benches {
                                         columns: 128,
                                         flat: true,
                                         ..Default::default() };
+
         let terrain = Procedural::new(config);
 
         b.iter(|| terrain.vertices());
     }
 
+    #[bench]
+    fn get_noise(b: &mut Bencher) {
+        let config = ProceduralConfig::default();
+        let terrain = Procedural::new(config);
+
+        b.iter(|| terrain.get_z([0.0, 0.0, 0.0]));
+    }
 
     #[bench]
     fn terrain(b: &mut Bencher) {
