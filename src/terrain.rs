@@ -133,6 +133,9 @@ pub struct Procedural {
 
     /// Persistence values
     persistences: Vec<f64>,
+
+    /// Steps to scale coordinates for the X and Y axis
+    steps: (f64, f64),
 }
 
 
@@ -141,8 +144,9 @@ impl Procedural {
         Procedural {
             config: config,
             noise_fns: Self::setup_noise_fns(config.seed),
-            persistences: Self::setup_persistences(config),
+            persistences: Self::setup_persistences(&config),
             z_scale: config.size / 20.0,
+            steps: Self::calculate_steps(&config),
         }
     }
 
@@ -171,7 +175,7 @@ impl Procedural {
     /// # Arguments
     ///
     /// * `conf` - Procedural terrain configuration
-    fn setup_persistences(conf: ProceduralConfig) -> Vec<f64> {
+    fn setup_persistences(conf: &ProceduralConfig) -> Vec<f64> {
         let base = 1.0 - conf.plains;
 
         let persistences = vec![
@@ -230,14 +234,13 @@ impl Procedural {
         let mut verts: Vertices = Vec::with_capacity(capacity);
 
         let scale = f64::from(max(conf.rows, conf.columns)) * (1.0 / conf.size);
-        let steps = self.calculate_steps();
 
         for x in 0..conf.columns {
             for y in 0..conf.rows {
                 let x = f64::from(x) - half_x;
                 let y = f64::from(y) - half_y;
 
-                let co = self.coords_for_noise(x, y, steps);
+                let co = self.coords_for_noise(x, y);
                 let z = if conf.flat {
                     0.0
                 } else {
@@ -267,26 +270,21 @@ impl Procedural {
     /// * `x`: Value for X axis
     /// * `y`: Value for y axis
     /// * `steps`: Steps to scale the coordinates for X and Y
-    fn coords_for_noise(
-        &self,
-        x: f64,
-        y: f64,
-        steps: (f64, f64),
-    ) -> (f64, f64) {
+    fn coords_for_noise(&self, x: f64, y: f64) -> (f64, f64) {
         let conf = self.config;
 
         let x2 = if conf.rotation != 0.0 {
             let rotated = x * conf.rotation.cos() - y * conf.rotation.sin();
-            steps.0 * (rotated + conf.offset_x)
+            self.steps.0 * (rotated + conf.offset_x)
         } else {
-            steps.0 * (x + conf.offset_x)
+            self.steps.0 * (x + conf.offset_x)
         };
 
         let y2 = if conf.rotation != 0.0 {
             let rotated = x * conf.rotation.sin() + y * conf.rotation.cos();
-            steps.1 * (rotated + conf.offset_y)
+            self.steps.1 * (rotated + conf.offset_y)
         } else {
-            steps.1 * (y + conf.offset_y)
+            self.steps.1 * (y + conf.offset_y)
         };
 
         (x2, y2)
@@ -298,9 +296,7 @@ impl Procedural {
     /// calculated from the ratio between rows and columns as
     /// well as the scale field.
     /// Returns a tuple with the X and Y steps.
-    fn calculate_steps(&self) -> (f64, f64) {
-        let conf = self.config;
-
+    fn calculate_steps(conf: &ProceduralConfig) -> (f64, f64) {
         let columns = f64::from(conf.columns);
         let rows = f64::from(conf.rows);
 
@@ -620,7 +616,7 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.5, 0.5), Procedural::new(config).calculate_steps());
+        assert_eq!((0.5, 0.5), Procedural::calculate_steps(config));
 
         let config = ProceduralConfig {
             rows: 8,
@@ -628,7 +624,7 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.25, 0.25), Procedural::new(config).calculate_steps());
+        assert_eq!((0.25, 0.25), Procedural::calculate_steps(config));
 
         let config = ProceduralConfig {
             rows: 4,
@@ -636,7 +632,7 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.25, 0.25), Procedural::new(config).calculate_steps());
+        assert_eq!((0.25, 0.25), Procedural::calculate_steps(config));
     }
 
 
@@ -649,7 +645,7 @@ mod tests {
             ..Default::default()
         };
         let steps = Procedural::new(config).calculate_steps();
-        let values = Procedural::new(config).coords_for_noise(1.0, 1.0, steps);
+        let values = Procedural::new(config).coords_for_noise(1.0, 1.0);
         assert_eq!((0.5, 0.5), values);
 
         let config = ProceduralConfig {
@@ -659,7 +655,7 @@ mod tests {
             ..Default::default()
         };
         let steps = Procedural::new(config).calculate_steps();
-        let values = Procedural::new(config).coords_for_noise(1.0, 1.0, steps);
+        let values = Procedural::new(config).coords_for_noise(1.0, 1.0);
 
         assert!(values.0.fract() - (1505.0) < 1e-10);
         assert!(values.1.fract() - (69088.0) < 1e-10);
