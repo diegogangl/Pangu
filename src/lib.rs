@@ -33,21 +33,22 @@ macro_rules! param {
 
 /// Setup and return configuration
 fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
-    let config =
-        terrain::ProceduralConfig { seed: param!(params, "seed", DEFAULT_SEED),
-                                    rows: param!(params, "rows", DEFAULT_ROWS),
-                                    columns: param!(params, "columns", DEFAULT_COLUMNS),
-                                    size: param!(params, "size", DEFAULT_SIZE),
-                                    scale: param!(params, "scale", DEFAULT_SCALE),
-                                    offset_x: param!(params, "offset_x", DEFAULT_OFFSET),
-                                    offset_y: param!(params, "offset_y", DEFAULT_OFFSET),
-                                    offset_z: param!(params, "offset_z", DEFAULT_OFFSET),
-                                    rotation: param!(params, "rotation", DEFAULT_OFFSET),
-                                    roughness: param!(params, "roughness", DEFAULT_OFFSET),
-                                    plains: param!(params, "plains", DEFAULT_OFFSET),
-                                    plateau: param!(params, "plateau", DEFAULT_OFFSET),
-                                    deformation: param!(params, "deformation", DEFAULT_OFFSET),
-                                    flat: false };
+    let config = terrain::ProceduralConfig {
+        seed: param!(params, "seed", DEFAULT_SEED),
+        rows: param!(params, "rows", DEFAULT_ROWS),
+        columns: param!(params, "columns", DEFAULT_COLUMNS),
+        size: param!(params, "size", DEFAULT_SIZE),
+        scale: param!(params, "scale", DEFAULT_SCALE),
+        offset_x: param!(params, "offset_x", DEFAULT_OFFSET),
+        offset_y: param!(params, "offset_y", DEFAULT_OFFSET),
+        offset_z: param!(params, "offset_z", DEFAULT_OFFSET),
+        rotation: param!(params, "rotation", DEFAULT_OFFSET),
+        roughness: param!(params, "roughness", DEFAULT_OFFSET),
+        plains: param!(params, "plains", DEFAULT_OFFSET),
+        plateau: param!(params, "plateau", DEFAULT_OFFSET),
+        deformation: param!(params, "deformation", DEFAULT_OFFSET),
+        flat: false,
+    };
 
 
     Ok(config)

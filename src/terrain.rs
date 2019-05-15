@@ -3,7 +3,7 @@
 extern crate noise;
 extern crate test;
 
-use noise::{NoiseFn, Perlin, Seedable, Point3};
+use noise::{NoiseFn, Perlin, Point3, Seedable};
 
 use super::utils::linear_interp;
 use std::cmp::max;
@@ -28,11 +28,12 @@ macro_rules! scale {
     };
 
     ($var:ident, $fac:expr, $warp:expr) => {
-        [$var[0] * $fac + $warp,
-         $var[1] * $fac + $warp,
-         $var[2] * $fac]
+        [
+            $var[0] * $fac + $warp,
+            $var[1] * $fac + $warp,
+            $var[2] * $fac,
+        ]
     };
-
 }
 
 
@@ -83,20 +84,22 @@ pub struct ProceduralConfig {
 
 impl Default for ProceduralConfig {
     fn default() -> Self {
-        ProceduralConfig { rows: Self::DEFAULT_ROWS,
-                           columns: Self::DEFAULT_COLUMNS,
-                           offset_x: Self::DEFAULT_OFFSET,
-                           offset_y: Self::DEFAULT_OFFSET,
-                           offset_z: Self::DEFAULT_OFFSET,
-                           rotation: Self::DEFAULT_ROTATION,
-                           scale: Self::DEFAULT_SCALE,
-                           size: Self::DEFAULT_SIZE,
-                           seed: Self::DEFAULT_SEED,
-                           roughness: Self::DEFAULT_ROUGHNESS,
-                           plains: Self::DEFAULT_PLAINS,
-                           plateau: Self::DEFAULT_PLATEAU,
-                           deformation: Self::DEFAULT_DEFORMATION,
-                           flat: false }
+        ProceduralConfig {
+            rows: Self::DEFAULT_ROWS,
+            columns: Self::DEFAULT_COLUMNS,
+            offset_x: Self::DEFAULT_OFFSET,
+            offset_y: Self::DEFAULT_OFFSET,
+            offset_z: Self::DEFAULT_OFFSET,
+            rotation: Self::DEFAULT_ROTATION,
+            scale: Self::DEFAULT_SCALE,
+            size: Self::DEFAULT_SIZE,
+            seed: Self::DEFAULT_SEED,
+            roughness: Self::DEFAULT_ROUGHNESS,
+            plains: Self::DEFAULT_PLAINS,
+            plateau: Self::DEFAULT_PLATEAU,
+            deformation: Self::DEFAULT_DEFORMATION,
+            flat: false,
+        }
     }
 }
 
@@ -135,11 +138,11 @@ pub struct Procedural {
 
 impl Procedural {
     pub fn new(config: ProceduralConfig) -> Self {
-        Procedural { config: config,
-        noise_fns: Self::setup_noise_fns(config.seed),
-        persistences: Self::setup_persistences(config),
-        z_scale: config.size / 20.0,
-
+        Procedural {
+            config: config,
+            noise_fns: Self::setup_noise_fns(config.seed),
+            persistences: Self::setup_persistences(config),
+            z_scale: config.size / 20.0,
         }
     }
 
@@ -172,11 +175,11 @@ impl Procedural {
         let base = 1.0 - conf.plains;
 
         let persistences = vec![
-                base,
-                conf.roughness / 5.0,
-                conf.roughness / 10.0,
-                base.powi(2),
-                base / 2.0,
+            base,
+            conf.roughness / 5.0,
+            conf.roughness / 10.0,
+            base.powi(2),
+            base / 2.0,
         ];
 
 
@@ -196,10 +199,12 @@ impl Procedural {
 
         for x in 0..conf.columns - 1 {
             for y in 0..conf.rows - 1 {
-                faces.push((x * conf.rows + y,
-                            (x + 1) * conf.rows + y,
-                            (x + 1) * conf.rows + 1 + y,
-                            x * conf.rows + 1 + y))
+                faces.push((
+                    x * conf.rows + y,
+                    (x + 1) * conf.rows + y,
+                    (x + 1) * conf.rows + 1 + y,
+                    x * conf.rows + 1 + y,
+                ))
             }
         }
 
@@ -262,7 +267,12 @@ impl Procedural {
     /// * `x`: Value for X axis
     /// * `y`: Value for y axis
     /// * `steps`: Steps to scale the coordinates for X and Y
-    fn coords_for_noise(&self, x: f64, y: f64, steps: (f64, f64)) -> (f64, f64) {
+    fn coords_for_noise(
+        &self,
+        x: f64,
+        y: f64,
+        steps: (f64, f64),
+    ) -> (f64, f64) {
         let conf = self.config;
 
         let x2 = if conf.rotation != 0.0 {
@@ -453,20 +463,24 @@ mod tests {
 
     #[test]
     fn faces() {
-        let config = ProceduralConfig { rows: 4,
-                                        columns: 4,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 4,
+            columns: 4,
+            ..Default::default()
+        };
         let faces = Procedural::new(config).faces();
 
-        let expected = vec![(0, 4, 5, 1),
-                            (1, 5, 6, 2),
-                            (2, 6, 7, 3),
-                            (4, 8, 9, 5),
-                            (5, 9, 10, 6),
-                            (6, 10, 11, 7),
-                            (8, 12, 13, 9),
-                            (9, 13, 14, 10),
-                            (10, 14, 15, 11)];
+        let expected = vec![
+            (0, 4, 5, 1),
+            (1, 5, 6, 2),
+            (2, 6, 7, 3),
+            (4, 8, 9, 5),
+            (5, 9, 10, 6),
+            (6, 10, 11, 7),
+            (8, 12, 13, 9),
+            (9, 13, 14, 10),
+            (10, 14, 15, 11),
+        ];
 
         assert_eq!(expected, faces);
     }
@@ -474,113 +488,125 @@ mod tests {
 
     #[test]
     fn vertices() {
-        let config = ProceduralConfig { rows: 4,
-                                        columns: 4,
-                                        size: 4.0,
-                                        flat: true,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 4,
+            columns: 4,
+            size: 4.0,
+            flat: true,
+            ..Default::default()
+        };
         let verts = Procedural::new(config).vertices();
 
-        let expected = vec![(-1.5, -1.5, 0.0),
-                            (-1.5, -0.5, 0.0),
-                            (-1.5, 0.5, 0.0),
-                            (-1.5, 1.5, 0.0),
-                            (-0.5, -1.5, 0.0),
-                            (-0.5, -0.5, 0.0),
-                            (-0.5, 0.5, 0.0),
-                            (-0.5, 1.5, 0.0),
-                            (0.5, -1.5, 0.0),
-                            (0.5, -0.5, 0.0),
-                            (0.5, 0.5, 0.0),
-                            (0.5, 1.5, 0.0),
-                            (1.5, -1.5, 0.0),
-                            (1.5, -0.5, 0.0),
-                            (1.5, 0.5, 0.0),
-                            (1.5, 1.5, 0.0)];
+        let expected = vec![
+            (-1.5, -1.5, 0.0),
+            (-1.5, -0.5, 0.0),
+            (-1.5, 0.5, 0.0),
+            (-1.5, 1.5, 0.0),
+            (-0.5, -1.5, 0.0),
+            (-0.5, -0.5, 0.0),
+            (-0.5, 0.5, 0.0),
+            (-0.5, 1.5, 0.0),
+            (0.5, -1.5, 0.0),
+            (0.5, -0.5, 0.0),
+            (0.5, 0.5, 0.0),
+            (0.5, 1.5, 0.0),
+            (1.5, -1.5, 0.0),
+            (1.5, -0.5, 0.0),
+            (1.5, 0.5, 0.0),
+            (1.5, 1.5, 0.0),
+        ];
 
         assert_eq!(expected, verts);
 
-        let config = ProceduralConfig { rows: 8,
-                                        columns: 4,
-                                        size: 4.0,
-                                        flat: true,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 8,
+            columns: 4,
+            size: 4.0,
+            flat: true,
+            ..Default::default()
+        };
         let verts = Procedural::new(config).vertices();
 
-        let expected = vec![(-0.75, -1.75, 0.0),
-                            (-0.75, -1.25, 0.0),
-                            (-0.75, -0.75, 0.0),
-                            (-0.75, -0.25, 0.0),
-                            (-0.75, 0.25, 0.0),
-                            (-0.75, 0.75, 0.0),
-                            (-0.75, 1.25, 0.0),
-                            (-0.75, 1.75, 0.0),
-                            (-0.25, -1.75, 0.0),
-                            (-0.25, -1.25, 0.0),
-                            (-0.25, -0.75, 0.0),
-                            (-0.25, -0.25, 0.0),
-                            (-0.25, 0.25, 0.0),
-                            (-0.25, 0.75, 0.0),
-                            (-0.25, 1.25, 0.0),
-                            (-0.25, 1.75, 0.0),
-                            (0.25, -1.75, 0.0),
-                            (0.25, -1.25, 0.0),
-                            (0.25, -0.75, 0.0),
-                            (0.25, -0.25, 0.0),
-                            (0.25, 0.25, 0.0),
-                            (0.25, 0.75, 0.0),
-                            (0.25, 1.25, 0.0),
-                            (0.25, 1.75, 0.0),
-                            (0.75, -1.75, 0.0),
-                            (0.75, -1.25, 0.0),
-                            (0.75, -0.75, 0.0),
-                            (0.75, -0.25, 0.0),
-                            (0.75, 0.25, 0.0),
-                            (0.75, 0.75, 0.0),
-                            (0.75, 1.25, 0.0),
-                            (0.75, 1.75, 0.0)];
+        let expected = vec![
+            (-0.75, -1.75, 0.0),
+            (-0.75, -1.25, 0.0),
+            (-0.75, -0.75, 0.0),
+            (-0.75, -0.25, 0.0),
+            (-0.75, 0.25, 0.0),
+            (-0.75, 0.75, 0.0),
+            (-0.75, 1.25, 0.0),
+            (-0.75, 1.75, 0.0),
+            (-0.25, -1.75, 0.0),
+            (-0.25, -1.25, 0.0),
+            (-0.25, -0.75, 0.0),
+            (-0.25, -0.25, 0.0),
+            (-0.25, 0.25, 0.0),
+            (-0.25, 0.75, 0.0),
+            (-0.25, 1.25, 0.0),
+            (-0.25, 1.75, 0.0),
+            (0.25, -1.75, 0.0),
+            (0.25, -1.25, 0.0),
+            (0.25, -0.75, 0.0),
+            (0.25, -0.25, 0.0),
+            (0.25, 0.25, 0.0),
+            (0.25, 0.75, 0.0),
+            (0.25, 1.25, 0.0),
+            (0.25, 1.75, 0.0),
+            (0.75, -1.75, 0.0),
+            (0.75, -1.25, 0.0),
+            (0.75, -0.75, 0.0),
+            (0.75, -0.25, 0.0),
+            (0.75, 0.25, 0.0),
+            (0.75, 0.75, 0.0),
+            (0.75, 1.25, 0.0),
+            (0.75, 1.75, 0.0),
+        ];
 
         assert_eq!(expected, verts);
 
-        let config = ProceduralConfig { rows: 4,
-                                        columns: 8,
-                                        size: 4.0,
-                                        flat: true,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 4,
+            columns: 8,
+            size: 4.0,
+            flat: true,
+            ..Default::default()
+        };
         let verts = Procedural::new(config).vertices();
 
-        let expected = vec![(-1.75, -0.75, 0.0),
-                            (-1.75, -0.25, 0.0),
-                            (-1.75, 0.25, 0.0),
-                            (-1.75, 0.75, 0.0),
-                            (-1.25, -0.75, 0.0),
-                            (-1.25, -0.25, 0.0),
-                            (-1.25, 0.25, 0.0),
-                            (-1.25, 0.75, 0.0),
-                            (-0.75, -0.75, 0.0),
-                            (-0.75, -0.25, 0.0),
-                            (-0.75, 0.25, 0.0),
-                            (-0.75, 0.75, 0.0),
-                            (-0.25, -0.75, 0.0),
-                            (-0.25, -0.25, 0.0),
-                            (-0.25, 0.25, 0.0),
-                            (-0.25, 0.75, 0.0),
-                            (0.25, -0.75, 0.0),
-                            (0.25, -0.25, 0.0),
-                            (0.25, 0.25, 0.0),
-                            (0.25, 0.75, 0.0),
-                            (0.75, -0.75, 0.0),
-                            (0.75, -0.25, 0.0),
-                            (0.75, 0.25, 0.0),
-                            (0.75, 0.75, 0.0),
-                            (1.25, -0.75, 0.0),
-                            (1.25, -0.25, 0.0),
-                            (1.25, 0.25, 0.0),
-                            (1.25, 0.75, 0.0),
-                            (1.75, -0.75, 0.0),
-                            (1.75, -0.25, 0.0),
-                            (1.75, 0.25, 0.0),
-                            (1.75, 0.75, 0.0)];
+        let expected = vec![
+            (-1.75, -0.75, 0.0),
+            (-1.75, -0.25, 0.0),
+            (-1.75, 0.25, 0.0),
+            (-1.75, 0.75, 0.0),
+            (-1.25, -0.75, 0.0),
+            (-1.25, -0.25, 0.0),
+            (-1.25, 0.25, 0.0),
+            (-1.25, 0.75, 0.0),
+            (-0.75, -0.75, 0.0),
+            (-0.75, -0.25, 0.0),
+            (-0.75, 0.25, 0.0),
+            (-0.75, 0.75, 0.0),
+            (-0.25, -0.75, 0.0),
+            (-0.25, -0.25, 0.0),
+            (-0.25, 0.25, 0.0),
+            (-0.25, 0.75, 0.0),
+            (0.25, -0.75, 0.0),
+            (0.25, -0.25, 0.0),
+            (0.25, 0.25, 0.0),
+            (0.25, 0.75, 0.0),
+            (0.75, -0.75, 0.0),
+            (0.75, -0.25, 0.0),
+            (0.75, 0.25, 0.0),
+            (0.75, 0.75, 0.0),
+            (1.25, -0.75, 0.0),
+            (1.25, -0.25, 0.0),
+            (1.25, 0.25, 0.0),
+            (1.25, 0.75, 0.0),
+            (1.75, -0.75, 0.0),
+            (1.75, -0.25, 0.0),
+            (1.75, 0.25, 0.0),
+            (1.75, 0.75, 0.0),
+        ];
 
         assert_eq!(expected, verts);
     }
@@ -588,40 +614,50 @@ mod tests {
 
     #[test]
     fn steps_calculation() {
-        let config = ProceduralConfig { rows: 4,
-                                        columns: 4,
-                                        size: 4.0,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 4,
+            columns: 4,
+            size: 4.0,
+            ..Default::default()
+        };
         assert_eq!((0.5, 0.5), Procedural::new(config).calculate_steps());
 
-        let config = ProceduralConfig { rows: 8,
-                                        columns: 4,
-                                        size: 4.0,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 8,
+            columns: 4,
+            size: 4.0,
+            ..Default::default()
+        };
         assert_eq!((0.25, 0.25), Procedural::new(config).calculate_steps());
 
-        let config = ProceduralConfig { rows: 4,
-                                        columns: 8,
-                                        size: 4.0,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 4,
+            columns: 8,
+            size: 4.0,
+            ..Default::default()
+        };
         assert_eq!((0.25, 0.25), Procedural::new(config).calculate_steps());
     }
 
 
     #[test]
     fn rotation() {
-        let config = ProceduralConfig { rows: 4,
-                                        columns: 4,
-                                        rotation: 0.0,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 4,
+            columns: 4,
+            rotation: 0.0,
+            ..Default::default()
+        };
         let steps = Procedural::new(config).calculate_steps();
         let values = Procedural::new(config).coords_for_noise(1.0, 1.0, steps);
         assert_eq!((0.5, 0.5), values);
 
-        let config = ProceduralConfig { rows: 4,
-                                        columns: 4,
-                                        rotation: 1.0,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 4,
+            columns: 4,
+            rotation: 1.0,
+            ..Default::default()
+        };
         let steps = Procedural::new(config).calculate_steps();
         let values = Procedural::new(config).coords_for_noise(1.0, 1.0, steps);
 
@@ -639,9 +675,11 @@ mod benches {
 
     #[bench]
     fn faces(b: &mut Bencher) {
-        let config = ProceduralConfig { rows: 128,
-                                        columns: 128,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 128,
+            columns: 128,
+            ..Default::default()
+        };
         let terrain = Procedural::new(config);
         b.iter(|| terrain.faces());
     }
@@ -649,10 +687,12 @@ mod benches {
 
     #[bench]
     fn verts(b: &mut Bencher) {
-        let config = ProceduralConfig { rows: 128,
-                                        columns: 128,
-                                        flat: true,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 128,
+            columns: 128,
+            flat: true,
+            ..Default::default()
+        };
 
         let terrain = Procedural::new(config);
 
@@ -669,9 +709,11 @@ mod benches {
 
     #[bench]
     fn terrain(b: &mut Bencher) {
-        let config = ProceduralConfig { rows: 128,
-                                        columns: 128,
-                                        ..Default::default() };
+        let config = ProceduralConfig {
+            rows: 128,
+            columns: 128,
+            ..Default::default()
+        };
         let terrain = Procedural::new(config);
         b.iter(|| terrain.build_mesh());
     }
