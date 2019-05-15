@@ -621,7 +621,7 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.5, 0.5), Procedural::calculate_steps(config));
+        assert_eq!((0.5, 0.5), Procedural::calculate_steps(&config));
 
         let config = ProceduralConfig {
             rows: 8,
@@ -629,7 +629,7 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.25, 0.25), Procedural::calculate_steps(config));
+        assert_eq!((0.25, 0.25), Procedural::calculate_steps(&config));
 
         let config = ProceduralConfig {
             rows: 4,
@@ -637,7 +637,7 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.25, 0.25), Procedural::calculate_steps(config));
+        assert_eq!((0.25, 0.25), Procedural::calculate_steps(&config));
     }
 
 
@@ -649,7 +649,6 @@ mod tests {
             rotation: 0.0,
             ..Default::default()
         };
-        let steps = Procedural::new(config).calculate_steps();
         let values = Procedural::new(config).coords_for_noise(1.0, 1.0);
         assert_eq!((0.5, 0.5), values);
 
@@ -659,7 +658,6 @@ mod tests {
             rotation: 1.0,
             ..Default::default()
         };
-        let steps = Procedural::new(config).calculate_steps();
         let values = Procedural::new(config).coords_for_noise(1.0, 1.0);
 
         assert!(values.0.fract() - (1505.0) < 1e-10);
