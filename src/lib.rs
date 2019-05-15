@@ -22,45 +22,36 @@ type PyVerts = PyResult<terrain::Vertices>;
 /// * `params` - The parameters dictionary
 /// * `key` - The key to look for in the dictionary
 /// * `default_value` - Value to use when the key is not found
-macro_rules! get_param {
-    ($params:expr, $key:expr, $default_value:expr) => {
+macro_rules! param {
+    ($params:expr, $key:expr, $default_value:ident) => {
         match $params.get_item($key) {
             Some(item) => item.extract()?,
-            None => $default_value,
+            None => terrain::ProceduralConfig::$default_value,
         };
     };
 }
 
 
-/// Setup and return terrain
-fn procedural_terrain(params: &PyDict) -> Result<terrain::Procedural, PyErr> {
-    let seed = get_param!(params, "seed", 0);
-    let rows = get_param!(params, "rows", 64);
-    let columns = get_param!(params, "columns", 64);
-    let size = get_param!(params, "size", 5.0);
-    let scale = get_param!(params, "scale", 2.0);
-    let offset_x = get_param!(params, "offset_x", 0.0);
-    let offset_y = get_param!(params, "offset_y", 0.0);
-    let offset_z = get_param!(params, "offset_z", 0.0);
-    let rotation = get_param!(params, "rotation", 0.0);
-    let roughness = get_param!(params, "roughness", 0.5);
-    let plains = get_param!(params, "plains", 0.5);
-    let plateau = get_param!(params, "plateau", 10.0);
-    let deformation = get_param!(params, "deformation", 0.1);
+/// Setup and return configuration
+fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
+    let config =
+        terrain::ProceduralConfig { seed: param!(params, "seed", DEFAULT_SEED),
+                                    rows: param!(params, "rows", DEFAULT_ROWS),
+                                    columns: param!(params, "columns", DEFAULT_COLUMNS),
+                                    size: param!(params, "size", DEFAULT_SIZE),
+                                    scale: param!(params, "scale", DEFAULT_SCALE),
+                                    offset_x: param!(params, "offset_x", DEFAULT_OFFSET),
+                                    offset_y: param!(params, "offset_y", DEFAULT_OFFSET),
+                                    offset_z: param!(params, "offset_z", DEFAULT_OFFSET),
+                                    rotation: param!(params, "rotation", DEFAULT_OFFSET),
+                                    roughness: param!(params, "roughness", DEFAULT_OFFSET),
+                                    plains: param!(params, "plains", DEFAULT_OFFSET),
+                                    plateau: param!(params, "plateau", DEFAULT_OFFSET),
+                                    deformation: param!(params, "deformation", DEFAULT_OFFSET),
+                                    flat: false };
 
-    Ok(terrain::Procedural::new().set_rows(rows)
-                                 .set_columns(columns)
-                                 .set_size(size)
-                                 .set_scale(scale)
-                                 .set_offset_x(offset_x)
-                                 .set_offset_y(offset_y)
-                                 .set_offset_z(offset_z)
-                                 .set_rotation(rotation)
-                                 .set_roughness(roughness)
-                                 .set_plains(plains)
-                                 .set_plateau(plateau)
-                                 .set_deformation(deformation)
-                                 .set_seed(seed))
+
+    Ok(config)
 }
 
 
@@ -68,8 +59,8 @@ fn procedural_terrain(params: &PyDict) -> Result<terrain::Procedural, PyErr> {
 /// and calls its build_mesh() function.
 #[pyfunction]
 fn terrain_mesh(params: &PyDict) -> PyMesh {
-    let terrain = procedural_terrain(params)?;
-    Ok(terrain.build_mesh())
+    let config = get_config(params)?;
+    Ok(terrain::Procedural::new(config).build_mesh())
 }
 
 
@@ -77,8 +68,8 @@ fn terrain_mesh(params: &PyDict) -> PyMesh {
 /// terrain::Procedural and calls its build_vertices() function.
 #[pyfunction]
 fn terrain_vertices(params: &PyDict) -> PyVerts {
-    let terrain = procedural_terrain(params)?;
-    Ok(terrain.build_vertices())
+    let config = get_config(params)?;
+    Ok(terrain::Procedural::new(config).build_vertices())
 }
 
 

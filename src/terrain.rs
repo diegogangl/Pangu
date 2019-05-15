@@ -12,114 +12,115 @@ pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
 
 
-/// Representation of a terrain
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Procedural {
+#[derive(Clone, Copy, Debug)]
+pub struct ProceduralConfig {
     /// The number of rows to use in the mesh grid
-    rows: u32,
+    pub rows: u32,
 
     /// The number of columns to use in the mesh grid
-    columns: u32,
+    pub columns: u32,
 
     /// Offsets for the coordinates passed to the noise
     /// function
-    offset_x: f64,
-    offset_y: f64,
-    offset_z: f64,
+    pub offset_x: f64,
+    pub offset_y: f64,
+    pub offset_z: f64,
 
     /// Z Rotation angle (in radians) for the noise
-    rotation: f64,
+    pub rotation: f64,
 
     /// Scale for the noise function. Larger scales create
     /// smaller, more detailed noise while smaller values
     /// create larger, less detailed terrains.
-    scale: f64,
+    pub scale: f64,
 
     /// Size of the mesh object in scene units
-    size: f64,
+    pub size: f64,
 
     /// Base seed for the noise function
-    seed: u32,
+    pub seed: u32,
 
     /// Make grid flat. Used for testing
-    flat: bool,
+    pub flat: bool,
 
     /// Roughness for the terrain
-    roughness: f64,
+    pub roughness: f64,
 
     /// How plain the base terrain is
-    plains: f64,
+    pub plains: f64,
 
     /// At which height to clamp to generate a plateau
-    plateau: f64,
+    pub plateau: f64,
 
     /// Intensity of domain warping
-    deformation: f64,
+    pub deformation: f64,
+}
+
+
+impl Default for ProceduralConfig {
+    fn default() -> Self {
+        ProceduralConfig { rows: Self::DEFAULT_ROWS,
+                           columns: Self::DEFAULT_COLUMNS,
+                           offset_x: Self::DEFAULT_OFFSET,
+                           offset_y: Self::DEFAULT_OFFSET,
+                           offset_z: Self::DEFAULT_OFFSET,
+                           rotation: Self::DEFAULT_ROTATION,
+                           scale: Self::DEFAULT_SCALE,
+                           size: Self::DEFAULT_SIZE,
+                           seed: Self::DEFAULT_SEED,
+                           roughness: Self::DEFAULT_ROUGHNESS,
+                           plains: Self::DEFAULT_PLAINS,
+                           plateau: Self::DEFAULT_PLATEAU,
+                           deformation: Self::DEFAULT_DEFORMATION,
+                           flat: false }
+    }
+}
+
+
+impl ProceduralConfig {
+    pub const DEFAULT_ROWS: u32 = 64;
+    pub const DEFAULT_COLUMNS: u32 = 64;
+    pub const DEFAULT_OFFSET: f64 = 0.0;
+    pub const DEFAULT_ROTATION: f64 = 0.0;
+    pub const DEFAULT_SCALE: f64 = 2.0;
+    pub const DEFAULT_SIZE: f64 = 5.0;
+    pub const DEFAULT_SEED: u32 = 0;
+    pub const DEFAULT_ROUGHNESS: f64 = 0.1;
+    pub const DEFAULT_PLAINS: f64 = 0.5;
+    pub const DEFAULT_PLATEAU: f64 = 10.0;
+    pub const DEFAULT_DEFORMATION: f64 = 0.1;
+}
+
+
+/// Representation of a terrain
+#[derive(Clone, Copy, Debug)]
+pub struct Procedural {
+    /// Configuration for the procedural terrain
+    config: ProceduralConfig,
 }
 
 
 impl Procedural {
-    const DEFAULT_ROWS: u32 = 64;
-    const DEFAULT_COLUMNS: u32 = 64;
-    const DEFAULT_SEED: u32 = 0;
-    const DEFAULT_OFFSET: f64 = 0.0;
-    const DEFAULT_SIZE: f64 = 20.0;
-    const DEFAULT_SCALE: f64 = 2.0;
-    const DEFAULT_ROTATION: f64 = 0.0;
-    const DEFAULT_FLAT: bool = false;
-    const DEFAULT_ROUGHNESS: f64 = 0.5;
-    const DEFAULT_PLAINS: f64 = 0.5;
-    const DEFAULT_PLATEAU: f64 = 0.5;
-    const DEFAULT_DEFORMATION: f64 = 0.1;
-
-    pub fn new() -> Self {
-        Procedural { rows: Self::DEFAULT_ROWS,
-                     columns: Self::DEFAULT_COLUMNS,
-                     offset_x: Self::DEFAULT_OFFSET,
-                     offset_y: Self::DEFAULT_OFFSET,
-                     offset_z: Self::DEFAULT_OFFSET,
-                     rotation: Self::DEFAULT_ROTATION,
-                     size: Self::DEFAULT_SIZE,
-                     scale: Self::DEFAULT_SCALE,
-                     seed: Self::DEFAULT_SEED,
-                     flat: Self::DEFAULT_FLAT,
-                     plains: Self::DEFAULT_PLAINS,
-                     plateau: Self::DEFAULT_PLATEAU,
-                     deformation: Self::DEFAULT_DEFORMATION,
-                     roughness: Self::DEFAULT_ROUGHNESS, }
+    pub fn new(config: ProceduralConfig) -> Self {
+        Procedural { config: config }
     }
-
-
-    setter!(set_rows, rows, u32);
-    setter!(set_columns, columns, u32);
-    setter!(set_seed, seed, u32);
-    setter!(set_offset_x, offset_x, f64);
-    setter!(set_offset_y, offset_y, f64);
-    setter!(set_offset_z, offset_z, f64);
-    setter!(set_size, size, f64);
-    setter!(set_scale, scale, f64);
-    setter!(set_rotation, rotation, f64);
-    setter!(set_flat, flat, bool);
-    setter!(set_roughness, roughness, f64);
-    setter!(set_plains, plains, f64);
-    setter!(set_plateau, plateau, f64);
-    setter!(set_deformation, deformation, f64);
-
 
     /// Generate list of faces for the terrain mesh
     ///
     /// Returns the a vector of tuples containing the indices
     /// for the four vertices of each face.
     fn faces(&self) -> Faces {
-        let capacity = (self.columns * self.rows) as usize;
+        let conf = self.config;
+
+        let capacity = (conf.columns * conf.rows) as usize;
         let mut faces: Faces = Vec::with_capacity(capacity);
 
-        for x in 0..self.columns - 1 {
-            for y in 0..self.rows - 1 {
-                faces.push((x * self.rows + y,
-                            (x + 1) * self.rows + y,
-                            (x + 1) * self.rows + 1 + y,
-                            x * self.rows + 1 + y))
+        for x in 0..conf.columns - 1 {
+            for y in 0..conf.rows - 1 {
+                faces.push((x * conf.rows + y,
+                            (x + 1) * conf.rows + y,
+                            (x + 1) * conf.rows + 1 + y,
+                            x * conf.rows + 1 + y))
             }
         }
 
@@ -136,27 +137,33 @@ impl Procedural {
     /// Returns the 3D coordinates for the mesh as a vector
     /// of tuples.
     fn vertices(&self) -> Vertices {
-        let half_x = f64::from(self.columns - 1) / 2.0;
-        let half_y = f64::from(self.rows - 1) / 2.0;
+        let conf = self.config;
 
-        let capacity = (self.columns * self.rows) as usize;
+        let half_x = f64::from(conf.columns - 1) / 2.0;
+        let half_y = f64::from(conf.rows - 1) / 2.0;
+
+        let capacity = (conf.columns * conf.rows) as usize;
         let mut verts: Vertices = Vec::with_capacity(capacity);
 
-        let scale = f64::from(max(self.rows, self.columns)) * (1.0 / self.size);
+        let scale = f64::from(max(conf.rows, conf.columns)) * (1.0 / conf.size);
         let steps = self.calculate_steps();
         let z_fn = self.get_noise_fn();
 
-        for x in 0..self.columns {
-            for y in 0..self.rows {
+        for x in 0..conf.columns {
+            for y in 0..conf.rows {
                 let x = f64::from(x) - half_x;
                 let y = f64::from(y) - half_y;
 
                 let co = self.coords_for_noise(x, y, steps);
-                let z = if self.flat {
+                let z = if conf.flat {
                     0.0
                 } else {
-                    let val = z_fn.get([co.0, co.1, self.offset_z]);
-                    if val > self.plateau { self.plateau } else { val }
+                    let val = z_fn.get([co.0, co.1, conf.offset_z]);
+                    if val > conf.plateau {
+                        conf.plateau
+                    } else {
+                        val
+                    }
                 };
 
                 verts.push((x / scale, y / scale, z));
@@ -178,18 +185,20 @@ impl Procedural {
     /// * `y`: Value for y axis
     /// * `steps`: Steps to scale the coordinates for X and Y
     fn coords_for_noise(self, x: f64, y: f64, steps: (f64, f64)) -> (f64, f64) {
-        let x2 = if self.rotation != 0.0 {
-            let rotated = x * self.rotation.cos() - y * self.rotation.sin();
-            steps.0 * (rotated + self.offset_x)
+        let conf = self.config;
+
+        let x2 = if conf.rotation != 0.0 {
+            let rotated = x * conf.rotation.cos() - y * conf.rotation.sin();
+            steps.0 * (rotated + conf.offset_x)
         } else {
-            steps.0 * (x + self.offset_x)
+            steps.0 * (x + conf.offset_x)
         };
 
-        let y2 = if self.rotation != 0.0 {
-            let rotated = x * self.rotation.sin() + y * self.rotation.cos();
-            steps.1 * (rotated + self.offset_y)
+        let y2 = if conf.rotation != 0.0 {
+            let rotated = x * conf.rotation.sin() + y * conf.rotation.cos();
+            steps.1 * (rotated + conf.offset_y)
         } else {
-            steps.1 * (y + self.offset_y)
+            steps.1 * (y + conf.offset_y)
         };
 
         (x2, y2)
@@ -202,22 +211,24 @@ impl Procedural {
     /// well as the scale field.
     /// Returns a tuple with the X and Y steps.
     fn calculate_steps(self) -> (f64, f64) {
-        let columns = f64::from(self.columns);
-        let rows = f64::from(self.rows);
+        let conf = self.config;
+
+        let columns = f64::from(conf.columns);
+        let rows = f64::from(conf.rows);
 
         let ratio = columns / rows;
 
         let x_bounds = if columns > rows {
-            self.scale
+            conf.scale
         } else {
-            self.scale * ratio
+            conf.scale * ratio
         };
 
 
         let y_bounds = if columns > rows {
-            self.scale / ratio
+            conf.scale / ratio
         } else {
-            self.scale
+            conf.scale
         };
 
         (x_bounds / columns, y_bounds / rows)
@@ -226,10 +237,11 @@ impl Procedural {
 
     /// Get the noise function with the right settings
     fn get_noise_fn(self) -> LandFractal {
-        LandFractal::new(self.seed).set_base_persistence(1.0 - self.plains)
-                                   .set_roughness(self.roughness)
-                                   .set_dw_intensity(self.deformation)
-                                   .set_z_scale(self.size / 20.0)
+        let conf = self.config;
+        LandFractal::new(conf.seed).set_base_persistence(1.0 - conf.plains)
+                                   .set_roughness(conf.roughness)
+                                   .set_dw_intensity(conf.deformation)
+                                   .set_z_scale(conf.size / 20.0)
     }
 
     /// Build a terrain mesh.
@@ -254,7 +266,10 @@ mod tests {
 
     #[test]
     fn faces() {
-        let terrain = Procedural::new().set_rows(4).set_columns(4);
+        let config = ProceduralConfig { rows: 4,
+                                        columns: 4,
+                                        ..Default::default() };
+        let faces = Procedural::new(config).faces();
 
         let expected = vec![(0, 4, 5, 1),
                             (1, 5, 6, 2),
@@ -266,16 +281,18 @@ mod tests {
                             (9, 13, 14, 10),
                             (10, 14, 15, 11)];
 
-        assert_eq!(expected, terrain.faces());
+        assert_eq!(expected, faces);
     }
 
 
     #[test]
     fn vertices() {
-        let terrain = Procedural::new().set_rows(4)
-                                       .set_columns(4)
-                                       .set_size(4.0)
-                                       .set_flat(true);
+        let config = ProceduralConfig { rows: 4,
+                                        columns: 4,
+                                        size: 4.0,
+                                        flat: true,
+                                        ..Default::default() };
+        let verts = Procedural::new(config).vertices();
 
         let expected = vec![(-1.5, -1.5, 0.0),
                             (-1.5, -0.5, 0.0),
@@ -294,9 +311,14 @@ mod tests {
                             (1.5, 0.5, 0.0),
                             (1.5, 1.5, 0.0)];
 
-        assert_eq!(expected, terrain.vertices());
+        assert_eq!(expected, verts);
 
-        let longer = terrain.set_rows(8).set_flat(true);
+        let config = ProceduralConfig { rows: 8,
+                                        columns: 4,
+                                        size: 4.0,
+                                        flat: true,
+                                        ..Default::default() };
+        let verts = Procedural::new(config).vertices();
 
         let expected = vec![(-0.75, -1.75, 0.0),
                             (-0.75, -1.25, 0.0),
@@ -331,9 +353,14 @@ mod tests {
                             (0.75, 1.25, 0.0),
                             (0.75, 1.75, 0.0)];
 
-        assert_eq!(expected, longer.vertices());
+        assert_eq!(expected, verts);
 
-        let taller = terrain.set_columns(8).set_flat(true);
+        let config = ProceduralConfig { rows: 4,
+                                        columns: 8,
+                                        size: 4.0,
+                                        flat: true,
+                                        ..Default::default() };
+        let verts = Procedural::new(config).vertices();
 
         let expected = vec![(-1.75, -0.75, 0.0),
                             (-1.75, -0.25, 0.0),
@@ -368,37 +395,48 @@ mod tests {
                             (1.75, 0.25, 0.0),
                             (1.75, 0.75, 0.0)];
 
-        assert_eq!(expected, taller.vertices());
+        assert_eq!(expected, verts);
     }
 
 
     #[test]
     fn steps_calculation() {
-        let terrain = Procedural::new().set_rows(4).set_columns(4).set_size(4.0);
-        assert_eq!((0.5, 0.5), terrain.calculate_steps());
+        let config = ProceduralConfig { rows: 4,
+                                        columns: 4,
+                                        size: 4.0,
+                                        ..Default::default() };
+        assert_eq!((0.5, 0.5), Procedural::new(config).calculate_steps());
 
-        let longer = terrain.set_rows(8);
-        assert_eq!((0.25, 0.25), longer.calculate_steps());
+        let config = ProceduralConfig { rows: 8,
+                                        columns: 4,
+                                        size: 4.0,
+                                        ..Default::default() };
+        assert_eq!((0.25, 0.25), Procedural::new(config).calculate_steps());
 
-        let taller = terrain.set_columns(8);
-        assert_eq!((0.25, 0.25), taller.calculate_steps());
+        let config = ProceduralConfig { rows: 4,
+                                        columns: 8,
+                                        size: 4.0,
+                                        ..Default::default() };
+        assert_eq!((0.25, 0.25), Procedural::new(config).calculate_steps());
     }
 
 
     #[test]
     fn rotation() {
-        let terrain = Procedural::new().set_rows(4)
-                                       .set_columns(4)
-                                       .set_rotation(0.0);
-
-        let values = terrain.coords_for_noise(1.0, 1.0, terrain.calculate_steps());
+        let config = ProceduralConfig { rows: 4,
+                                        columns: 4,
+                                        rotation: 0.0,
+                                        ..Default::default() };
+        let steps = Procedural::new(config).calculate_steps();
+        let values = Procedural::new(config).coords_for_noise(1.0, 1.0, steps);
         assert_eq!((0.5, 0.5), values);
 
-        let terrain = Procedural::new().set_rows(4)
-                                       .set_columns(4)
-                                       .set_rotation(1.0);
-
-        let values = terrain.coords_for_noise(1.0, 1.0, terrain.calculate_steps());
+        let config = ProceduralConfig { rows: 4,
+                                        columns: 4,
+                                        rotation: 1.0,
+                                        ..Default::default() };
+        let steps = Procedural::new(config).calculate_steps();
+        let values = Procedural::new(config).coords_for_noise(1.0, 1.0, steps);
 
         assert!(values.0.fract() - (1505.0) < 1e-10);
         assert!(values.1.fract() - (69088.0) < 1e-10);
@@ -414,16 +452,21 @@ mod benches {
 
     #[bench]
     fn faces(b: &mut Bencher) {
-        let terrain = Procedural::new().set_rows(128).set_columns(128);
+        let config = ProceduralConfig { rows: 128,
+                                        columns: 128,
+                                        ..Default::default() };
+        let terrain = Procedural::new(config);
         b.iter(|| terrain.faces());
     }
 
 
     #[bench]
     fn verts(b: &mut Bencher) {
-        let terrain = Procedural::new().set_rows(128)
-                                       .set_columns(128)
-                                       .set_flat(true);
+        let config = ProceduralConfig { rows: 128,
+                                        columns: 128,
+                                        flat: true,
+                                        ..Default::default() };
+        let terrain = Procedural::new(config);
 
         b.iter(|| terrain.vertices());
     }
@@ -431,7 +474,10 @@ mod benches {
 
     #[bench]
     fn terrain(b: &mut Bencher) {
-        let terrain = Procedural::new().set_rows(128).set_columns(128);
+        let config = ProceduralConfig { rows: 128,
+                                        columns: 128,
+                                        ..Default::default() };
+        let terrain = Procedural::new(config);
         b.iter(|| terrain.build_mesh());
     }
 }
