@@ -180,8 +180,13 @@ impl Procedural {
 
         let persistences = vec![
             base,
+
+            // Final octaves
+            conf.roughness / 2.0,
             conf.roughness / 5.0,
             conf.roughness / 10.0,
+
+            // Blend terrain
             base.powi(2),
             base / 2.0,
         ];
@@ -390,10 +395,9 @@ impl Procedural {
         // Medium details
 
         let octave3_scale = 2.0;
-        let octave3_persistence = 0.25;
 
         current_point = scale!(current_point, octave3_scale, domain);
-        result += self.noise_fns[3].get(current_point) * octave3_persistence;
+        result -= self.noise_fns[3].get(current_point) * self.persistences[1];
 
 
         //------------------------------------------------------------------------------------------
@@ -402,7 +406,7 @@ impl Procedural {
         let octave4_scale = 2.0;
 
         current_point = scale!(current_point, octave4_scale, domain);
-        result += self.noise_fns[4].get(current_point) * self.persistences[1];
+        result += self.noise_fns[4].get(current_point) * self.persistences[2];
 
 
         //------------------------------------------------------------------------------------------
@@ -410,7 +414,7 @@ impl Procedural {
         let octave5_scale = 2.0;
 
         current_point = scale!(current_point, octave5_scale, domain);
-        result += self.noise_fns[5].get(current_point) * self.persistences[2];
+        result += self.noise_fns[5].get(current_point) * self.persistences[3];
 
 
         //------------------------------------------------------------------------------------------
@@ -420,7 +424,7 @@ impl Procedural {
         //------------------------------------------------------------------------------------------
         // Basic shape of the terrain
 
-        blend = self.noise_fns[3].get(point) * self.persistences[3];
+        blend = self.noise_fns[3].get(point) * self.persistences[4];
 
 
         //------------------------------------------------------------------------------------------
@@ -429,7 +433,7 @@ impl Procedural {
         let blend1_scale = 2.0;
 
         current_point = scale!(point, blend1_scale, domain);
-        blend += self.noise_fns[1].get(current_point) * self.persistences[4];
+        blend += self.noise_fns[1].get(current_point) * self.persistences[5];
 
 
         result = linear_interp(result, blend, mask);
