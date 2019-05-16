@@ -47,6 +47,7 @@ fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
         plains: param!(params, "plains", DEFAULT_OFFSET),
         plateau: param!(params, "plateau", DEFAULT_OFFSET),
         deformation: param!(params, "deformation", DEFAULT_OFFSET),
+        mountainess: param!(params, "mountainess", DEFAULT_MOUNTAINESS),
         flat: false,
     };
 

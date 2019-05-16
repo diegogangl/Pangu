@@ -77,6 +77,9 @@ pub struct ProceduralConfig {
     /// At which height to clamp to generate a plateau
     pub plateau: f64,
 
+    /// Mountainess
+    pub mountainess: f64,
+
     /// Intensity of domain warping
     pub deformation: f64,
 }
@@ -98,6 +101,7 @@ impl Default for ProceduralConfig {
             plains: Self::DEFAULT_PLAINS,
             plateau: Self::DEFAULT_PLATEAU,
             deformation: Self::DEFAULT_DEFORMATION,
+            mountainess: Self::DEFAULT_MOUNTAINESS,
             flat: false,
         }
     }
@@ -116,6 +120,7 @@ impl ProceduralConfig {
     pub const DEFAULT_PLAINS: f64 = 0.5;
     pub const DEFAULT_PLATEAU: f64 = 10.0;
     pub const DEFAULT_DEFORMATION: f64 = 0.1;
+    pub const DEFAULT_MOUNTAINESS: f64 = 0.5;
 }
 
 
@@ -180,10 +185,11 @@ impl Procedural {
 
         let persistences = vec![
             base,
-            base * 4.0,
+            base * conf.mountainess,
+            conf.mountainess,
 
             // Final octaves
-            conf.roughness / 2.0,
+            conf.roughness  * conf.mountainess / 2.0,
             conf.roughness / 5.0,
             conf.roughness / 10.0,
 
@@ -342,7 +348,7 @@ impl Procedural {
         let mask_control = 1.1;
         current_point = scale!(point, mask_control);
 
-        let mask = self.noise_fns[0].get(current_point);
+        let mut mask = self.noise_fns[0].get(current_point);
 
 
         //------------------------------------------------------------------------------------------
@@ -377,19 +383,28 @@ impl Procedural {
         // Large features of the terrain
 
         let octave1_scale = 1.4;
-
         current_point = scale!(point, octave1_scale, domain);
-        result += self.noise_fns[1].get(current_point) * self.persistences[1];
 
+        if self.config.plains > 0.5 {
+           let signal = self.noise_fns[1].get(current_point) * self.persistences[1];
+           result += if signal > 0.0 { signal } else { 0.0 };
+        } else {
+           result += self.noise_fns[1].get(current_point) * self.persistences[1];
+        }
 
         //------------------------------------------------------------------------------------------
         // Larger details
 
         let octave2_scale = 2.0;
-        let octave2_persistence = 0.4;
-
         current_point = scale!(current_point, octave2_scale, domain);
-        result += self.noise_fns[2].get(current_point) * octave2_persistence;
+
+
+        if self.config.plains > 0.5 {
+           let signal = self.noise_fns[2].get(current_point) * self.persistences[2];
+           result += if signal > 0.0 { signal } else { 0.0 };
+        } else {
+           result += self.noise_fns[2].get(current_point) * self.persistences[2];
+        }
 
 
         //------------------------------------------------------------------------------------------
@@ -398,7 +413,14 @@ impl Procedural {
         let octave3_scale = 2.0;
 
         current_point = scale!(current_point, octave3_scale, domain);
-        result -= self.noise_fns[3].get(current_point) * self.persistences[2];
+
+        if self.config.plains > 0.5 {
+           let signal = self.noise_fns[3].get(current_point) * self.persistences[3];
+           result += if signal > 0.0 { signal } else { 0.0 };
+        } else {
+           result -= self.noise_fns[3].get(current_point) * self.persistences[3];
+        }
+
 
 
         //------------------------------------------------------------------------------------------
@@ -407,7 +429,7 @@ impl Procedural {
         let octave4_scale = 2.0;
 
         current_point = scale!(current_point, octave4_scale, domain);
-        result += self.noise_fns[4].get(current_point) * self.persistences[3];
+        result += self.noise_fns[4].get(current_point) * self.persistences[4];
 
 
         //------------------------------------------------------------------------------------------
@@ -415,7 +437,7 @@ impl Procedural {
         let octave5_scale = 2.0;
 
         current_point = scale!(current_point, octave5_scale, domain);
-        result += self.noise_fns[5].get(current_point) * self.persistences[4];
+        result += self.noise_fns[5].get(current_point) * self.persistences[5];
 
 
         //------------------------------------------------------------------------------------------
@@ -425,7 +447,8 @@ impl Procedural {
         //------------------------------------------------------------------------------------------
         // Basic shape of the terrain
 
-        blend = self.noise_fns[3].get(point) * self.persistences[5];
+        blend = self.noise_fns[3].get(point) * self.persistences[6];
+
 
 
         //------------------------------------------------------------------------------------------
@@ -434,8 +457,13 @@ impl Procedural {
         let blend1_scale = 2.0;
 
         current_point = scale!(point, blend1_scale, domain);
-        blend += self.noise_fns[1].get(current_point) * self.persistences[6];
+        blend += self.noise_fns[1].get(current_point) * self.persistences[7];
 
+        // Make sure there are no holes in the ground when using a high
+        // plains setting
+        if self.config.plains > 0.5 {
+            mask += 1.0;
+        }
 
         result = linear_interp(result, blend, mask);
         result * self.z_scale
