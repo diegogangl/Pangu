@@ -185,8 +185,8 @@ impl Procedural {
 
         let persistences = vec![
             base,
-            base * conf.mountainess,
             conf.mountainess,
+            base * conf.mountainess,
             // Final octaves
             conf.roughness * conf.mountainess / 2.0,
             conf.roughness / 5.0,
@@ -338,6 +338,7 @@ impl Procedural {
         let mut domain;
         let mut blend;
         let mut current_point;
+        let divisor = 1.0 + self.config.plains;
 
 
         //---------------------------------------------------------------------
@@ -383,14 +384,9 @@ impl Procedural {
         let octave1_scale = 1.4;
         current_point = scale!(point, octave1_scale, domain);
 
-        if self.config.plains > 0.5 {
-            let signal =
-                self.noise_fns[1].get(current_point) * self.persistences[1];
-            result += if signal > 0.0 { signal } else { 0.0 };
-        } else {
-            result +=
-                self.noise_fns[1].get(current_point) * self.persistences[1];
-        }
+        let signal = self.noise_fns[1].get(current_point);
+        result += ((signal + (signal.abs() + self.config.plains)) / divisor)
+                   * self.persistences[1];
 
         //---------------------------------------------------------------------
         // Larger details
@@ -398,32 +394,20 @@ impl Procedural {
         let octave2_scale = 2.0;
         current_point = scale!(current_point, octave2_scale, domain);
 
-
-        if self.config.plains > 0.5 {
-            let signal =
-                self.noise_fns[2].get(current_point) * self.persistences[2];
-            result += if signal > 0.0 { signal } else { 0.0 };
-        } else {
-            result +=
-                self.noise_fns[2].get(current_point) * self.persistences[2];
-        }
-
+        let signal = self.noise_fns[2].get(current_point);
+        result += ((signal + (signal.abs() + self.config.plains)) / divisor)
+                   * self.persistences[2];
 
         //---------------------------------------------------------------------
         // Medium details
 
         let octave3_scale = 2.0;
-
         current_point = scale!(current_point, octave3_scale, domain);
 
-        if self.config.plains > 0.5 {
-            let signal =
-                self.noise_fns[3].get(current_point) * self.persistences[3];
-            result += if signal > 0.0 { signal } else { 0.0 };
-        } else {
-            result -=
-                self.noise_fns[3].get(current_point) * self.persistences[3];
-        }
+        let signal = self.noise_fns[3].get(current_point);
+        result += ((signal + (signal.abs() + self.config.plains)) / divisor)
+                   * self.persistences[3];
+
 
 
         //---------------------------------------------------------------------
@@ -463,12 +447,9 @@ impl Procedural {
 
         // Make sure there are no holes in the ground when using a high
         // plains setting
-        if self.config.plains > 0.5 {
-            mask += 1.0;
-        }
+        mask += self.config.plains;
 
-        result = linear_interp(result, blend, mask);
-        result * self.z_scale
+        linear_interp(result, blend, mask) * self.z_scale
     }
 
 
