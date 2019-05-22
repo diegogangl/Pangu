@@ -82,6 +82,9 @@ pub struct ProceduralConfig {
 
     /// Intensity of domain warping
     pub deformation: f64,
+
+    /// Mixing between plains and mountains
+    pub mix: f64,
 }
 
 
@@ -102,6 +105,7 @@ impl Default for ProceduralConfig {
             plateau: Self::DEFAULT_PLATEAU,
             deformation: Self::DEFAULT_DEFORMATION,
             mountainess: Self::DEFAULT_MOUNTAINESS,
+            mix: 0.5,
             flat: false,
         }
     }
@@ -121,6 +125,7 @@ impl ProceduralConfig {
     pub const DEFAULT_PLATEAU: f64 = 10.0;
     pub const DEFAULT_DEFORMATION: f64 = 0.1;
     pub const DEFAULT_MOUNTAINESS: f64 = 0.5;
+    pub const DEFAULT_MIX: f64 = 0.5;
 }
 
 
@@ -344,7 +349,7 @@ impl Procedural {
         //---------------------------------------------------------------------
         // BLEND MASK
         //---------------------------------------------------------------------
-        let mask_control = 1.1;
+        let mask_control = self.config.mix;
         current_point = scale!(point, mask_control);
 
         let mut mask = self.noise_fns[0].get(current_point);
