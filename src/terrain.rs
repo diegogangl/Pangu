@@ -359,7 +359,7 @@ impl Procedural {
         // DOMAIN WARPING
         //---------------------------------------------------------------------
 
-        let domain_scale = self.config.scale / 1.5;
+        let domain_scale = 1.5;
 
         current_point = scale!(point, domain_scale);
         domain = self.noise_fns[1].get(current_point);
