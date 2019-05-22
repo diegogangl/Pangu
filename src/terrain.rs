@@ -188,9 +188,9 @@ impl Procedural {
             conf.mountainess,
             base * conf.mountainess,
             // Final octaves
-            conf.roughness * conf.mountainess / 2.0,
-            conf.roughness / 5.0,
-            conf.roughness / 10.0,
+            conf.roughness / 2.0,
+            conf.roughness / 4.0,
+            conf.roughness / 8.0,
             // Blend terrain
             base.powi(2),
             base / 2.0,
@@ -413,7 +413,7 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Small details
 
-        let octave4_scale = 2.0;
+        let octave4_scale = 1.2;
 
         current_point = scale!(current_point, octave4_scale, domain);
         result += self.noise_fns[4].get(current_point) * self.persistences[4];
@@ -421,7 +421,7 @@ impl Procedural {
 
         //---------------------------------------------------------------------
         // Fine details
-        let octave5_scale = 2.0;
+        let octave5_scale = 1.4;
 
         current_point = scale!(current_point, octave5_scale, domain);
         result += self.noise_fns[5].get(current_point) * self.persistences[5];
