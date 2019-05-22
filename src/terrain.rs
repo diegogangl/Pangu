@@ -354,7 +354,7 @@ impl Procedural {
         // DOMAIN WARPING
         //---------------------------------------------------------------------
 
-        let domain_scale = 1.5;
+        let domain_scale = self.config.scale / 1.5;
 
         current_point = scale!(point, domain_scale);
         domain = self.noise_fns[1].get(current_point);
@@ -381,7 +381,7 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Large features of the terrain
 
-        let octave1_scale = 1.4;
+        let octave1_scale = 1.5;
         current_point = scale!(point, octave1_scale, domain);
 
         let signal = self.noise_fns[1].get(current_point);
