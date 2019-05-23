@@ -5,7 +5,7 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
 
-use super::utils::linear_interp;
+use super::utils::lerp;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -493,7 +493,7 @@ impl Procedural {
             mask *= -1.0;
         }
 
-        linear_interp(result, blend, mask) * self.z_scale
+        lerp(result, blend, mask) * self.z_scale
     }
 
 
