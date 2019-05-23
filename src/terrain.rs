@@ -128,7 +128,7 @@ impl Default for ProceduralConfig {
             plateau: Self::DEFAULT_PLATEAU,
             deformation: Self::DEFAULT_DEFORMATION,
             mountainess: Self::DEFAULT_MOUNTAINESS,
-            mix: 0.5,
+            mix: Self::DEFAULT_MIX,
             ridgedness: Self::DEFAULT_RIDGEDNESS,
             flat: false,
         }
