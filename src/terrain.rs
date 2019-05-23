@@ -37,6 +37,26 @@ macro_rules! scale {
 }
 
 
+/// Macro casue ridgedness (sharp points) on heights
+///
+/// This macro creates an expresion to assign a value.
+///
+/// # Arguments
+///
+/// * `self` - A procedural instance
+/// * `signal` - The signal from the noise function
+/// * `level` - Level at which the ridgedness should be activated
+macro_rules! ridge {
+    ($self:ident, $signal:ident, $level:expr) => {
+       if $self.config.ridgedness >= $level {
+            $signal.abs() * -1.0
+       } else {
+            $signal
+       }
+    };
+}
+
+
 #[derive(Clone, Copy, Debug)]
 pub struct ProceduralConfig {
     /// The number of rows to use in the mesh grid
@@ -85,6 +105,9 @@ pub struct ProceduralConfig {
 
     /// Mixing between plains and mountains
     pub mix: f64,
+
+    /// Ridgedness
+    pub ridgedness: u8,
 }
 
 
@@ -106,6 +129,7 @@ impl Default for ProceduralConfig {
             deformation: Self::DEFAULT_DEFORMATION,
             mountainess: Self::DEFAULT_MOUNTAINESS,
             mix: 0.5,
+            ridgedness: Self::DEFAULT_RIDGEDNESS,
             flat: false,
         }
     }
@@ -126,6 +150,7 @@ impl ProceduralConfig {
     pub const DEFAULT_DEFORMATION: f64 = 0.1;
     pub const DEFAULT_MOUNTAINESS: f64 = 0.5;
     pub const DEFAULT_MIX: f64 = 0.5;
+    pub const DEFAULT_RIDGEDNESS: u8 = 0;
 }
 
 
@@ -380,7 +405,8 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Basic shape of the terrain
 
-        result = self.noise_fns[0].get(point) * self.persistences[0];
+        let signal = self.noise_fns[0].get(point) * self.persistences[0];
+        result = ridge!(self, signal, 5);
 
 
         //---------------------------------------------------------------------
@@ -389,9 +415,12 @@ impl Procedural {
         let octave1_scale = 1.5;
         current_point = scale!(point, octave1_scale, domain);
 
-        let signal = self.noise_fns[1].get(current_point);
-        result += ((signal + (signal.abs() + self.config.plains)) / divisor)
+        let mut signal = self.noise_fns[1].get(current_point);
+        signal = ((signal + (signal.abs() + self.config.plains)) / divisor)
                    * self.persistences[1];
+
+        result += ridge!(self, signal, 4);
+
 
         //---------------------------------------------------------------------
         // Larger details
@@ -399,9 +428,11 @@ impl Procedural {
         let octave2_scale = 2.0;
         current_point = scale!(current_point, octave2_scale, domain);
 
-        let signal = self.noise_fns[2].get(current_point);
-        result += ((signal + (signal.abs() + self.config.plains)) / divisor)
+        let mut signal = self.noise_fns[2].get(current_point);
+        signal = ((signal + (signal.abs() + self.config.plains)) / divisor)
                    * self.persistences[2];
+
+        result += ridge!(self, signal, 3);
 
         //---------------------------------------------------------------------
         // Medium details
@@ -409,10 +440,11 @@ impl Procedural {
         let octave3_scale = 2.0;
         current_point = scale!(current_point, octave3_scale, domain);
 
-        let signal = self.noise_fns[3].get(current_point);
-        result += ((signal + (signal.abs() + self.config.plains)) / divisor)
+        let mut signal = self.noise_fns[3].get(current_point);
+        signal = ((signal + (signal.abs() + self.config.plains)) / divisor)
                    * self.persistences[3];
 
+        result += ridge!(self, signal, 2);
 
 
         //---------------------------------------------------------------------
@@ -421,7 +453,8 @@ impl Procedural {
         let octave4_scale = 1.2;
 
         current_point = scale!(current_point, octave4_scale, domain);
-        result += self.noise_fns[4].get(current_point) * self.persistences[4];
+        let signal = self.noise_fns[4].get(current_point) * self.persistences[4];
+        result += ridge!(self, signal, 1);
 
 
         //---------------------------------------------------------------------
@@ -439,7 +472,8 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Basic shape of the terrain
 
-        blend = self.noise_fns[3].get(point) * self.persistences[6];
+        let signal = self.noise_fns[3].get(point) * self.persistences[6];
+        blend = ridge!(self, signal, 4);
 
 
         //---------------------------------------------------------------------
@@ -448,11 +482,16 @@ impl Procedural {
         let blend1_scale = 2.0;
 
         current_point = scale!(point, blend1_scale, domain);
-        blend += self.noise_fns[1].get(current_point) * self.persistences[7];
+        let signal = self.noise_fns[1].get(current_point) * self.persistences[7];
+        blend += ridge!(self, signal, 5);
 
         // Make sure there are no holes in the ground when using a high
         // plains setting
         mask += self.config.plains;
+
+        if self.config.ridgedness > 3 {
+            mask *= -1.0;
+        }
 
         linear_interp(result, blend, mask) * self.z_scale
     }
