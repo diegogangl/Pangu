@@ -20,8 +20,8 @@ pub type Vertices = Vec<(f64, f64, f64)>;
 /// # Arguments
 ///
 /// * `var` - The Point3 variable.
-/// * `fac - The scaling factor
-/// * `warp - Domain warping value
+/// * `fac` - The scaling factor
+/// * `warp` - Domain warping value
 macro_rules! scale {
     ($var:ident, $fac:expr) => {
         [$var[0] * $fac, $var[1] * $fac, $var[2] * $fac]
@@ -37,7 +37,7 @@ macro_rules! scale {
 }
 
 
-/// Macro casue ridgedness (sharp points) on heights
+/// Macro to casue ridgedness (sharpness) on heights
 ///
 /// This macro creates an expresion to assign a value.
 ///
