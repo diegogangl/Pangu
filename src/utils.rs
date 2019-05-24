@@ -7,3 +7,4 @@
 pub fn lerp(a: f64, b: f64, x: f64) -> f64 {
     x.mul_add(a - b, b)
 }
+

@@ -56,6 +56,13 @@ macro_rules! ridge {
     };
 }
 
+macro_rules! mountainess {
+    ($self:ident, $signal:ident, $persistence:expr, $divisor:ident) => {
+        (($signal + ($signal.abs() + $self.config.plains)) / $divisor)
+          * $self.persistences[$persistence]
+    };
+}
+
 
 #[derive(Clone, Copy, Debug)]
 pub struct ProceduralConfig {
@@ -412,56 +419,54 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Large features of the terrain
 
-        let octave1_scale = 1.5;
-        current_point = scale!(point, octave1_scale, domain);
+        current_point = scale!(point, 1.5, domain);
 
-        let mut signal = self.noise_fns[1].get(current_point);
-        signal = ((signal + (signal.abs() + self.config.plains)) / divisor)
-                   * self.persistences[1];
-
-        result += ridge!(self, signal, 4);
+        result += {
+            let mut signal = self.noise_fns[1].get(current_point);
+            signal =  mountainess!(self, signal, 1, divisor);
+            ridge!(self, signal, 4)
+        };
 
 
         //---------------------------------------------------------------------
         // Larger details
 
-        let octave2_scale = 2.0;
-        current_point = scale!(current_point, octave2_scale, domain);
+        current_point = scale!(current_point, 2.0, domain);
 
-        let mut signal = self.noise_fns[2].get(current_point);
-        signal = ((signal + (signal.abs() + self.config.plains)) / divisor)
-                   * self.persistences[2];
-
-        result += ridge!(self, signal, 3);
+        result += {
+            let mut signal = self.noise_fns[2].get(current_point);
+            signal =  mountainess!(self, signal, 2, divisor);
+            ridge!(self, signal, 3)
+        };
 
         //---------------------------------------------------------------------
         // Medium details
 
-        let octave3_scale = 2.0;
-        current_point = scale!(current_point, octave3_scale, domain);
+        current_point = scale!(current_point, 2.0, domain);
 
-        let mut signal = self.noise_fns[3].get(current_point);
-        signal = ((signal + (signal.abs() + self.config.plains)) / divisor)
-                   * self.persistences[3];
+        result += {
+            let mut signal = self.noise_fns[3].get(current_point);
+            signal =  mountainess!(self, signal, 3, divisor);
+            ridge!(self, signal, 2)
+        };
 
-        result += ridge!(self, signal, 2);
 
 
         //---------------------------------------------------------------------
         // Small details
 
-        let octave4_scale = 1.2;
+        current_point = scale!(current_point, 1.2, domain);
 
-        current_point = scale!(current_point, octave4_scale, domain);
-        let signal = self.noise_fns[4].get(current_point) * self.persistences[4];
-        result += ridge!(self, signal, 1);
+        result += {
+            let signal = self.noise_fns[4].get(current_point) * self.persistences[4];
+            ridge!(self, signal, 1)
+        };
 
 
         //---------------------------------------------------------------------
         // Fine details
-        let octave5_scale = 1.4;
 
-        current_point = scale!(current_point, octave5_scale, domain);
+        current_point = scale!(current_point, 1.4, domain);
         result += self.noise_fns[5].get(current_point) * self.persistences[5];
 
 
@@ -479,11 +484,12 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Extra-details
 
-        let blend1_scale = 2.0;
+        current_point = scale!(point, 2.0, domain);
 
-        current_point = scale!(point, blend1_scale, domain);
-        let signal = self.noise_fns[1].get(current_point) * self.persistences[7];
-        blend += ridge!(self, signal, 5);
+        blend += {
+           let signal = self.noise_fns[1].get(current_point) * self.persistences[7];
+            ridge!(self, signal, 5)
+        };
 
         // Make sure there are no holes in the ground when using a high
         // plains setting
