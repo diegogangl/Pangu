@@ -115,6 +115,9 @@ pub struct ProceduralConfig {
 
     /// Ridgedness
     pub ridgedness: u8,
+
+    /// Sea Floor
+    pub sea_floor: f64,
 }
 
 
@@ -137,6 +140,7 @@ impl Default for ProceduralConfig {
             mountainess: Self::DEFAULT_MOUNTAINESS,
             mix: Self::DEFAULT_MIX,
             ridgedness: Self::DEFAULT_RIDGEDNESS,
+            sea_floor: Self::DEFAULT_SEA_FLOOR,
             flat: false,
         }
     }
@@ -158,6 +162,7 @@ impl ProceduralConfig {
     pub const DEFAULT_MOUNTAINESS: f64 = 0.5;
     pub const DEFAULT_MIX: f64 = 0.5;
     pub const DEFAULT_RIDGEDNESS: u8 = 0;
+    pub const DEFAULT_SEA_FLOOR: f64 = 0.0;
 }
 
 
@@ -291,12 +296,10 @@ impl Procedural {
                 let z = if conf.flat {
                     0.0
                 } else {
-                    let val = self.get_z([co.0, co.1, conf.offset_z]);
-                    if val > conf.plateau {
-                        conf.plateau
-                    } else {
-                        val
-                    }
+                    let mut val = self.get_z([co.0, co.1, conf.offset_z]);
+                    if val > conf.plateau { val = conf.plateau; }
+                    if val < conf.sea_floor { val = 0.0; }
+                    val
                 };
 
                 verts.push((x / scale, y / scale, z));
