@@ -5,7 +5,7 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
 
-use super::utils::lerp;
+use super::utils::{lerp, map_on_zero};
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -287,6 +287,9 @@ impl Procedural {
 
         let scale = f64::from(max(conf.rows, conf.columns)) * (1.0 / conf.size);
 
+        let mut heights_min = 0.0;
+        let mut heights_max = 1.0;
+
         for x in 0..conf.columns {
             for y in 0..conf.rows {
                 let x = f64::from(x) - half_x;
@@ -299,10 +302,24 @@ impl Procedural {
                     let mut val = self.get_z([co.0, co.1, conf.offset_z]);
                     if val > conf.plateau { val = conf.plateau; }
                     if val < conf.sea_floor { val = 0.0; }
+
+                    if val > heights_max { heights_max = val; }
+                    if val < heights_min { heights_min = val; }
+
                     val
                 };
 
                 verts.push((x / scale, y / scale, z));
+            }
+        }
+
+        // Normalization
+        for x in 0..conf.columns as usize {
+            for y in 0..conf.rows as usize {
+                let i = x * conf.columns as usize + y;
+                let z = map_on_zero(verts[i].2, heights_min, heights_max, 3.0);
+
+                verts[i] = (verts[i].0, verts[i].1, z);
             }
         }
 
