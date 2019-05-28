@@ -48,18 +48,18 @@ macro_rules! scale {
 /// * `level` - Level at which the ridgedness should be activated
 macro_rules! ridge {
     ($self:ident, $signal:ident, $level:expr) => {
-       if $self.config.ridgedness >= $level {
+        if $self.config.ridgedness >= $level {
             $signal.abs() * -1.0
-       } else {
+        } else {
             $signal
-       }
+        }
     };
 }
 
 macro_rules! mountainess {
     ($self:ident, $signal:ident, $persistence:expr, $divisor:ident) => {
         (($signal + ($signal.abs() + $self.config.plains)) / $divisor)
-          * $self.persistences[$persistence]
+            * $self.persistences[$persistence]
     };
 }
 
@@ -118,6 +118,9 @@ pub struct ProceduralConfig {
 
     /// Sea Floor
     pub sea_floor: f64,
+
+    /// Maximum Height
+    pub height: f64,
 }
 
 
@@ -141,6 +144,7 @@ impl Default for ProceduralConfig {
             mix: Self::DEFAULT_MIX,
             ridgedness: Self::DEFAULT_RIDGEDNESS,
             sea_floor: Self::DEFAULT_SEA_FLOOR,
+            height: Self::DEFAULT_HEIGHT,
             flat: false,
         }
     }
@@ -163,6 +167,7 @@ impl ProceduralConfig {
     pub const DEFAULT_MIX: f64 = 0.5;
     pub const DEFAULT_RIDGEDNESS: u8 = 0;
     pub const DEFAULT_SEA_FLOOR: f64 = 0.0;
+    pub const DEFAULT_HEIGHT: f64 = 3.0;
 }
 
 
@@ -296,11 +301,19 @@ impl Procedural {
                     0.0
                 } else {
                     let mut val = self.get_z([co.0, co.1, conf.offset_z]);
-                    if val > conf.plateau { val = conf.plateau; }
-                    if val < conf.sea_floor { val = 0.0; }
+                    if val > conf.plateau {
+                        val = conf.plateau;
+                    }
+                    if val < conf.sea_floor {
+                        val = 0.0;
+                    }
 
-                    if val > heights_max { heights_max = val; }
-                    if val < heights_min { heights_min = val; }
+                    if val > heights_max {
+                        heights_max = val;
+                    }
+                    if val < heights_min {
+                        heights_min = val;
+                    }
 
                     val
                 };
@@ -313,7 +326,12 @@ impl Procedural {
         for x in 0..conf.columns as usize {
             for y in 0..conf.rows as usize {
                 let i = x * conf.columns as usize + y;
-                let z = map_on_zero(verts[i].2, heights_min, heights_max, 3.0);
+                let z = map_on_zero(
+                    verts[i].2,
+                    heights_min,
+                    heights_max,
+                    self.config.height,
+                );
 
                 verts[i] = (verts[i].0, verts[i].1, z);
             }
@@ -439,7 +457,7 @@ impl Procedural {
 
         result += {
             let mut signal = self.noise_fns[1].get(current_point);
-            signal =  mountainess!(self, signal, 1, divisor);
+            signal = mountainess!(self, signal, 1, divisor);
             ridge!(self, signal, 4)
         };
 
@@ -451,7 +469,7 @@ impl Procedural {
 
         result += {
             let mut signal = self.noise_fns[2].get(current_point);
-            signal =  mountainess!(self, signal, 2, divisor);
+            signal = mountainess!(self, signal, 2, divisor);
             ridge!(self, signal, 3)
         };
 
@@ -462,10 +480,9 @@ impl Procedural {
 
         result += {
             let mut signal = self.noise_fns[3].get(current_point);
-            signal =  mountainess!(self, signal, 3, divisor);
+            signal = mountainess!(self, signal, 3, divisor);
             ridge!(self, signal, 2)
         };
-
 
 
         //---------------------------------------------------------------------
@@ -474,7 +491,8 @@ impl Procedural {
         current_point = scale!(current_point, 1.2, domain);
 
         result += {
-            let signal = self.noise_fns[4].get(current_point) * self.persistences[4];
+            let signal =
+                self.noise_fns[4].get(current_point) * self.persistences[4];
             ridge!(self, signal, 1)
         };
 
@@ -503,7 +521,8 @@ impl Procedural {
         current_point = scale!(point, 2.0, domain);
 
         blend += {
-           let signal = self.noise_fns[1].get(current_point) * self.persistences[7];
+            let signal =
+                self.noise_fns[1].get(current_point) * self.persistences[7];
             ridge!(self, signal, 5)
         };
 
