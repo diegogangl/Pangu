@@ -270,10 +270,6 @@ impl Procedural {
 
     /// Generate list of vertices for the terrain mesh
     ///
-    /// # Arguments
-    ///
-    /// * `z` - Noise function to generate the terrain
-    ///
     /// Returns the 3D coordinates for the mesh as a vector
     /// of tuples.
     fn vertices(&self) -> Vertices {
@@ -336,7 +332,6 @@ impl Procedural {
     ///
     /// * `x`: Value for X axis
     /// * `y`: Value for y axis
-    /// * `steps`: Steps to scale the coordinates for X and Y
     fn coords_for_noise(&self, x: f64, y: f64) -> (f64, f64) {
         let conf = self.config;
 
@@ -362,6 +357,7 @@ impl Procedural {
     /// to make coordinates fit in the bounds. Boundaries are
     /// calculated from the ratio between rows and columns as
     /// well as the scale field.
+    ///
     /// Returns a tuple with the X and Y steps.
     fn calculate_steps(conf: &ProceduralConfig) -> (f64, f64) {
         let columns = f64::from(conf.columns);
