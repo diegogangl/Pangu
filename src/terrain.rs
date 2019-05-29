@@ -298,6 +298,35 @@ impl Procedural {
                 let co = self.coords_for_noise(x, y);
                 let z = if conf.flat {
                     0.0
+
+                // Make seamless
+                } else if false {
+                    let x_extent = 1.0;
+                    let y_extent = 1.0;
+
+                    let sw = self.get_z([co.0, co.1, conf.offset_z]);
+                    let se = self.get_z([co.0 + x_extent, co.1, conf.offset_z]);
+                    let nw = self.get_z([co.0, co.1 + y_extent, conf.offset_z]);
+                    let ne = self.get_z([co.0 + x_extent, co.1 + y_extent, conf.offset_z]);
+
+                    let x_blend = 1.0 - ((co.0  + 0.0) / x_extent);
+                    let y_blend = 1.0 - ((co.1  + 0.0) / y_extent);
+
+                    let y0 = lerp(sw, se, x_blend);
+                    let y1 = lerp(nw, ne, x_blend);
+
+                    let val = lerp(y0, y1, y_blend);
+
+                    // Keep track of min/max for normalization
+                    if val > heights_max {
+                        heights_max = val;
+                    }
+
+                    if val < heights_min {
+                        heights_min = val;
+                    }
+
+                    val
                 } else {
                     let val = self.get_z([co.0, co.1, conf.offset_z]);
 
