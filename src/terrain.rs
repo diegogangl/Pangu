@@ -180,9 +180,6 @@ pub struct Procedural {
     /// Perlin noises for the main octaves (re-used for the others)
     noise_fns: Vec<Perlin>,
 
-    /// Scale on Z (height) of the terrain
-    z_scale: f64,
-
     /// Persistence values
     persistences: Vec<f64>,
 
@@ -197,7 +194,6 @@ impl Procedural {
             config: config,
             noise_fns: Self::setup_noise_fns(config.seed),
             persistences: Self::setup_persistences(&config),
-            z_scale: config.size / 20.0,
             steps: Self::calculate_steps(&config),
         }
     }
@@ -542,7 +538,7 @@ impl Procedural {
             mask *= -1.0;
         }
 
-        lerp(result, blend, mask) * self.z_scale
+        lerp(result, blend, mask)
     }
 
 
