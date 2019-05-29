@@ -337,6 +337,10 @@ impl Procedural {
                     z = floor;
                 }
 
+                if floor > 0.0 {
+                    z -= floor;
+                }
+
                 verts[i] = (verts[i].0, verts[i].1, z);
             }
         }
