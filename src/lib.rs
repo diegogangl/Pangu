@@ -1,5 +1,8 @@
 #![feature(test)]
-#[macro_use]
+#[macro_use] extern crate log;
+extern crate simplelog;
+
+use simplelog::*;
 
 mod utils;
 mod terrain;
@@ -55,7 +58,6 @@ fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
         flat: false,
     };
 
-
     Ok(config)
 }
 
@@ -81,6 +83,10 @@ fn terrain_vertices(params: &PyDict) -> PyVerts {
 /// The pangu module to be used in Python
 #[pymodule]
 fn pangu(_py: Python, m: &PyModule) -> PyResult<()> {
+
+    let log_config = Config {time: Some(Level::Trace),..Default::default() };
+    TermLogger::init(LevelFilter::Debug, log_config).unwrap();
+
     m.add_wrapped(wrap_pyfunction!(terrain_mesh))?;
     m.add_wrapped(wrap_pyfunction!(terrain_vertices))?;
     Ok(())

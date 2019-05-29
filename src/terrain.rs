@@ -239,7 +239,7 @@ impl Procedural {
             base / 2.0,
         ];
 
-
+        debug!("Calculated persistences: {:?}", persistences);
         persistences
     }
 
@@ -282,13 +282,20 @@ impl Procedural {
         let capacity = (conf.columns * conf.rows) as usize;
         let mut verts: Vertices = Vec::with_capacity(capacity);
 
+        debug!("Allocated vec with capacity: {:?}", capacity);
+
         let scale = f64::from(max(conf.rows, conf.columns)) * (1.0 / conf.size);
+        debug!("Scale: {:?}", scale);
+        debug!("Calculated steps are: {:?}", self.steps);
 
         let mut heights_min = 0.0;
         let mut heights_max = 1.0;
 
         let floor = conf.sea_floor * conf.height;
         let ceiling = conf.plateau * conf.height;
+
+        debug!("Calculated floor: {:?}", floor);
+        debug!("Calculated ceiling: {:?}", ceiling);
 
         for x in 0..conf.columns {
             for y in 0..conf.rows {
@@ -432,6 +439,8 @@ impl Procedural {
         } else {
             conf.scale
         };
+
+        debug!("Bounds x: {:?}, y: {:?}", x_bounds, y_bounds);
 
         (x_bounds / columns, y_bounds / rows)
     }
