@@ -291,6 +291,9 @@ impl Procedural {
         let mut heights_min = 0.0;
         let mut heights_max = 1.0;
 
+        let floor = conf.sea_floor * conf.height;
+        let ceiling = conf.plateau * conf.height;
+
         for x in 0..conf.columns {
             for y in 0..conf.rows {
                 let x = f64::from(x) - half_x;
@@ -300,17 +303,13 @@ impl Procedural {
                 let z = if conf.flat {
                     0.0
                 } else {
-                    let mut val = self.get_z([co.0, co.1, conf.offset_z]);
-                    if val > conf.plateau {
-                        val = conf.plateau;
-                    }
-                    if val < conf.sea_floor {
-                        val = 0.0;
-                    }
+                    let val = self.get_z([co.0, co.1, conf.offset_z]);
 
+                    // Keep track of min/max for normalization
                     if val > heights_max {
                         heights_max = val;
                     }
+
                     if val < heights_min {
                         heights_min = val;
                     }
@@ -326,12 +325,21 @@ impl Procedural {
         for x in 0..conf.columns as usize {
             for y in 0..conf.rows as usize {
                 let i = x * conf.columns as usize + y;
-                let z = map_on_zero(
+                let mut z = map_on_zero(
                     verts[i].2,
                     heights_min,
                     heights_max,
                     self.config.height,
                 );
+
+                // Restrict to plateau and sea floor
+                if z > ceiling {
+                    z = ceiling;
+                }
+
+                if z < floor {
+                    z = floor;
+                }
 
                 verts[i] = (verts[i].0, verts[i].1, z);
             }
