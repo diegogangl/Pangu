@@ -372,9 +372,10 @@ impl Procedural {
         }
 
         // Normalization
-        for x in 0..conf.columns as usize {
-            for y in 0..conf.rows as usize {
-                let i = x * conf.columns as usize + y;
+        for x in 0..conf.columns {
+            for y in 0..conf.rows {
+                let i = (y * conf.columns + x) as usize;
+
                 let mut z = map_on_zero(
                     verts[i].2,
                     heights_min,
