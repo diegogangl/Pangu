@@ -121,6 +121,9 @@ pub struct ProceduralConfig {
 
     /// Maximum Height
     pub height: f64,
+
+    /// Make the terrain seamless
+    pub is_seamless: bool,
 }
 
 
@@ -146,6 +149,7 @@ impl Default for ProceduralConfig {
             sea_floor: Self::DEFAULT_SEA_FLOOR,
             height: Self::DEFAULT_HEIGHT,
             flat: false,
+            is_seamless: Self::DEFAULT_SEAMLESS,
         }
     }
 }
@@ -168,6 +172,7 @@ impl ProceduralConfig {
     pub const DEFAULT_RIDGEDNESS: u8 = 0;
     pub const DEFAULT_SEA_FLOOR: f64 = 0.0;
     pub const DEFAULT_HEIGHT: f64 = 3.0;
+    pub const DEFAULT_SEAMLESS: bool = true;
 }
 
 
@@ -315,6 +320,10 @@ impl Procedural {
         debug!("Calculated floor: {:?}", floor);
         debug!("Calculated ceiling: {:?}", ceiling);
 
+        // Convenience for seamless calculations
+        let x_extent = self.limits_xy.0;
+        let y_extent = self.limits_xy.1;
+
         for x in 0..conf.columns {
             for y in 0..conf.rows {
                 let x = f64::from(x) - half_x;
@@ -325,22 +334,19 @@ impl Procedural {
                     0.0
 
                 // Make seamless
-                } else if false {
-                    let x_extent = 1.0;
-                    let y_extent = 1.0;
-
+                } else if conf.is_seamless {
                     let sw = self.get_z([co.0, co.1, conf.offset_z]);
                     let se = self.get_z([co.0 + x_extent, co.1, conf.offset_z]);
                     let nw = self.get_z([co.0, co.1 + y_extent, conf.offset_z]);
                     let ne = self.get_z([co.0 + x_extent, co.1 + y_extent, conf.offset_z]);
 
-                    let x_blend = 1.0 - ((co.0  + 0.0) / x_extent);
-                    let y_blend = 1.0 - ((co.1  + 0.0) / y_extent);
+                    let x_blend = 1.0 - ((co.0 + 1.0) / x_extent);
+                    let y_blend = 1.0 - ((co.1 + 1.0) / y_extent);
 
-                    let y0 = lerp(sw, se, x_blend);
-                    let y1 = lerp(nw, ne, x_blend);
+                    let y0 = lerp(se, sw, x_blend);
+                    let y1 = lerp(ne, nw, x_blend);
 
-                    let val = lerp(y0, y1, y_blend);
+                    let val = lerp(y1, y0, y_blend);
 
                     // Keep track of min/max for normalization
                     if val > heights_max {

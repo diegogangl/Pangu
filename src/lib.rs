@@ -55,6 +55,7 @@ fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
         ridgedness: param!(params, "ridgedness", DEFAULT_RIDGEDNESS),
         sea_floor: param!(params, "sea_floor", DEFAULT_SEA_FLOOR),
         height: param!(params, "height", DEFAULT_HEIGHT),
+        is_seamless: param!(params, "seamless", DEFAULT_SEAMLESS),
         flat: false,
     };
 
