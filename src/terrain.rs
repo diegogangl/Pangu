@@ -185,45 +185,55 @@ pub struct Procedural {
 
     /// Steps to scale coordinates for the X and Y axis
     steps: (f64, f64),
+
+    /// Upper bounds for noise coordinates. Used for seamless
+    /// calculation. Lower bounds are always zero.
+    limits_xy: (f64, f64)
 }
 
 
 impl Procedural {
-    pub fn new(config: ProceduralConfig) -> Self {
-        Procedural {
-            config: config,
-            noise_fns: Self::setup_noise_fns(config.seed),
-            persistences: Self::setup_persistences(&config),
-            steps: Self::calculate_steps(&config),
-        }
-    }
+    pub fn new(conf: ProceduralConfig) -> Self {
+        let columns = f64::from(conf.columns);
+        let rows = f64::from(conf.rows);
+
+        // Calculate correct boundaries for the noise. Boundaries are
+        // calculated fromt he ratio between rows and columns as well as
+        // the scale setting.
+        let limit_x = if columns > rows {
+            conf.scale
+        } else {
+            conf.scale * (columns / rows)
+        };
 
 
-    /// Setup the Perlin noise functions for the octaves
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` - The base seed for the noises
-    ///
-    /// Returns a vector of Perlin noise functions with
-    /// different seeds
-    fn setup_noise_fns(seed: u32) -> Vec<Perlin> {
+        let limit_y = if columns > rows {
+            conf.scale / (columns / rows)
+        } else {
+            conf.scale
+        };
+
+        debug!("Bound limits are x: {:?}, y: {:?}", limit_x, limit_y);
+        let limits_xy = (limit_x, limit_y);
+
+
+        // Calculate noise coordinates steps. These are used to fit
+        // coordinates inside the boundaries.
+        let steps = (limit_x / columns, limit_y / rows);
+        debug!("Calculated steps are: {:?}", steps);
+
+
+        // Setup Perlin noise functions for the octaves. Each octave
+        // has a different seed based on the seed setting.
         let mut noise_fns = Vec::with_capacity(6);
 
         for i in 0..6 {
-            noise_fns.push(Perlin::new().set_seed(seed + i));
+            noise_fns.push(Perlin::new().set_seed(conf.seed + i));
         }
 
-        noise_fns
-    }
 
-
-    /// Setup persistence values
-    ///
-    /// # Arguments
-    ///
-    /// * `conf` - Procedural terrain configuration
-    fn setup_persistences(conf: &ProceduralConfig) -> Vec<f64> {
+        // Setup persistence values for the octaves. These are used
+        // in the main noise function.
         let base = 1.0 - conf.plains;
 
         let persistences = vec![
@@ -240,7 +250,16 @@ impl Procedural {
         ];
 
         debug!("Calculated persistences: {:?}", persistences);
-        persistences
+
+
+        // All done!
+        Procedural {
+            config: conf,
+            noise_fns: noise_fns,
+            persistences: persistences,
+            limits_xy: limits_xy,
+            steps: steps,
+        }
     }
 
 
@@ -286,7 +305,6 @@ impl Procedural {
 
         let scale = f64::from(max(conf.rows, conf.columns)) * (1.0 / conf.size);
         debug!("Scale: {:?}", scale);
-        debug!("Calculated steps are: {:?}", self.steps);
 
         let mut heights_min = 0.0;
         let mut heights_max = 1.0;
@@ -412,37 +430,6 @@ impl Procedural {
         };
 
         (x2, y2)
-    }
-
-
-    /// Calculate correct boundaries for the noise and the steps
-    /// to make coordinates fit in the bounds. Boundaries are
-    /// calculated from the ratio between rows and columns as
-    /// well as the scale field.
-    ///
-    /// Returns a tuple with the X and Y steps.
-    fn calculate_steps(conf: &ProceduralConfig) -> (f64, f64) {
-        let columns = f64::from(conf.columns);
-        let rows = f64::from(conf.rows);
-
-        let ratio = columns / rows;
-
-        let x_bounds = if columns > rows {
-            conf.scale
-        } else {
-            conf.scale * ratio
-        };
-
-
-        let y_bounds = if columns > rows {
-            conf.scale / ratio
-        } else {
-            conf.scale
-        };
-
-        debug!("Bounds x: {:?}, y: {:?}", x_bounds, y_bounds);
-
-        (x_bounds / columns, y_bounds / rows)
     }
 
 
