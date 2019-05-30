@@ -517,9 +517,8 @@ impl Procedural {
         current_point = scale!(current_point, 2.0, domain);
 
         result += {
-            let mut signal = self.noise_fns[3].get(current_point);
-            signal = mountainess!(self, signal, 3, divisor);
-            ridge!(self, signal, 2)
+            let signal = self.noise_fns[3].get(current_point);
+            mountainess!(self, signal, 3, divisor) * result
         };
 
 
@@ -528,18 +527,18 @@ impl Procedural {
 
         current_point = scale!(current_point, 1.2, domain);
 
-        result += {
-            let signal =
-                self.noise_fns[4].get(current_point) * self.persistences[4];
-            ridge!(self, signal, 1)
-        };
+        result += self.noise_fns[4].get(current_point)
+                  * self.persistences[4]
+                  * result;
 
 
         //---------------------------------------------------------------------
         // Fine details
 
         current_point = scale!(current_point, 1.4, domain);
-        result += self.noise_fns[5].get(current_point) * self.persistences[5];
+        result += self.noise_fns[5].get(current_point)
+                  * self.persistences[5]
+                  * result;
 
 
         //---------------------------------------------------------------------
