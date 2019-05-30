@@ -702,6 +702,7 @@ mod tests {
             flat: true,
             ..Default::default()
         };
+
         let verts = Procedural::new(config).vertices();
 
         let expected = vec![
@@ -751,7 +752,9 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.5, 0.5), Procedural::calculate_steps(&config));
+
+        let steps = Procedural::new(config).steps;
+        assert_eq!((0.5, 0.5), steps);
 
         let config = ProceduralConfig {
             rows: 8,
@@ -759,7 +762,9 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.25, 0.25), Procedural::calculate_steps(&config));
+
+        let steps = Procedural::new(config).steps;
+        assert_eq!((0.25, 0.25), steps);
 
         let config = ProceduralConfig {
             rows: 4,
@@ -767,7 +772,9 @@ mod tests {
             size: 4.0,
             ..Default::default()
         };
-        assert_eq!((0.25, 0.25), Procedural::calculate_steps(&config));
+
+        let steps = Procedural::new(config).steps;
+        assert_eq!((0.25, 0.25), steps);
     }
 
 
