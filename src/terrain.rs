@@ -47,12 +47,10 @@ macro_rules! scale {
 /// * `signal` - The signal from the noise function
 /// * `level` - Level at which the ridgedness should be activated
 macro_rules! ridge {
-    ($self:ident, $signal:ident, $level:expr) => {
-        if $self.config.ridgedness >= $level {
-            $signal.abs() * -1.0
-        } else {
-            $signal
-        }
+    ($self:ident, $signal:ident) => {
+        lerp($signal + ($signal.abs() * -1.0),
+             $signal,
+             $self.config.ridgedness)
     };
 }
 
@@ -114,7 +112,7 @@ pub struct ProceduralConfig {
     pub mix: f64,
 
     /// Ridgedness
-    pub ridgedness: u8,
+    pub ridgedness: f64,
 
     /// Sea Floor
     pub sea_floor: f64,
@@ -169,7 +167,7 @@ impl ProceduralConfig {
     pub const DEFAULT_DEFORMATION: f64 = 0.1;
     pub const DEFAULT_MOUNTAINESS: f64 = 0.5;
     pub const DEFAULT_MIX: f64 = 0.5;
-    pub const DEFAULT_RIDGEDNESS: u8 = 0;
+    pub const DEFAULT_RIDGEDNESS: f64 = 0.0;
     pub const DEFAULT_SEA_FLOOR: f64 = 0.0;
     pub const DEFAULT_HEIGHT: f64 = 3.0;
     pub const DEFAULT_SEAMLESS: bool = true;
@@ -487,7 +485,7 @@ impl Procedural {
         // Basic shape of the terrain
 
         let signal = self.noise_fns[0].get(point) * self.persistences[0];
-        result = ridge!(self, signal, 5);
+        result = ridge!(self, signal);
 
 
         //---------------------------------------------------------------------
@@ -498,7 +496,7 @@ impl Procedural {
         result += {
             let mut signal = self.noise_fns[1].get(current_point);
             signal = mountainess!(self, signal, 1, divisor);
-            ridge!(self, signal, 4)
+            ridge!(self, signal)
         };
 
 
@@ -510,7 +508,7 @@ impl Procedural {
         result += {
             let mut signal = self.noise_fns[2].get(current_point);
             signal = mountainess!(self, signal, 2, divisor);
-            ridge!(self, signal, 3)
+            ridge!(self, signal)
         };
 
         //---------------------------------------------------------------------
@@ -552,7 +550,7 @@ impl Procedural {
         // Basic shape of the terrain
 
         let signal = self.noise_fns[3].get(point) * self.persistences[6];
-        blend = ridge!(self, signal, 4);
+        blend = ridge!(self, signal);
 
 
         //---------------------------------------------------------------------
@@ -563,16 +561,12 @@ impl Procedural {
         blend += {
             let signal =
                 self.noise_fns[1].get(current_point) * self.persistences[7];
-            ridge!(self, signal, 5)
+            ridge!(self, signal)
         };
 
         // Make sure there are no holes in the ground when using a high
         // plains setting
         mask += self.config.plains;
-
-        if self.config.ridgedness > 3 {
-            mask *= -1.0;
-        }
 
         lerp(result, blend, mask)
     }
