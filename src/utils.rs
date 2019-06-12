@@ -24,3 +24,18 @@ pub fn lerp(a: f64, b: f64, x: f64) -> f64 {
 pub fn map_on_zero(v: f64, min: f64, max: f64, new_max: f64) -> f64 {
     ((v - min) * new_max) / (max - min)
 }
+
+/// Clamp a value to a range
+pub fn clamp<T: PartialOrd>(val: T, min: T, max: T) -> T {
+    assert!(max >= min);
+    match () {
+        _ if val < min => min,
+        _ if val > max => max,
+        _ => val,
+    }
+}
+
+
+pub fn clamp_index(index: isize, min: usize, max: usize) -> usize {
+    clamp(index, min as isize, max as isize) as usize
+}

@@ -5,7 +5,7 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
 
-use super::utils::{lerp, map_on_zero};
+use super::utils::{lerp, map_on_zero, clamp_index};
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -59,6 +59,39 @@ macro_rules! mountainess {
         (($signal + ($signal.abs() + $self.config.plains)) / $divisor)
             * $self.persistences[$persistence]
     };
+}
+
+
+#[derive(Clone, Debug)]
+struct Curve {
+    pub points: Vec<f64>,
+}
+
+
+impl Curve {
+    pub fn new() -> Self {
+        Curve { points: Vec::new() }
+    }
+
+    /// Adds a control point to the curve.
+    pub fn add_control_point(mut self, control_point: f64) -> Self {
+        // check to see if the vector already contains the input point.
+        let is_point_in_vector = self.points
+                .iter()
+                .any(|&x| (x - control_point).abs() < std::f64::EPSILON);
+
+        if !is_point_in_vector {
+            let insertion_point = self.points
+                .iter()
+                .position(|&x| x >= control_point)
+                .unwrap_or_else(|| self.points.len());
+
+            // add the new control point at the correct position.
+            self.points.insert(insertion_point, control_point);
+        }
+
+        self
+    }
 }
 
 
@@ -201,7 +234,10 @@ pub struct Procedural {
 
     /// Upper bounds for noise coordinates. Used for seamless
     /// calculation. Lower bounds are always zero.
-    limits_xy: (f64, f64)
+    limits_xy: (f64, f64),
+
+    /// Curve for terrace effect
+    terrace_curve: Curve,
 }
 
 
@@ -264,6 +300,18 @@ impl Procedural {
 
         debug!("Calculated persistences: {:?}", persistences);
 
+        // TERRACE
+        let terrace_curve = Curve::new()
+            .add_control_point(-1.0)
+            .add_control_point(-0.1)
+            .add_control_point(0.2)
+            .add_control_point(0.5)
+            .add_control_point(0.6)
+            .add_control_point(0.65)
+            .add_control_point(0.7)
+            .add_control_point(0.95)
+            .add_control_point(1.0);
+
 
         // All done!
         Procedural {
@@ -272,6 +320,7 @@ impl Procedural {
             persistences: persistences,
             limits_xy: limits_xy,
             steps: steps,
+            terrace_curve: terrace_curve,
         }
     }
 
@@ -581,7 +630,31 @@ impl Procedural {
         // plains setting
         mask += self.config.plains;
 
-        lerp(result, blend, mask)
+        // TERRACE EFFECT
+        let source_value = lerp(result, blend, mask);
+
+
+        let index_pos = self.terrace_curve.points
+            .iter()
+            .position(|&x| x >= source_value)
+            .unwrap_or_else(|| self.terrace_curve.points.len());
+
+
+        let index0 = clamp_index(index_pos as isize - 1, 0, self.terrace_curve.points.len() - 1);
+        let index1 = clamp_index(index_pos as isize, 0, self.terrace_curve.points.len() - 1);
+
+        if index0 == index1 {
+            return self.terrace_curve.points[index1];
+        }
+
+        let input0 = self.terrace_curve.points[index0];
+        let input1 = self.terrace_curve.points[index1];
+        let mut alpha = (source_value - input0) / (input1 - input0);
+
+        alpha *= alpha;
+
+        lerp(input1, input0, alpha)
+
     }
 
 
