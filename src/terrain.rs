@@ -125,6 +125,9 @@ pub struct ProceduralConfig {
 
     /// Invert the terrain
     pub invert: bool,
+
+    /// Use terraces
+    pub terraces: bool
 }
 
 
@@ -152,6 +155,7 @@ impl Default for ProceduralConfig {
             flat: false,
             is_seamless: Self::DEFAULT_SEAMLESS,
             invert: Self::DEFAULT_INVERT,
+            terraces: Self::DEFAULT_TERRACES,
         }
     }
 }
@@ -176,6 +180,7 @@ impl ProceduralConfig {
     pub const DEFAULT_HEIGHT: f64 = 3.0;
     pub const DEFAULT_SEAMLESS: bool = true;
     pub const DEFAULT_INVERT: bool = false;
+    pub const DEFAULT_TERRACES: bool = false;
 }
 
 
