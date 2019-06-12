@@ -45,7 +45,3 @@ pub fn clamp<T: PartialOrd>(val: T, min: T, max: T) -> T {
     }
 }
 
-
-pub fn clamp_index(index: isize, min: usize, max: usize) -> usize {
-    clamp(index, min as isize, max as isize) as usize
-}

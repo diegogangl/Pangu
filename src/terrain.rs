@@ -5,7 +5,7 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
 
-use super::utils::{lerp, map_on_zero, clamp_index};
+use super::utils::{lerp, map_on_zero, clamp};
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -632,6 +632,7 @@ impl Procedural {
 
         // TERRACE EFFECT
         let source_value = lerp(result, blend, mask);
+        let points = self.terrace_curve.points.len();
 
 
         let index_pos = self.terrace_curve.points
@@ -640,8 +641,8 @@ impl Procedural {
             .unwrap_or_else(|| self.terrace_curve.points.len());
 
 
-        let index0 = clamp_index(index_pos as isize - 1, 0, self.terrace_curve.points.len() - 1);
-        let index1 = clamp_index(index_pos as isize, 0, self.terrace_curve.points.len() - 1);
+        let index0 = clamp(index_pos as isize - 1, 0, (points - 1) as isize) as usize;
+        let index1 = clamp(index_pos, 0, points - 1);
 
         if index0 == index1 {
             return self.terrace_curve.points[index1];
