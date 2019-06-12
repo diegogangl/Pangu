@@ -122,6 +122,9 @@ pub struct ProceduralConfig {
 
     /// Make the terrain seamless
     pub is_seamless: bool,
+
+    /// Invert the terrain
+    pub invert: bool,
 }
 
 
@@ -148,6 +151,7 @@ impl Default for ProceduralConfig {
             height: Self::DEFAULT_HEIGHT,
             flat: false,
             is_seamless: Self::DEFAULT_SEAMLESS,
+            invert: Self::DEFAULT_INVERT,
         }
     }
 }
@@ -171,6 +175,7 @@ impl ProceduralConfig {
     pub const DEFAULT_SEA_FLOOR: f64 = 0.0;
     pub const DEFAULT_HEIGHT: f64 = 3.0;
     pub const DEFAULT_SEAMLESS: bool = true;
+    pub const DEFAULT_INVERT: bool = false;
 }
 
 
@@ -328,7 +333,7 @@ impl Procedural {
                 let y = f64::from(y) - half_y;
 
                 let co = self.coords_for_noise(x, y);
-                let z = if conf.flat {
+                let mut z = if conf.flat {
                     0.0
 
                 // Make seamless
@@ -370,6 +375,10 @@ impl Procedural {
 
                     val
                 };
+
+                if conf.invert {
+                    z *= -1.0;
+                }
 
                 verts.push((x / scale, y / scale, z));
             }
