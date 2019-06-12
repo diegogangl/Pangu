@@ -84,7 +84,7 @@ impl Curve {
             let insertion_point = self.points
                 .iter()
                 .position(|&x| x >= control_point)
-                .unwrap_or_else(|| self.points.len());
+                .unwrap_or(self.points.len());
 
             // add the new control point at the correct position.
             self.points.insert(insertion_point, control_point);
@@ -638,7 +638,7 @@ impl Procedural {
         let index_pos = self.terrace_curve.points
             .iter()
             .position(|&x| x >= source_value)
-            .unwrap_or_else(|| self.terrace_curve.points.len());
+            .unwrap_or(points);
 
 
         let index0 = clamp(index_pos as isize - 1, 0, (points - 1) as isize) as usize;
