@@ -25,13 +25,23 @@ pub fn map_on_zero(v: f64, min: f64, max: f64, new_max: f64) -> f64 {
     ((v - min) * new_max) / (max - min)
 }
 
+
 /// Clamp a value to a range
+///
+/// # Arguments
+///
+/// * `val` - Value to clamp
+/// * `min` - Minimum value
+/// * `max` - Maximum value
 pub fn clamp<T: PartialOrd>(val: T, min: T, max: T) -> T {
-    assert!(max >= min);
-    match () {
-        _ if val < min => min,
-        _ if val > max => max,
-        _ => val,
+    debug_assert!(min <= max, "min must be less than or equal to max");
+
+    if val < min {
+        min
+    } else if val > max {
+        max
+    } else {
+        val
     }
 }
 
