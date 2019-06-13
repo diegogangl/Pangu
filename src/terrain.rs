@@ -5,7 +5,7 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
 
-use super::utils::{lerp, map_on_zero, clamp};
+use super::utils::{lerp, map_on_zero, clamp, percent_to_value};
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -348,8 +348,9 @@ impl Procedural {
 
             let mut curve = Curve::new();
 
-            for point in &conf.terraces_points {
-               curve.add_control_point(*point);
+            for p in &conf.terraces_points {
+               let point = percent_to_value(*p, conf.height);
+               curve.add_control_point(point);
             }
 
             curve
@@ -495,6 +496,10 @@ impl Procedural {
                     heights_max,
                     self.config.height,
                 );
+
+                if self.config.terraces {
+                    z = self.terrace(z);
+                }
 
                 // Restrict to plateau and sea floor
                 if z > ceiling {
@@ -675,16 +680,7 @@ impl Procedural {
         // Make sure there are no holes in the ground when using a high
         // plains setting
         mask += self.config.plains;
-        let value = lerp(result, blend, mask);
-
-
-        // Terrace Effect
-        if self.config.terraces {
-            self.terrace(value)
-        } else {
-            value
-        }
-
+        lerp(result, blend, mask)
     }
 
 
@@ -700,7 +696,7 @@ impl Procedural {
         // of the nearest control point and return. This can
         // happen when value < lowest_point or value > highest_point
         if indexes.0 == indexes.1 {
-            self.terrace_curve.points[indexes.1];
+            return self.terrace_curve.points[indexes.1];
         }
 
         // Get values and calculate alpha parameter for lerping

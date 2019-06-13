@@ -26,6 +26,17 @@ pub fn map_on_zero(v: f64, min: f64, max: f64, new_max: f64) -> f64 {
 }
 
 
+/// Get a value from a percentage
+///
+/// # Arguments
+///
+/// * `percent` - The percentage (range 0..100)
+/// * `total - Value represented by 100%
+pub fn percent_to_value(percent: f64, total: f64) -> f64 {
+    (percent / 100.0) * total
+}
+
+
 /// Clamp a value to a range
 ///
 /// # Arguments
