@@ -685,13 +685,12 @@ impl Procedural {
             let mut input_1 = self.terrace_curve.get_point(indexes.1);
             let mut alpha = (value - input_0) / (input_1 - input_0);
 
-            alpha *= alpha;
-
             if self.config.terraces_invert {
                 alpha = 1.0 - alpha;
                 std::mem::swap(&mut input_0, &mut input_1);
             }
 
+            alpha *= alpha;
             lerp(input_1, input_0, alpha)
 
         } else {
