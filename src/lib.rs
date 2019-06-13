@@ -31,6 +31,14 @@ macro_rules! param {
             None => terrain::ProceduralConfig::$default_value,
         };
     };
+
+    // Vecs can't have default parameters
+    ($params:expr, $key:expr) => {
+        match $params.get_item($key) {
+            Some(item) => item.extract()?,
+            None => Vec::new(),
+        };
+    };
 }
 
 
@@ -61,6 +69,7 @@ fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
         invert: param!(params, "invert", DEFAULT_INVERT),
         terraces: param!(params, "terraces", DEFAULT_TERRACES),
         terraces_invert: param!(params, "terraces_invert", DEFAULT_TERRACES_INVERT),
+        terraces_points: param!(params, "terraces_points"),
         flat: false,
     };
 

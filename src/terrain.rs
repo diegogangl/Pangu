@@ -78,7 +78,7 @@ impl Curve {
     /// # Arguments
     ///
     /// * `control_point` - Value for the control point
-    pub fn add_control_point(mut self, control_point: f64) -> Self {
+    pub fn add_control_point(&mut self, control_point: f64) -> &Self {
         let is_point_in_vector = self.points
                 .iter()
                 .any(|&x| (x - control_point).abs() < std::f64::EPSILON);
@@ -94,6 +94,7 @@ impl Curve {
         }
 
         self
+
     }
 
 
@@ -127,7 +128,7 @@ impl Curve {
 }
 
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct ProceduralConfig {
     /// The number of rows to use in the mesh grid
     pub rows: u32,
@@ -196,6 +197,9 @@ pub struct ProceduralConfig {
 
     /// Invert Terraces
     pub terraces_invert: bool,
+
+    /// Invert Terraces
+    pub terraces_points: Vec<f64>,
 }
 
 
@@ -225,6 +229,7 @@ impl Default for ProceduralConfig {
             invert: Self::DEFAULT_INVERT,
             terraces: Self::DEFAULT_TERRACES,
             terraces_invert: Self::DEFAULT_TERRACES_INVERT,
+            terraces_points: Vec::new(),
         }
     }
 }
@@ -341,20 +346,17 @@ impl Procedural {
         let terrace_curve = if conf.terraces {
             debug!("Adding control points for terrace");
 
-            Curve::new().add_control_point(-1.0)
-                        .add_control_point(-0.1)
-                        .add_control_point(0.2)
-                        .add_control_point(0.5)
-                        .add_control_point(0.6)
-                        .add_control_point(0.65)
-                        .add_control_point(0.7)
-                        .add_control_point(0.95)
-                        .add_control_point(1.0)
+            let mut curve = Curve::new();
+
+            for point in &conf.terraces_points {
+               curve.add_control_point(*point);
+            }
+
+            curve
+
         } else {
             Curve::new()
         };
-
-
 
 
         // All done!
@@ -374,7 +376,7 @@ impl Procedural {
     /// Returns the a vector of tuples containing the indices
     /// for the four vertices of each face.
     fn faces(&self) -> Faces {
-        let conf = self.config;
+        let conf = &self.config;
 
         let capacity = (conf.columns * conf.rows) as usize;
         let mut faces: Faces = Vec::with_capacity(capacity);
@@ -399,7 +401,7 @@ impl Procedural {
     /// Returns the 3D coordinates for the mesh as a vector
     /// of tuples.
     fn vertices(&self) -> Vertices {
-        let conf = self.config;
+        let conf = &self.config;
 
         let half_x = f64::from(conf.columns - 1) / 2.0;
         let half_y = f64::from(conf.rows - 1) / 2.0;
@@ -525,7 +527,7 @@ impl Procedural {
     /// * `x`: Value for X axis
     /// * `y`: Value for y axis
     fn coords_for_noise(&self, x: f64, y: f64) -> (f64, f64) {
-        let conf = self.config;
+        let conf = &self.config;
 
         let x2 = if conf.rotation != 0.0 {
             let rotated = x * conf.rotation.cos() - y * conf.rotation.sin();
@@ -698,8 +700,7 @@ impl Procedural {
                 std::mem::swap(&mut input_0, &mut input_1);
             }
 
-            alpha *= alpha;
-            lerp(input_1, input_0, alpha)
+            lerp(input_1, input_0, alpha.powi(2))
 
         } else {
             value
