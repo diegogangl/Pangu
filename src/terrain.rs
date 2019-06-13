@@ -191,7 +191,10 @@ pub struct ProceduralConfig {
     pub invert: bool,
 
     /// Use terraces
-    pub terraces: bool
+    pub terraces: bool,
+
+    /// Invert Terraces
+    pub terraces_invert: bool,
 }
 
 
@@ -220,6 +223,7 @@ impl Default for ProceduralConfig {
             is_seamless: Self::DEFAULT_SEAMLESS,
             invert: Self::DEFAULT_INVERT,
             terraces: Self::DEFAULT_TERRACES,
+            terraces_invert: Self::DEFAULT_TERRACES_INVERT,
         }
     }
 }
@@ -245,6 +249,7 @@ impl ProceduralConfig {
     pub const DEFAULT_SEAMLESS: bool = true;
     pub const DEFAULT_INVERT: bool = false;
     pub const DEFAULT_TERRACES: bool = false;
+    pub const DEFAULT_TERRACES_INVERT: bool = true;
 }
 
 
@@ -676,11 +681,16 @@ impl Procedural {
             }
 
             // Get values and calculate alpha parameter for lerping
-            let input_0 = self.terrace_curve.get_point(indexes.0);
-            let input_1 = self.terrace_curve.get_point(indexes.1);
+            let mut input_0 = self.terrace_curve.get_point(indexes.0);
+            let mut input_1 = self.terrace_curve.get_point(indexes.1);
             let mut alpha = (value - input_0) / (input_1 - input_0);
 
             alpha *= alpha;
+
+            if self.config.terraces_invert {
+                alpha = 1.0 - alpha;
+                std::mem::swap(&mut input_0, &mut input_1);
+            }
 
             lerp(input_1, input_0, alpha)
 

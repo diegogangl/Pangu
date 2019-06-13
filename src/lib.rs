@@ -58,6 +58,7 @@ fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
         is_seamless: param!(params, "seamless", DEFAULT_SEAMLESS),
         invert: param!(params, "invert", DEFAULT_INVERT),
         terraces: param!(params, "terraces", DEFAULT_TERRACES),
+        terraces_invert: param!(params, "terraces_invert", DEFAULT_TERRACES_INVERT),
         flat: false,
     };
 
