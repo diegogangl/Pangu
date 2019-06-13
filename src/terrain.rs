@@ -650,22 +650,28 @@ impl Procedural {
         // Make sure there are no holes in the ground when using a high
         // plains setting
         mask += self.config.plains;
+        let value = lerp(result, blend, mask);
+
 
         // TERRACE EFFECT
-        let source_value = lerp(result, blend, mask);
-        let indexes = self.terrace_curve.nearest_points(source_value);
+        if self.config.terraces {
+            let indexes = self.terrace_curve.nearest_points(value);
 
-        if indexes.0 == indexes.1 {
-            return self.terrace_curve.points[indexes.1];
+            if indexes.0 == indexes.1 {
+                return self.terrace_curve.points[indexes.1];
+            }
+
+            let input_0 = self.terrace_curve.get_point(indexes.0);
+            let input_1 = self.terrace_curve.get_point(indexes.1);
+            let mut alpha = (value - input_0) / (input_1 - input_0);
+
+            alpha *= alpha;
+
+            lerp(input_1, input_0, alpha)
+
+        } else {
+            value
         }
-
-        let input_0 = self.terrace_curve.get_point(indexes.0);
-        let input_1 = self.terrace_curve.get_point(indexes.1);
-        let mut alpha = (source_value - input_0) / (input_1 - input_0);
-
-        alpha *= alpha;
-
-        lerp(input_1, input_0, alpha)
 
     }
 
