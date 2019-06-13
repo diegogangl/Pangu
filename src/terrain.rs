@@ -680,32 +680,40 @@ impl Procedural {
 
         // Terrace Effect
         if self.config.terraces {
-            // Get indices of the nearest two points
-            let indexes = self.terrace_curve.nearest_points(value);
-
-            // If some control points are missing get the output value
-            // of the nearest control point and return. This can
-            // happen when value < lowest_point or value > highest_point
-            if indexes.0 == indexes.1 {
-                return self.terrace_curve.points[indexes.1];
-            }
-
-            // Get values and calculate alpha parameter for lerping
-            let mut input_0 = self.terrace_curve.get_point(indexes.0);
-            let mut input_1 = self.terrace_curve.get_point(indexes.1);
-            let mut alpha = (value - input_0) / (input_1 - input_0);
-
-            if self.config.terraces_invert {
-                alpha = 1.0 - alpha;
-                std::mem::swap(&mut input_0, &mut input_1);
-            }
-
-            lerp(input_1, input_0, alpha.powi(2))
-
+            self.terrace(value)
         } else {
             value
         }
 
+    }
+
+
+    /// Create a terrace effect
+    ///
+    /// # Arguments
+    /// * `value - A height value from the terrain
+    fn terrace(&self, value: f64) -> f64 {
+        // Get indices of the nearest two points
+        let indexes = self.terrace_curve.nearest_points(value);
+
+        // If some control points are missing get the output value
+        // of the nearest control point and return. This can
+        // happen when value < lowest_point or value > highest_point
+        if indexes.0 == indexes.1 {
+            self.terrace_curve.points[indexes.1];
+        }
+
+        // Get values and calculate alpha parameter for lerping
+        let mut input_0 = self.terrace_curve.get_point(indexes.0);
+        let mut input_1 = self.terrace_curve.get_point(indexes.1);
+        let mut alpha = (value - input_0) / (input_1 - input_0);
+
+        if self.config.terraces_invert {
+            alpha = 1.0 - alpha;
+            std::mem::swap(&mut input_0, &mut input_1);
+        }
+
+        lerp(input_1, input_0, alpha.powi(2))
     }
 
 
