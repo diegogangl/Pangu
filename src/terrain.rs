@@ -74,8 +74,11 @@ impl Curve {
     }
 
     /// Adds a control point to the curve.
+    ///
+    /// # Arguments
+    ///
+    /// * `control_point` - Value for the control point
     pub fn add_control_point(mut self, control_point: f64) -> Self {
-        // check to see if the vector already contains the input point.
         let is_point_in_vector = self.points
                 .iter()
                 .any(|&x| (x - control_point).abs() < std::f64::EPSILON);
@@ -86,7 +89,6 @@ impl Curve {
                 .position(|&x| x >= control_point)
                 .unwrap_or(self.points.len());
 
-            // add the new control point at the correct position.
             self.points.insert(insertion_point, control_point);
         }
 
@@ -95,6 +97,10 @@ impl Curve {
 
 
     /// Get the index to the two nearest control points to value
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - Value to find points for
     pub fn nearest_points(&self, value: f64) -> (usize, usize) {
         let length = self.points.len();
 
@@ -110,6 +116,10 @@ impl Curve {
 
 
     /// Get a control point
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - Index of the control point
     pub fn get_point(&self, index: usize) -> f64 {
         self.points[index]
     }
@@ -653,14 +663,19 @@ impl Procedural {
         let value = lerp(result, blend, mask);
 
 
-        // TERRACE EFFECT
+        // Terrace Effect
         if self.config.terraces {
+            // Get indices of the nearest two points
             let indexes = self.terrace_curve.nearest_points(value);
 
+            // If some control points are missing get the output value
+            // of the nearest control point and return. This can
+            // happen when value < lowest_point or value > highest_point
             if indexes.0 == indexes.1 {
                 return self.terrace_curve.points[indexes.1];
             }
 
+            // Get values and calculate alpha parameter for lerping
             let input_0 = self.terrace_curve.get_point(indexes.0);
             let input_1 = self.terrace_curve.get_point(indexes.1);
             let mut alpha = (value - input_0) / (input_1 - input_0);
