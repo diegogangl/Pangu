@@ -84,12 +84,13 @@ impl Curve {
                 .any(|&x| (x - control_point).abs() < std::f64::EPSILON);
 
         if !is_point_in_vector {
-            let insertion_point = self.points
+            let index = self.points
                 .iter()
                 .position(|&x| x >= control_point)
                 .unwrap_or(self.points.len());
 
-            self.points.insert(insertion_point, control_point);
+            self.points.insert(index, control_point);
+            debug!("Added control point {0} at #{1}", control_point, index);
         }
 
         self
