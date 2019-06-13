@@ -337,17 +337,24 @@ impl Procedural {
 
         debug!("Calculated persistences: {:?}", persistences);
 
-        // TERRACE
-        let terrace_curve = Curve::new()
-            .add_control_point(-1.0)
-            .add_control_point(-0.1)
-            .add_control_point(0.2)
-            .add_control_point(0.5)
-            .add_control_point(0.6)
-            .add_control_point(0.65)
-            .add_control_point(0.7)
-            .add_control_point(0.95)
-            .add_control_point(1.0);
+
+        let terrace_curve = if conf.terraces {
+            debug!("Adding control points for terrace");
+
+            Curve::new().add_control_point(-1.0)
+                        .add_control_point(-0.1)
+                        .add_control_point(0.2)
+                        .add_control_point(0.5)
+                        .add_control_point(0.6)
+                        .add_control_point(0.65)
+                        .add_control_point(0.7)
+                        .add_control_point(0.95)
+                        .add_control_point(1.0)
+        } else {
+            Curve::new()
+        };
+
+
 
 
         // All done!
