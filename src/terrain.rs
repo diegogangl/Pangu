@@ -64,7 +64,7 @@ macro_rules! mountainess {
 
 #[derive(Clone, Debug)]
 struct Curve {
-    pub points: Vec<f64>,
+    points: Vec<f64>,
 }
 
 
@@ -91,6 +91,27 @@ impl Curve {
         }
 
         self
+    }
+
+
+    /// Get the index to the two nearest control points to value
+    pub fn nearest_points(&self, value: f64) -> (usize, usize) {
+        let length = self.points.len();
+
+        let ind_pos = self.points
+            .iter()
+            .position(|&x| x >= value)
+            .unwrap_or(length);
+
+
+        (clamp(ind_pos as isize - 1, 0, (length - 1) as isize) as usize,
+         clamp(ind_pos, 0, length - 1))
+    }
+
+
+    /// Get a control point
+    pub fn get_point(&self, index: usize) -> f64 {
+        self.points[index]
     }
 }
 
@@ -632,29 +653,19 @@ impl Procedural {
 
         // TERRACE EFFECT
         let source_value = lerp(result, blend, mask);
-        let points = self.terrace_curve.points.len();
+        let indexes = self.terrace_curve.nearest_points(source_value);
 
-
-        let index_pos = self.terrace_curve.points
-            .iter()
-            .position(|&x| x >= source_value)
-            .unwrap_or(points);
-
-
-        let index0 = clamp(index_pos as isize - 1, 0, (points - 1) as isize) as usize;
-        let index1 = clamp(index_pos, 0, points - 1);
-
-        if index0 == index1 {
-            return self.terrace_curve.points[index1];
+        if indexes.0 == indexes.1 {
+            return self.terrace_curve.points[indexes.1];
         }
 
-        let input0 = self.terrace_curve.points[index0];
-        let input1 = self.terrace_curve.points[index1];
-        let mut alpha = (source_value - input0) / (input1 - input0);
+        let input_0 = self.terrace_curve.get_point(indexes.0);
+        let input_1 = self.terrace_curve.get_point(indexes.1);
+        let mut alpha = (source_value - input_0) / (input_1 - input_0);
 
         alpha *= alpha;
 
-        lerp(input1, input0, alpha)
+        lerp(input_1, input_0, alpha)
 
     }
 
