@@ -71,6 +71,10 @@ fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
         terraces_invert: param!(params, "terraces_invert", DEFAULT_TERRACES_INVERT),
         terraces_points: param!(params, "terraces_points"),
         flat: false,
+        smooth: param!(params, "smooth", DEFAULT_SMOOTH),
+        smooth_x: param!(params, "smooth_x", DEFAULT_SMOOTH_X),
+        smooth_y: param!(params, "smooth_y", DEFAULT_SMOOTH_Y),
+        smooth_linear_fac: param!(params, "smooth_linear_fac", DEFAULT_SMOOTH_LINEAR_FAC),
     };
 
     Ok(config)

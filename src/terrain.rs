@@ -200,6 +200,13 @@ pub struct ProceduralConfig {
 
     /// Invert Terraces
     pub terraces_points: Vec<f64>,
+
+    // Smooth out terrain
+    pub smooth: bool,
+    pub smooth_linear_fac: (f64, f64),
+    pub smooth_x: bool,
+    pub smooth_y: bool,
+
 }
 
 
@@ -230,6 +237,10 @@ impl Default for ProceduralConfig {
             terraces: Self::DEFAULT_TERRACES,
             terraces_invert: Self::DEFAULT_TERRACES_INVERT,
             terraces_points: Vec::new(),
+            smooth: Self::DEFAULT_SMOOTH,
+            smooth_x: Self::DEFAULT_SMOOTH_X,
+            smooth_y: Self::DEFAULT_SMOOTH_Y,
+            smooth_linear_fac: Self::DEFAULT_SMOOTH_LINEAR_FAC,
         }
     }
 }
@@ -256,6 +267,10 @@ impl ProceduralConfig {
     pub const DEFAULT_INVERT: bool = false;
     pub const DEFAULT_TERRACES: bool = false;
     pub const DEFAULT_TERRACES_INVERT: bool = true;
+    pub const DEFAULT_SMOOTH: bool = false;
+    pub const DEFAULT_SMOOTH_X: bool = false;
+    pub const DEFAULT_SMOOTH_Y: bool = false;
+    pub const DEFAULT_SMOOTH_LINEAR_FAC: (f64, f64) = (0.0, 0.0);
 }
 
 
