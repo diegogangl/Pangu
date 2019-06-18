@@ -204,9 +204,8 @@ pub struct ProceduralConfig {
     // Smooth out terrain
     pub smooth: bool,
     pub smooth_linear_fac: (f64, f64),
-    pub smooth_x: bool,
-    pub smooth_y: bool,
-
+    pub smooth_linear_start: (f64, f64),
+    pub smooth_linear_invert: (bool, bool),
 }
 
 
@@ -238,9 +237,9 @@ impl Default for ProceduralConfig {
             terraces_invert: Self::DEFAULT_TERRACES_INVERT,
             terraces_points: Vec::new(),
             smooth: Self::DEFAULT_SMOOTH,
-            smooth_x: Self::DEFAULT_SMOOTH_X,
-            smooth_y: Self::DEFAULT_SMOOTH_Y,
             smooth_linear_fac: Self::DEFAULT_SMOOTH_LINEAR_FAC,
+            smooth_linear_start: Self::DEFAULT_SMOOTH_LINEAR_FAC,
+            smooth_linear_invert: Self::DEFAULT_SMOOTH_LINEAR_INVERT,
         }
     }
 }
@@ -268,9 +267,9 @@ impl ProceduralConfig {
     pub const DEFAULT_TERRACES: bool = false;
     pub const DEFAULT_TERRACES_INVERT: bool = true;
     pub const DEFAULT_SMOOTH: bool = false;
-    pub const DEFAULT_SMOOTH_X: bool = false;
-    pub const DEFAULT_SMOOTH_Y: bool = false;
     pub const DEFAULT_SMOOTH_LINEAR_FAC: (f64, f64) = (0.0, 0.0);
+    pub const DEFAULT_SMOOTH_LINEAR_START: (f64, f64) = (0.0, 0.0);
+    pub const DEFAULT_SMOOTH_LINEAR_INVERT: (bool, bool) = (true, false);
 }
 
 
@@ -504,9 +503,10 @@ impl Procedural {
         for x in 0..conf.columns {
             for y in 0..conf.rows {
                 let i = (y * conf.columns + x) as usize;
+                let mut z = verts[i].2;
 
-                let mut z = map_on_zero(
-                    verts[i].2,
+                z = map_on_zero(
+                    z,
                     heights_min,
                     heights_max,
                     self.config.height,
@@ -527,6 +527,11 @@ impl Procedural {
 
                 if floor > 0.0 {
                     z -= floor;
+                }
+
+                // Smooth Modifier
+                if self.config.smooth {
+                    z *= self.smooth_linear(x, y);
                 }
 
                 verts[i] = (verts[i].0, verts[i].1, z);
@@ -696,6 +701,51 @@ impl Procedural {
         // plains setting
         mask += self.config.plains;
         lerp(result, blend, mask)
+    }
+
+
+    /// Create a smooth effect on one or two axis
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X index of the current height point
+    /// * `y` - Y index of the current height point
+    fn smooth_linear(&self, x: u32, y: u32) -> f64 {
+        let mut multiplier = 1.0;
+
+        if self.config.smooth_linear_fac.0 > 0.0 {
+            let cols = f64::from(self.config.columns);
+
+            let fac = if self.config.smooth_linear_invert.0 {
+               (cols - (x as f64 + self.config.smooth_linear_start.0)) / cols
+            } else {
+               ((cols + (x as f64 - self.config.smooth_linear_start.0)) / cols) - 1.0
+            };
+
+            if fac > 0.0 {
+                multiplier = fac.powf(self.config.smooth_linear_fac.0);
+            } else {
+                multiplier = 0.0;
+            };
+        };
+
+        if self.config.smooth_linear_fac.1 > 0.0 {
+            let rows = f64::from(self.config.rows);
+
+            let fac = if self.config.smooth_linear_invert.1 {
+               (rows - (y as f64 + self.config.smooth_linear_start.1)) / rows
+            } else {
+               ((rows + (y as f64 - self.config.smooth_linear_start.1)) / rows) - 1.0
+            };
+
+            if fac > 0.0 {
+                multiplier *= fac.powf(self.config.smooth_linear_fac.1);
+            } else {
+                multiplier *= 0.0;
+            };
+        };
+
+        multiplier
     }
 
 
