@@ -3,7 +3,7 @@
 extern crate noise;
 extern crate test;
 
-use noise::{NoiseFn, Perlin, Point3, Seedable};
+use noise::{NoiseFn, Perlin, Point2, Seedable};
 
 use super::utils::{lerp, map_on_zero, clamp, percent_to_value, distance};
 use std::cmp::max;
@@ -24,14 +24,13 @@ pub type Vertices = Vec<(f64, f64, f64)>;
 /// * `warp` - Domain warping value
 macro_rules! scale {
     ($var:ident, $fac:expr) => {
-        [$var[0] * $fac, $var[1] * $fac, $var[2] * $fac]
+        [$var[0] * $fac, $var[1] * $fac]
     };
 
     ($var:ident, $fac:expr, $warp:expr) => {
         [
             $var[0] * $fac + $warp,
-            $var[1] * $fac + $warp,
-            $var[2] * $fac,
+            $var[1] * $fac + $warp
         ]
     };
 }
@@ -462,10 +461,10 @@ impl Procedural {
 
                 // Make seamless
                 } else if conf.is_seamless {
-                    let sw = self.get_z([co.0, co.1, conf.offset_z]);
-                    let se = self.get_z([co.0 + x_extent, co.1, conf.offset_z]);
-                    let nw = self.get_z([co.0, co.1 + y_extent, conf.offset_z]);
-                    let ne = self.get_z([co.0 + x_extent, co.1 + y_extent, conf.offset_z]);
+                    let sw = self.get_z([co.0, co.1]);
+                    let se = self.get_z([co.0 + x_extent, co.1]);
+                    let nw = self.get_z([co.0, co.1 + y_extent]);
+                    let ne = self.get_z([co.0 + x_extent, co.1 + y_extent]);
 
                     let x_blend = 1.0 - ((co.0 + 1.0) / x_extent);
                     let y_blend = 1.0 - ((co.1 + 1.0) / y_extent);
@@ -486,7 +485,7 @@ impl Procedural {
 
                     val
                 } else {
-                    let val = self.get_z([co.0, co.1, conf.offset_z]);
+                    let val = self.get_z([co.0, co.1]);
 
                     // Keep track of min/max for normalization
                     if val > heights_max {
@@ -589,7 +588,7 @@ impl Procedural {
     ///
     /// # Arguments
     /// * `point` - The coordinates in 3D space for the noise
-    fn get_z(&self, point: Point3<f64>) -> f64 {
+    fn get_z(&self, point: Point2<f64>) -> f64 {
         let mut result;
         let mut domain;
         let mut blend;
@@ -1091,7 +1090,7 @@ mod benches {
         let config = ProceduralConfig::default();
         let terrain = Procedural::new(config);
 
-        b.iter(|| terrain.get_z([0.0, 0.0, 0.0]));
+        b.iter(|| terrain.get_z([0.0, 0.0]));
     }
 
     #[bench]
