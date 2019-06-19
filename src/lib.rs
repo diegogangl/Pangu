@@ -4,7 +4,7 @@ extern crate simplelog;
 
 use simplelog::*;
 
-mod utils;
+mod math;
 mod terrain;
 
 use pyo3::prelude::*;

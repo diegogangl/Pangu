@@ -5,7 +5,7 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point2, Seedable};
 
-use super::utils::{lerp, map_on_zero, clamp, percent_to_value, distance};
+use super::math::{lerp, map_on_zero, clamp, percent_to_value, distance};
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
