@@ -86,7 +86,7 @@ impl Curve {
             let index = self.points
                 .iter()
                 .position(|&x| x >= control_point)
-                .unwrap_or(self.points.len());
+                .unwrap_or_else(|| self.points.len());
 
             self.points.insert(index, control_point);
             debug!("Added control point {0} at #{1}", control_point, index);
