@@ -57,3 +57,15 @@ pub fn clamp<T: PartialOrd>(val: T, min: T, max: T) -> T {
 }
 
 
+/// Calculate distance between two points in 2D
+///
+/// # Arguments
+///
+/// * `x1` - X coordinate of the first point
+/// * `y1` - y coordinate of the first point
+/// * `x2` - X coordinate of the second point
+/// * `y2` - y coordinate of the second point
+pub fn distance(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
+    ((x1 - x2).abs().powi(2) + (y1 - y2).abs().powi(2)).sqrt()
+}
+
