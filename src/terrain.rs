@@ -5,7 +5,7 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point3, Seedable};
 
-use super::utils::{lerp, map_on_zero, clamp, percent_to_value};
+use super::utils::{lerp, map_on_zero, clamp, percent_to_value, distance};
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -203,6 +203,9 @@ pub struct ProceduralConfig {
 
     // Smooth out terrain
     pub smooth: bool,
+    pub smooth_radial: bool,
+    pub smooth_radial_fac: f64,
+    pub smooth_radial_size: (f64, f64),
     pub smooth_linear_fac: (f64, f64),
     pub smooth_linear_start: (f64, f64),
     pub smooth_linear_invert: (bool, bool),
@@ -237,6 +240,9 @@ impl Default for ProceduralConfig {
             terraces_invert: Self::DEFAULT_TERRACES_INVERT,
             terraces_points: Vec::new(),
             smooth: Self::DEFAULT_SMOOTH,
+            smooth_radial: Self::DEFAULT_SMOOTH_RADIAL,
+            smooth_radial_fac: Self::DEFAULT_SMOOTH_RADIAL_FAC,
+            smooth_radial_size: Self::DEFAULT_SMOOTH_RADIAL_SIZE,
             smooth_linear_fac: Self::DEFAULT_SMOOTH_LINEAR_FAC,
             smooth_linear_start: Self::DEFAULT_SMOOTH_LINEAR_FAC,
             smooth_linear_invert: Self::DEFAULT_SMOOTH_LINEAR_INVERT,
@@ -267,6 +273,9 @@ impl ProceduralConfig {
     pub const DEFAULT_TERRACES: bool = false;
     pub const DEFAULT_TERRACES_INVERT: bool = true;
     pub const DEFAULT_SMOOTH: bool = false;
+    pub const DEFAULT_SMOOTH_RADIAL: bool = true;
+    pub const DEFAULT_SMOOTH_RADIAL_FAC: f64 = 0.0;
+    pub const DEFAULT_SMOOTH_RADIAL_SIZE: (f64, f64) = (0.0, 0.0);
     pub const DEFAULT_SMOOTH_LINEAR_FAC: (f64, f64) = (0.0, 0.0);
     pub const DEFAULT_SMOOTH_LINEAR_START: (f64, f64) = (0.0, 0.0);
     pub const DEFAULT_SMOOTH_LINEAR_INVERT: (bool, bool) = (true, false);
@@ -531,7 +540,11 @@ impl Procedural {
 
                 // Smooth Modifier
                 if self.config.smooth {
-                    z *= self.smooth_linear(x, y);
+                    z *= if self.config.smooth_radial {
+                            self.smooth_radial(x, y)
+                         } else {
+                            self.smooth_linear(x, y)
+                         };
                 }
 
                 verts[i] = (verts[i].0, verts[i].1, z);
@@ -701,6 +714,38 @@ impl Procedural {
         // plains setting
         mask += self.config.plains;
         lerp(result, blend, mask)
+    }
+
+
+    /// Create a circular smooth effect
+    ///
+    /// Only works in square terrains for now
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X index of the current height point
+    /// * `y` - Y index of the current height point
+    fn smooth_radial(&self, x: u32, y: u32) -> f64 {
+
+        if self.config.columns != self.config.rows {
+            return 1.0
+        }
+
+        let cols = f64::from(self.config.columns);
+        let rows = f64::from(self.config.rows);
+
+        let center_x = cols / 2.0;
+        let center_y = rows / 2.0;
+
+        let max_dist = distance(center_x, center_y,
+                                cols - self.config.smooth_radial_size.0,
+                                rows - self.config.smooth_radial_size.1);
+
+        let dist = distance(center_x, center_y, x as f64, y as f64);
+        let normalized = (dist / max_dist).min(1.0);
+
+        // Normalized with a power of <1 creates pointy terrains
+        lerp(0.0, 1.0, normalized.powf(self.config.smooth_radial_fac - normalized))
     }
 
 
