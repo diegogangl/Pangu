@@ -1,5 +1,8 @@
 #![allow(dead_code)]
 
+/// Terrain generation core
+
+
 extern crate noise;
 extern crate test;
 

@@ -1,3 +1,5 @@
+/// Small math library to make life easier
+
 /// Calculate linear interpolation
 ///
 /// # Arguments
