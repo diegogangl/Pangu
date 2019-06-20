@@ -8,7 +8,7 @@ extern crate test;
 
 use noise::{NoiseFn, Perlin, Point2, Seedable};
 
-use super::math::{lerp, map_on_zero, clamp, percent_to_value, distance};
+use super::math;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -50,7 +50,7 @@ macro_rules! scale {
 /// * `level` - Level at which the ridgedness should be activated
 macro_rules! ridge {
     ($self:ident, $signal:ident) => {
-        lerp($signal + ($signal.abs() * -1.0),
+        math::lerp($signal + ($signal.abs() * -1.0),
              $signal,
              $self.config.ridgedness)
     };
@@ -114,8 +114,8 @@ impl Curve {
             .unwrap_or(length);
 
 
-        (clamp(ind_pos as isize - 1, 0, (length - 1) as isize) as usize,
-         clamp(ind_pos, 0, length - 1))
+        (math::clamp(ind_pos as isize - 1, 0, (length - 1) as isize) as usize,
+         math::clamp(ind_pos, 0, length - 1))
     }
 
 
@@ -374,7 +374,7 @@ impl Procedural {
             let mut curve = Curve::new();
 
             for p in &conf.terraces_points {
-               let point = percent_to_value(*p, conf.height);
+               let point = math::percent_to_value(*p, conf.height);
                curve.add_control_point(point);
             }
 
@@ -472,10 +472,10 @@ impl Procedural {
                     let x_blend = 1.0 - ((co.0 + 1.0) / x_extent);
                     let y_blend = 1.0 - ((co.1 + 1.0) / y_extent);
 
-                    let y0 = lerp(se, sw, x_blend);
-                    let y1 = lerp(ne, nw, x_blend);
+                    let y0 = math::lerp(se, sw, x_blend);
+                    let y1 = math::lerp(ne, nw, x_blend);
 
-                    let val = lerp(y1, y0, y_blend);
+                    let val = math::lerp(y1, y0, y_blend);
 
                     // Keep track of min/max for normalization
                     if val > heights_max {
@@ -516,7 +516,7 @@ impl Procedural {
                 let i = (y * conf.columns + x) as usize;
                 let mut z = verts[i].2;
 
-                z = map_on_zero(
+                z = math::map_on_zero(
                     z,
                     heights_min,
                     heights_max,
@@ -715,7 +715,7 @@ impl Procedural {
         // Make sure there are no holes in the ground when using a high
         // plains setting
         mask += self.config.plains;
-        lerp(result, blend, mask)
+        math::lerp(result, blend, mask)
     }
 
 
@@ -739,15 +739,15 @@ impl Procedural {
         let center_x = cols / 2.0;
         let center_y = rows / 2.0;
 
-        let max_dist = distance(center_x, center_y,
+        let max_dist = math::distance(center_x, center_y,
                                 cols - self.config.smooth_radial_size.0,
                                 rows - self.config.smooth_radial_size.1);
 
-        let dist = distance(center_x, center_y, x as f64, y as f64);
+        let dist = math::distance(center_x, center_y, x as f64, y as f64);
         let normalized = (dist / max_dist).min(1.0);
 
         // Normalized with a power of <1 creates pointy terrains
-        lerp(0.0, 1.0, normalized.powf(self.config.smooth_radial_fac - normalized))
+        math::lerp(0.0, 1.0, normalized.powf(self.config.smooth_radial_fac - normalized))
     }
 
 
@@ -821,7 +821,7 @@ impl Procedural {
             std::mem::swap(&mut input_0, &mut input_1);
         }
 
-        lerp(input_1, input_0, alpha.powi(2))
+        math::lerp(input_1, input_0, alpha.powi(2))
     }
 
 
