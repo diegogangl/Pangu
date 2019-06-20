@@ -45,7 +45,7 @@ macro_rules! param {
 
 /// Setup and return configuration
 fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
-    debug!("Start Terrain Generation =====================================");
+    debug!("[Start Terrain Generation]");
 
     let config = terrain::ProceduralConfig {
         seed: param!(params, "seed", DEFAULT_SEED),
