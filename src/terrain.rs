@@ -9,6 +9,7 @@ extern crate test;
 use noise::{NoiseFn, Perlin, Point2, Seedable};
 
 use super::math;
+use super::curve::Curve;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -61,72 +62,6 @@ macro_rules! mountainess {
         (($signal + ($signal.abs() + $self.config.plains)) / $divisor)
             * $self.persistences[$persistence]
     };
-}
-
-
-#[derive(Clone, Debug)]
-struct Curve {
-    points: Vec<f64>,
-}
-
-
-impl Curve {
-    pub fn new() -> Self {
-        Curve { points: Vec::new() }
-    }
-
-    /// Adds a control point to the curve.
-    ///
-    /// # Arguments
-    ///
-    /// * `control_point` - Value for the control point
-    pub fn add_control_point(&mut self, control_point: f64) -> &Self {
-        let is_point_in_vector = self.points
-                .iter()
-                .any(|&x| (x - control_point).abs() < std::f64::EPSILON);
-
-        if !is_point_in_vector {
-            let index = self.points
-                .iter()
-                .position(|&x| x >= control_point)
-                .unwrap_or_else(|| self.points.len());
-
-            self.points.insert(index, control_point);
-            debug!("Added control point {0} at #{1}", control_point, index);
-        }
-
-        self
-
-    }
-
-
-    /// Get the index to the two nearest control points to value
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - Value to find points for
-    pub fn nearest_points(&self, value: f64) -> (usize, usize) {
-        let length = self.points.len();
-
-        let ind_pos = self.points
-            .iter()
-            .position(|&x| x >= value)
-            .unwrap_or(length);
-
-
-        (math::clamp(ind_pos as isize - 1, 0, (length - 1) as isize) as usize,
-         math::clamp(ind_pos, 0, length - 1))
-    }
-
-
-    /// Get a control point
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - Index of the control point
-    pub fn get_point(&self, index: usize) -> f64 {
-        self.points[index]
-    }
 }
 
 
@@ -375,7 +310,7 @@ impl Procedural {
 
             for p in &conf.terraces_points {
                let point = math::percent_to_value(*p, conf.height);
-               curve.add_control_point(point);
+               curve.add_point(point);
             }
 
             curve
@@ -802,18 +737,18 @@ impl Procedural {
     /// * `value - A height value from the terrain
     fn terrace(&self, value: f64) -> f64 {
         // Get indices of the nearest two points
-        let indexes = self.terrace_curve.nearest_points(value);
+        let indexes = self.terrace_curve.points_near(value);
 
         // If some control points are missing get the output value
         // of the nearest control point and return. This can
         // happen when value < lowest_point or value > highest_point
         if indexes.0 == indexes.1 {
-            return self.terrace_curve.points[indexes.1];
+            return self.terrace_curve.point(indexes.1);
         }
 
         // Get values and calculate alpha parameter for lerping
-        let mut input_0 = self.terrace_curve.get_point(indexes.0);
-        let mut input_1 = self.terrace_curve.get_point(indexes.1);
+        let mut input_0 = self.terrace_curve.point(indexes.0);
+        let mut input_1 = self.terrace_curve.point(indexes.1);
         let mut alpha = (value - input_0) / (input_1 - input_0);
 
         if self.config.terraces_invert {

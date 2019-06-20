@@ -5,6 +5,7 @@ extern crate simplelog;
 use simplelog::*;
 
 mod math;
+mod curve;
 mod terrain;
 
 use pyo3::prelude::*;
