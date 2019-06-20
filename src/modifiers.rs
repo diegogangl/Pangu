@@ -87,3 +87,147 @@ impl Terraces {
     }
 }
 
+
+/// Style of smoothing effect to apply
+#[derive(Clone, Debug)]
+pub enum SmoothStyle {
+    RADIAL,
+    LINEAR
+}
+
+
+/// Smooth modifier
+///
+/// Smooths out the terrain in a circle on linearly
+/// along an axis. This struct also has the rows and
+/// columns of the terrain as f64 to avoid too many
+/// type casts.
+#[derive(Clone, Debug)]
+pub struct Smooth {
+
+    /// Enable the modifier
+    pub enabled: bool,
+
+    /// Smoothing style
+    pub style: SmoothStyle,
+
+    /// Slope of the radial effect
+    pub radial_fac: f64,
+
+    /// Size (radius) of the radial effect
+    pub radial_size: (f64, f64),
+
+    /// Slope of the linear effect on X/Y
+    pub linear_fac: (f64, f64),
+
+    /// Starting coordinate for linear on X/Y
+    pub linear_start: (f64, f64),
+
+    /// Invert the linear effect on X/Y
+    pub linear_invert: (bool, bool),
+
+    /// Number of rows in terrain
+    pub rows: f64,
+
+    /// Number of columns in terrain
+    pub columns: f64,
+}
+
+
+impl Default for Smooth {
+    fn default() -> Self {
+        Smooth {
+            enabled: false,
+            style: SmoothStyle::RADIAL,
+            radial_fac: 0.0,
+            radial_size: (0.0, 0.0),
+            linear_fac: (0.0, 0.0),
+            linear_start: (0.0, 0.0),
+            linear_invert: (false, false),
+            rows: 64.0,
+            columns: 64.0,
+        }
+    }
+}
+
+
+impl Smooth {
+
+    /// Run the smooth modifier effect
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X index of the current height point
+    /// * `y` - Y index of the current height point
+    pub fn run(&self, x: u32, y:u32) -> f64 {
+        match self.style {
+            SmoothStyle::LINEAR => self.linear(x, y),
+            SmoothStyle::RADIAL => self.radial(x, y),
+        }
+    }
+
+
+    /// Create a circular smooth effect
+    ///
+    /// Only works in square terrains for now
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X index of the current height point
+    /// * `y` - Y index of the current height point
+    fn radial(&self, x: u32, y: u32) -> f64 {
+        let center_x = self.columns / 2.0;
+        let center_y = self.rows / 2.0;
+
+        let max_dist = math::distance(center_x, center_y,
+                                      self.columns - self.radial_size.0,
+                                      self.rows - self.radial_size.1);
+
+        let dist = math::distance(center_x, center_y, x as f64, y as f64);
+        let normalized = (dist / max_dist).min(1.0);
+
+        // Normalized with a power of <1 creates pointy terrains
+        math::lerp(0.0, 1.0, normalized.powf(self.radial_fac - normalized))
+    }
+
+
+    /// Create a smooth effect on one or two axis
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X index of the current height point
+    /// * `y` - Y index of the current height point
+    fn linear(&self, x: u32, y: u32) -> f64 {
+        let mut multiplier = 1.0;
+
+        if self.linear_fac.0 > 0.0 {
+            let fac = if self.linear_invert.0 {
+               (self.columns - (x as f64 + self.linear_start.0)) / self.columns
+            } else {
+               ((self.columns + (x as f64 - self.linear_start.0)) / self.columns) - 1.0
+            };
+
+            if fac > 0.0 {
+                multiplier = fac.powf(self.linear_fac.0);
+            } else {
+                multiplier = 0.0;
+            };
+        };
+
+        if self.linear_fac.1 > 0.0 {
+            let fac = if self.linear_invert.1 {
+               (self.rows - (y as f64 + self.linear_start.1)) / self.rows
+            } else {
+               ((self.rows + (y as f64 - self.linear_start.1)) / self.rows) - 1.0
+            };
+
+            if fac > 0.0 {
+                multiplier *= fac.powf(self.linear_fac.1);
+            } else {
+                multiplier *= 0.0;
+            };
+        };
+
+        multiplier
+    }
+}

@@ -2,7 +2,7 @@ use pyo3::types::PyDict;
 use pyo3::PyErr;
 use pyo3::prelude::*;
 
-use super::modifiers::Terraces;
+use super::modifiers::*;
 
 
 /// Macro to extract values from a Python dictionary as
@@ -86,14 +86,8 @@ pub struct Terrain {
     ///  Terraces modifier
     pub terraces: Terraces,
 
-    // Smooth out terrain
-    pub smooth: bool,
-    pub smooth_radial: bool,
-    pub smooth_radial_fac: f64,
-    pub smooth_radial_size: (f64, f64),
-    pub smooth_linear_fac: (f64, f64),
-    pub smooth_linear_start: (f64, f64),
-    pub smooth_linear_invert: (bool, bool),
+    // Smooth modifier
+    pub smooth: Smooth,
 }
 
 
@@ -120,13 +114,7 @@ impl Default for Terrain {
             is_seamless: false,
             invert: false,
             terraces: Terraces::default(),
-            smooth: false,
-            smooth_radial: true,
-            smooth_radial_fac: 0.0,
-            smooth_radial_size: (0.0, 0.0),
-            smooth_linear_fac: (0.0, 0.0),
-            smooth_linear_start: (0.0, 0.0),
-            smooth_linear_invert: (true, false),
+            smooth: Smooth::default(),
         }
     }
 }
@@ -141,6 +129,8 @@ impl Terrain {
     /// * `params`: The parameters dictionary
     pub fn from_dict(params: &PyDict) -> Result<Self, PyErr> {
         let height = get!(params, "height");
+        let columns: u32 = get!(params, "columns");
+        let rows: u32 = get!(params, "rows");
 
         let terraces = if get!(params, "terraces") {
             let points = get!(params, "terraces_points");
@@ -150,6 +140,26 @@ impl Terrain {
             t
         } else {
             Terraces::default()
+        };
+
+        let smooth = if get!(params, "smooth") {
+            Smooth {
+                enabled: true,
+                style: if get!(params, "smooth_radial") {
+                            SmoothStyle::RADIAL
+                        } else {
+                            SmoothStyle::LINEAR
+                        },
+                radial_fac: get!(params, "smooth_radial_fac"),
+                radial_size: get!(params, "smooth_radial_size"),
+                linear_fac: get!(params, "smooth_linear_fac"),
+                linear_start: get!(params, "smooth_linear_start"),
+                linear_invert: get!(params, "smooth_linear_invert"),
+                rows: rows as f64,
+                columns: columns as f64,
+            }
+        } else {
+            Smooth::default()
         };
 
 
@@ -174,13 +184,7 @@ impl Terrain {
             invert: get!(params, "invert"),
             terraces: terraces,
             flat: false,
-            smooth: get!(params, "smooth"),
-            smooth_radial: get!(params, "smooth_radial"),
-            smooth_radial_fac: get!(params, "smooth_radial_fac"),
-            smooth_radial_size: get!(params, "smooth_radial_size"),
-            smooth_linear_fac: get!(params, "smooth_linear_fac"),
-            smooth_linear_start: get!(params, "smooth_linear_start"),
-            smooth_linear_invert: get!(params, "smooth_linear_invert"),
+            smooth: smooth,
         };
 
         Ok(config)

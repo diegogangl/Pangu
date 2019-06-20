@@ -295,12 +295,8 @@ impl Procedural {
                 }
 
                 // Smooth Modifier
-                if self.config.smooth {
-                    z *= if self.config.smooth_radial {
-                            self.smooth_radial(x, y)
-                         } else {
-                            self.smooth_linear(x, y)
-                         };
+                if self.config.smooth.enabled {
+                    z *= self.config.smooth.run(x, y);
                 }
 
                 verts[i] = (verts[i].0, verts[i].1, z);
@@ -470,83 +466,6 @@ impl Procedural {
         // plains setting
         mask += self.config.plains;
         math::lerp(result, blend, mask)
-    }
-
-
-    /// Create a circular smooth effect
-    ///
-    /// Only works in square terrains for now
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - X index of the current height point
-    /// * `y` - Y index of the current height point
-    fn smooth_radial(&self, x: u32, y: u32) -> f64 {
-
-        if self.config.columns != self.config.rows {
-            return 1.0
-        }
-
-        let cols = f64::from(self.config.columns);
-        let rows = f64::from(self.config.rows);
-
-        let center_x = cols / 2.0;
-        let center_y = rows / 2.0;
-
-        let max_dist = math::distance(center_x, center_y,
-                                cols - self.config.smooth_radial_size.0,
-                                rows - self.config.smooth_radial_size.1);
-
-        let dist = math::distance(center_x, center_y, x as f64, y as f64);
-        let normalized = (dist / max_dist).min(1.0);
-
-        // Normalized with a power of <1 creates pointy terrains
-        math::lerp(0.0, 1.0, normalized.powf(self.config.smooth_radial_fac - normalized))
-    }
-
-
-    /// Create a smooth effect on one or two axis
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - X index of the current height point
-    /// * `y` - Y index of the current height point
-    fn smooth_linear(&self, x: u32, y: u32) -> f64 {
-        let mut multiplier = 1.0;
-
-        if self.config.smooth_linear_fac.0 > 0.0 {
-            let cols = f64::from(self.config.columns);
-
-            let fac = if self.config.smooth_linear_invert.0 {
-               (cols - (x as f64 + self.config.smooth_linear_start.0)) / cols
-            } else {
-               ((cols + (x as f64 - self.config.smooth_linear_start.0)) / cols) - 1.0
-            };
-
-            if fac > 0.0 {
-                multiplier = fac.powf(self.config.smooth_linear_fac.0);
-            } else {
-                multiplier = 0.0;
-            };
-        };
-
-        if self.config.smooth_linear_fac.1 > 0.0 {
-            let rows = f64::from(self.config.rows);
-
-            let fac = if self.config.smooth_linear_invert.1 {
-               (rows - (y as f64 + self.config.smooth_linear_start.1)) / rows
-            } else {
-               ((rows + (y as f64 - self.config.smooth_linear_start.1)) / rows) - 1.0
-            };
-
-            if fac > 0.0 {
-                multiplier *= fac.powf(self.config.smooth_linear_fac.1);
-            } else {
-                multiplier *= 0.0;
-            };
-        };
-
-        multiplier
     }
 
 
