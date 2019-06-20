@@ -272,7 +272,7 @@ impl Procedural {
         // Normalization
         for x in 0..conf.columns {
             for y in 0..conf.rows {
-                let i = (y * conf.columns + x) as usize;
+                let i = math::index_1d(x, y, conf.columns);
                 let mut z = verts[i].2;
 
                 z = math::map_on_zero(

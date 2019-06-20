@@ -71,3 +71,14 @@ pub fn distance(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
     ((x1 - x2).abs().powi(2) + (y1 - y2).abs().powi(2)).sqrt()
 }
 
+
+/// Convert a 2D index to 1D
+///
+/// # Arguments
+///
+/// * `x` - X coordinate
+/// * `y` - Y coordinate
+/// * `size` - Length of rows or columns
+pub fn index_1d(x: u32, y: u32, size: u32) -> usize {
+        (y * size + x) as usize
+}
