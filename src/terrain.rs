@@ -148,67 +148,37 @@ pub struct ProceduralConfig {
 impl Default for ProceduralConfig {
     fn default() -> Self {
         ProceduralConfig {
-            rows: Self::DEFAULT_ROWS,
-            columns: Self::DEFAULT_COLUMNS,
-            offset_x: Self::DEFAULT_OFFSET,
-            offset_y: Self::DEFAULT_OFFSET,
-            rotation: Self::DEFAULT_ROTATION,
-            scale: Self::DEFAULT_SCALE,
-            size: Self::DEFAULT_SIZE,
-            seed: Self::DEFAULT_SEED,
-            roughness: Self::DEFAULT_ROUGHNESS,
-            plains: Self::DEFAULT_PLAINS,
-            deformation: Self::DEFAULT_DEFORMATION,
-            mountainess: Self::DEFAULT_MOUNTAINESS,
-            mix: Self::DEFAULT_MIX,
-            ridgedness: Self::DEFAULT_RIDGEDNESS,
-            sea_floor: Self::DEFAULT_SEA_FLOOR,
-            height: Self::DEFAULT_HEIGHT,
+            rows: 64,
+            columns: 64,
+            offset_x: 0.0,
+            offset_y: 0.0,
+            rotation: 0.0,
+            scale: 2.0,
+            size: 5.0,
+            seed: 0,
+            roughness: 0.1,
+            plains:0.5,
+            deformation: 0.1,
+            mountainess: 0.5,
+            mix: 0.5,
+            ridgedness: 0.0,
+            sea_floor: 0.0,
+            height: 3.0,
             flat: false,
-            is_seamless: Self::DEFAULT_SEAMLESS,
-            invert: Self::DEFAULT_INVERT,
-            terraces: Self::DEFAULT_TERRACES,
-            terraces_invert: Self::DEFAULT_TERRACES_INVERT,
+            is_seamless: false,
+            invert: false,
+            terraces: false,
+            terraces_invert: false,
             terraces_points: Vec::new(),
-            smooth: Self::DEFAULT_SMOOTH,
-            smooth_radial: Self::DEFAULT_SMOOTH_RADIAL,
-            smooth_radial_fac: Self::DEFAULT_SMOOTH_RADIAL_FAC,
-            smooth_radial_size: Self::DEFAULT_SMOOTH_RADIAL_SIZE,
-            smooth_linear_fac: Self::DEFAULT_SMOOTH_LINEAR_FAC,
-            smooth_linear_start: Self::DEFAULT_SMOOTH_LINEAR_FAC,
-            smooth_linear_invert: Self::DEFAULT_SMOOTH_LINEAR_INVERT,
+            smooth: false,
+            smooth_radial: true,
+            smooth_radial_fac: 0.0,
+            smooth_radial_size: (0.0, 0.0),
+            smooth_linear_fac: (0.0, 0.0),
+            smooth_linear_start: (0.0, 0.0),
+            smooth_linear_invert: (true, false),
         }
     }
-}
-
-
-impl ProceduralConfig {
-    pub const DEFAULT_ROWS: u32 = 64;
-    pub const DEFAULT_COLUMNS: u32 = 64;
-    pub const DEFAULT_OFFSET: f64 = 0.0;
-    pub const DEFAULT_ROTATION: f64 = 0.0;
-    pub const DEFAULT_SCALE: f64 = 2.0;
-    pub const DEFAULT_SIZE: f64 = 5.0;
-    pub const DEFAULT_SEED: u32 = 0;
-    pub const DEFAULT_ROUGHNESS: f64 = 0.1;
-    pub const DEFAULT_PLAINS: f64 = 0.5;
-    pub const DEFAULT_DEFORMATION: f64 = 0.1;
-    pub const DEFAULT_MOUNTAINESS: f64 = 0.5;
-    pub const DEFAULT_MIX: f64 = 0.5;
-    pub const DEFAULT_RIDGEDNESS: f64 = 0.0;
-    pub const DEFAULT_SEA_FLOOR: f64 = 0.0;
-    pub const DEFAULT_HEIGHT: f64 = 3.0;
-    pub const DEFAULT_SEAMLESS: bool = true;
-    pub const DEFAULT_INVERT: bool = false;
-    pub const DEFAULT_TERRACES: bool = false;
-    pub const DEFAULT_TERRACES_INVERT: bool = true;
-    pub const DEFAULT_SMOOTH: bool = false;
-    pub const DEFAULT_SMOOTH_RADIAL: bool = true;
-    pub const DEFAULT_SMOOTH_RADIAL_FAC: f64 = 0.0;
-    pub const DEFAULT_SMOOTH_RADIAL_SIZE: (f64, f64) = (0.0, 0.0);
-    pub const DEFAULT_SMOOTH_LINEAR_FAC: (f64, f64) = (0.0, 0.0);
-    pub const DEFAULT_SMOOTH_LINEAR_START: (f64, f64) = (0.0, 0.0);
-    pub const DEFAULT_SMOOTH_LINEAR_INVERT: (bool, bool) = (true, false);
 }
 
 

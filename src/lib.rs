@@ -25,20 +25,9 @@ type PyVerts = PyResult<terrain::Vertices>;
 /// * `params` - The parameters dictionary
 /// * `key` - The key to look for in the dictionary
 /// * `default_value` - Value to use when the key is not found
-macro_rules! param {
-    ($params:expr, $key:expr, $default_value:ident) => {
-        match $params.get_item($key) {
-            Some(item) => item.extract()?,
-            None => terrain::ProceduralConfig::$default_value,
-        };
-    };
-
-    // Vecs can't have default parameters
+macro_rules! get {
     ($params:expr, $key:expr) => {
-        match $params.get_item($key) {
-            Some(item) => item.extract()?,
-            None => Vec::new(),
-        };
+        $params.get_item($key).unwrap().extract()?
     };
 }
 
@@ -48,35 +37,35 @@ fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
     debug!("[Start Terrain Generation]");
 
     let config = terrain::ProceduralConfig {
-        seed: param!(params, "seed", DEFAULT_SEED),
-        rows: param!(params, "rows", DEFAULT_ROWS),
-        columns: param!(params, "columns", DEFAULT_COLUMNS),
-        size: param!(params, "size", DEFAULT_SIZE),
-        scale: param!(params, "scale", DEFAULT_SCALE),
-        offset_x: param!(params, "offset_x", DEFAULT_OFFSET),
-        offset_y: param!(params, "offset_y", DEFAULT_OFFSET),
-        rotation: param!(params, "rotation", DEFAULT_OFFSET),
-        roughness: param!(params, "roughness", DEFAULT_OFFSET),
-        plains: param!(params, "plains", DEFAULT_OFFSET),
-        deformation: param!(params, "deformation", DEFAULT_OFFSET),
-        mountainess: param!(params, "mountainess", DEFAULT_MOUNTAINESS),
-        mix: param!(params, "mix", DEFAULT_MIX),
-        ridgedness: param!(params, "ridgedness", DEFAULT_RIDGEDNESS),
-        sea_floor: param!(params, "sea_floor", DEFAULT_SEA_FLOOR),
-        height: param!(params, "height", DEFAULT_HEIGHT),
-        is_seamless: param!(params, "seamless", DEFAULT_SEAMLESS),
-        invert: param!(params, "invert", DEFAULT_INVERT),
-        terraces: param!(params, "terraces", DEFAULT_TERRACES),
-        terraces_invert: param!(params, "terraces_invert", DEFAULT_TERRACES_INVERT),
-        terraces_points: param!(params, "terraces_points"),
+        seed: get!(params, "seed"),
+        rows: get!(params, "rows"),
+        columns: get!(params, "columns"),
+        size: get!(params, "size"),
+        scale: get!(params, "scale"),
+        offset_x: get!(params, "offset_x"),
+        offset_y: get!(params, "offset_y"),
+        rotation: get!(params, "rotation"),
+        roughness: get!(params, "roughness"),
+        plains: get!(params, "plains"),
+        deformation: get!(params, "deformation"),
+        mountainess: get!(params, "mountainess"),
+        mix: get!(params, "mix"),
+        ridgedness: get!(params, "ridgedness"),
+        sea_floor: get!(params, "sea_floor"),
+        height: get!(params, "height"),
+        is_seamless: get!(params, "seamless"),
+        invert: get!(params, "invert"),
+        terraces: get!(params, "terraces"),
+        terraces_invert: get!(params, "terraces_invert"),
+        terraces_points: get!(params, "terraces_points"),
         flat: false,
-        smooth: param!(params, "smooth", DEFAULT_SMOOTH),
-        smooth_radial: param!(params, "smooth_radial", DEFAULT_SMOOTH_RADIAL),
-        smooth_radial_fac: param!(params, "smooth_radial_fac", DEFAULT_SMOOTH_RADIAL_FAC),
-        smooth_radial_size: param!(params, "smooth_radial_size", DEFAULT_SMOOTH_RADIAL_SIZE),
-        smooth_linear_fac: param!(params, "smooth_linear_fac", DEFAULT_SMOOTH_LINEAR_FAC),
-        smooth_linear_start: param!(params, "smooth_linear_start", DEFAULT_SMOOTH_LINEAR_START),
-        smooth_linear_invert: param!(params, "smooth_linear_invert", DEFAULT_SMOOTH_LINEAR_INVERT),
+        smooth: get!(params, "smooth"),
+        smooth_radial: get!(params, "smooth_radial"),
+        smooth_radial_fac: get!(params, "smooth_radial_fac"),
+        smooth_radial_size: get!(params, "smooth_radial_size"),
+        smooth_linear_fac: get!(params, "smooth_linear_fac"),
+        smooth_linear_start: get!(params, "smooth_linear_start"),
+        smooth_linear_invert: get!(params, "smooth_linear_invert"),
     };
 
     Ok(config)
