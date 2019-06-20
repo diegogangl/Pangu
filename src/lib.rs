@@ -55,7 +55,6 @@ fn get_config(params: &PyDict) -> Result<terrain::ProceduralConfig, PyErr> {
         scale: param!(params, "scale", DEFAULT_SCALE),
         offset_x: param!(params, "offset_x", DEFAULT_OFFSET),
         offset_y: param!(params, "offset_y", DEFAULT_OFFSET),
-        offset_z: param!(params, "offset_z", DEFAULT_OFFSET),
         rotation: param!(params, "rotation", DEFAULT_OFFSET),
         roughness: param!(params, "roughness", DEFAULT_OFFSET),
         plains: param!(params, "plains", DEFAULT_OFFSET),

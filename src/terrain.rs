@@ -77,7 +77,6 @@ pub struct ProceduralConfig {
     /// function
     pub offset_x: f64,
     pub offset_y: f64,
-    pub offset_z: f64,
 
     /// Z Rotation angle (in radians) for the noise
     pub rotation: f64,
@@ -156,7 +155,6 @@ impl Default for ProceduralConfig {
             columns: Self::DEFAULT_COLUMNS,
             offset_x: Self::DEFAULT_OFFSET,
             offset_y: Self::DEFAULT_OFFSET,
-            offset_z: Self::DEFAULT_OFFSET,
             rotation: Self::DEFAULT_ROTATION,
             scale: Self::DEFAULT_SCALE,
             size: Self::DEFAULT_SIZE,
