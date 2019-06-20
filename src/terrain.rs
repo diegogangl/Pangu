@@ -101,9 +101,6 @@ pub struct ProceduralConfig {
     /// How plain the base terrain is
     pub plains: f64,
 
-    /// At which height to clamp to generate a plateau
-    pub plateau: f64,
-
     /// Mountainess
     pub mountainess: f64,
 
@@ -161,7 +158,6 @@ impl Default for ProceduralConfig {
             seed: Self::DEFAULT_SEED,
             roughness: Self::DEFAULT_ROUGHNESS,
             plains: Self::DEFAULT_PLAINS,
-            plateau: Self::DEFAULT_PLATEAU,
             deformation: Self::DEFAULT_DEFORMATION,
             mountainess: Self::DEFAULT_MOUNTAINESS,
             mix: Self::DEFAULT_MIX,
@@ -196,7 +192,6 @@ impl ProceduralConfig {
     pub const DEFAULT_SEED: u32 = 0;
     pub const DEFAULT_ROUGHNESS: f64 = 0.1;
     pub const DEFAULT_PLAINS: f64 = 0.5;
-    pub const DEFAULT_PLATEAU: f64 = 10.0;
     pub const DEFAULT_DEFORMATION: f64 = 0.1;
     pub const DEFAULT_MOUNTAINESS: f64 = 0.5;
     pub const DEFAULT_MIX: f64 = 0.5;
@@ -377,7 +372,7 @@ impl Procedural {
         let mut heights_max = 1.0;
 
         let floor = conf.sea_floor * conf.height;
-        let ceiling = conf.plateau * conf.height;
+        let ceiling = conf.height;
 
         debug!("Calculated floor: {:?}", floor);
         debug!("Calculated ceiling: {:?}", ceiling);
@@ -458,11 +453,6 @@ impl Procedural {
 
                 if self.config.terraces {
                     z = self.terrace(z);
-                }
-
-                // Restrict to plateau and sea floor
-                if z > ceiling {
-                    z = ceiling;
                 }
 
                 if z < floor {
