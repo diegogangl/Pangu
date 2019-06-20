@@ -2,6 +2,8 @@ use pyo3::types::PyDict;
 use pyo3::PyErr;
 use pyo3::prelude::*;
 
+use super::modifiers::Terraces;
+
 
 /// Macro to extract values from a Python dictionary as
 /// rust types.
@@ -81,14 +83,8 @@ pub struct Terrain {
     /// Invert the terrain
     pub invert: bool,
 
-    /// Use terraces
-    pub terraces: bool,
-
-    /// Invert Terraces
-    pub terraces_invert: bool,
-
-    /// Invert Terraces
-    pub terraces_points: Vec<f64>,
+    ///  Terraces modifier
+    pub terraces: Terraces,
 
     // Smooth out terrain
     pub smooth: bool,
@@ -123,9 +119,7 @@ impl Default for Terrain {
             flat: false,
             is_seamless: false,
             invert: false,
-            terraces: false,
-            terraces_invert: false,
-            terraces_points: Vec::new(),
+            terraces: Terraces::default(),
             smooth: false,
             smooth_radial: true,
             smooth_radial_fac: 0.0,
@@ -146,6 +140,18 @@ impl Terrain {
     ///
     /// * `params`: The parameters dictionary
     pub fn from_dict(params: &PyDict) -> Result<Self, PyErr> {
+        let height = get!(params, "height");
+
+        let terraces = if get!(params, "terraces") {
+            let points = get!(params, "terraces_points");
+            let mut t = Terraces::from_list(points, height);
+            t.invert = get!(params, "terraces_invert");
+
+            t
+        } else {
+            Terraces::default()
+        };
+
 
         let config = Terrain {
             seed: get!(params, "seed"),
@@ -163,12 +169,10 @@ impl Terrain {
             mix: get!(params, "mix"),
             ridgedness: get!(params, "ridgedness"),
             sea_floor: get!(params, "sea_floor"),
-            height: get!(params, "height"),
+            height: height,
             is_seamless: get!(params, "seamless"),
             invert: get!(params, "invert"),
-            terraces: get!(params, "terraces"),
-            terraces_invert: get!(params, "terraces_invert"),
-            terraces_points: get!(params, "terraces_points"),
+            terraces: terraces,
             flat: false,
             smooth: get!(params, "smooth"),
             smooth_radial: get!(params, "smooth_radial"),

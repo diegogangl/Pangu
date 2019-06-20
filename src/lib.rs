@@ -7,7 +7,9 @@ use simplelog::*;
 mod math;
 mod curve;
 mod terrain;
+mod modifiers;
 mod config;
+
 
 use pyo3::prelude::*;
 use pyo3::types::PyDict;

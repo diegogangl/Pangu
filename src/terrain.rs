@@ -10,7 +10,6 @@ use noise::{NoiseFn, Perlin, Point2, Seedable};
 
 use super::math;
 use super::config;
-use super::curve::Curve;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -84,9 +83,6 @@ pub struct Procedural {
     /// Upper bounds for noise coordinates. Used for seamless
     /// calculation. Lower bounds are always zero.
     limits_xy: (f64, f64),
-
-    /// Curve for terrace effect
-    terrace_curve: Curve,
 }
 
 
@@ -149,24 +145,6 @@ impl Procedural {
 
         debug!("Calculated persistences: {:?}", persistences);
 
-
-        let terrace_curve = if conf.terraces {
-            debug!("Adding control points for terrace");
-
-            let mut curve = Curve::new();
-
-            for p in &conf.terraces_points {
-               let point = math::percent_to_value(*p, conf.height);
-               curve.add_point(point);
-            }
-
-            curve
-
-        } else {
-            Curve::new()
-        };
-
-
         // All done!
         Procedural {
             config: conf,
@@ -174,7 +152,6 @@ impl Procedural {
             persistences: persistences,
             limits_xy: limits_xy,
             steps: steps,
-            terrace_curve: terrace_curve,
         }
     }
 
@@ -305,8 +282,8 @@ impl Procedural {
                     self.config.height,
                 );
 
-                if self.config.terraces {
-                    z = self.terrace(z);
+                if self.config.terraces.enabled {
+                    z = self.config.terraces.run(z);
                 }
 
                 if z < floor {
@@ -570,35 +547,6 @@ impl Procedural {
         };
 
         multiplier
-    }
-
-
-    /// Create a terrace effect
-    ///
-    /// # Arguments
-    /// * `value - A height value from the terrain
-    fn terrace(&self, value: f64) -> f64 {
-        // Get indices of the nearest two points
-        let indexes = self.terrace_curve.points_near(value);
-
-        // If some control points are missing get the output value
-        // of the nearest control point and return. This can
-        // happen when value < lowest_point or value > highest_point
-        if indexes.0 == indexes.1 {
-            return self.terrace_curve.point(indexes.1);
-        }
-
-        // Get values and calculate alpha parameter for lerping
-        let mut input_0 = self.terrace_curve.point(indexes.0);
-        let mut input_1 = self.terrace_curve.point(indexes.1);
-        let mut alpha = (value - input_0) / (input_1 - input_0);
-
-        if self.config.terraces_invert {
-            alpha = 1.0 - alpha;
-            std::mem::swap(&mut input_0, &mut input_1);
-        }
-
-        math::lerp(input_1, input_0, alpha.powi(2))
     }
 
 
