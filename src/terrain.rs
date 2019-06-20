@@ -9,6 +9,7 @@ extern crate test;
 use noise::{NoiseFn, Perlin, Point2, Seedable};
 
 use super::math;
+use super::config;
 use super::curve::Curve;
 use std::cmp::max;
 
@@ -65,128 +66,11 @@ macro_rules! mountainess {
 }
 
 
-#[derive(Clone, Debug)]
-pub struct ProceduralConfig {
-    /// The number of rows to use in the mesh grid
-    pub rows: u32,
-
-    /// The number of columns to use in the mesh grid
-    pub columns: u32,
-
-    /// Offsets for the coordinates passed to the noise
-    /// function
-    pub offset_x: f64,
-    pub offset_y: f64,
-
-    /// Z Rotation angle (in radians) for the noise
-    pub rotation: f64,
-
-    /// Scale for the noise function. Larger scales create
-    /// smaller, more detailed noise while smaller values
-    /// create larger, less detailed terrains.
-    pub scale: f64,
-
-    /// Size of the mesh object in scene units
-    pub size: f64,
-
-    /// Base seed for the noise function
-    pub seed: u32,
-
-    /// Make grid flat. Used for testing
-    pub flat: bool,
-
-    /// Roughness for the terrain
-    pub roughness: f64,
-
-    /// How plain the base terrain is
-    pub plains: f64,
-
-    /// Mountainess
-    pub mountainess: f64,
-
-    /// Intensity of domain warping
-    pub deformation: f64,
-
-    /// Mixing between plains and mountains
-    pub mix: f64,
-
-    /// Ridgedness
-    pub ridgedness: f64,
-
-    /// Sea Floor
-    pub sea_floor: f64,
-
-    /// Maximum Height
-    pub height: f64,
-
-    /// Make the terrain seamless
-    pub is_seamless: bool,
-
-    /// Invert the terrain
-    pub invert: bool,
-
-    /// Use terraces
-    pub terraces: bool,
-
-    /// Invert Terraces
-    pub terraces_invert: bool,
-
-    /// Invert Terraces
-    pub terraces_points: Vec<f64>,
-
-    // Smooth out terrain
-    pub smooth: bool,
-    pub smooth_radial: bool,
-    pub smooth_radial_fac: f64,
-    pub smooth_radial_size: (f64, f64),
-    pub smooth_linear_fac: (f64, f64),
-    pub smooth_linear_start: (f64, f64),
-    pub smooth_linear_invert: (bool, bool),
-}
-
-
-impl Default for ProceduralConfig {
-    fn default() -> Self {
-        ProceduralConfig {
-            rows: 64,
-            columns: 64,
-            offset_x: 0.0,
-            offset_y: 0.0,
-            rotation: 0.0,
-            scale: 2.0,
-            size: 5.0,
-            seed: 0,
-            roughness: 0.1,
-            plains:0.5,
-            deformation: 0.1,
-            mountainess: 0.5,
-            mix: 0.5,
-            ridgedness: 0.0,
-            sea_floor: 0.0,
-            height: 3.0,
-            flat: false,
-            is_seamless: false,
-            invert: false,
-            terraces: false,
-            terraces_invert: false,
-            terraces_points: Vec::new(),
-            smooth: false,
-            smooth_radial: true,
-            smooth_radial_fac: 0.0,
-            smooth_radial_size: (0.0, 0.0),
-            smooth_linear_fac: (0.0, 0.0),
-            smooth_linear_start: (0.0, 0.0),
-            smooth_linear_invert: (true, false),
-        }
-    }
-}
-
-
 /// Representation of a terrain
 #[derive(Clone, Debug)]
 pub struct Procedural {
     /// Configuration for the procedural terrain
-    config: ProceduralConfig,
+    config: config::Terrain,
 
     /// Perlin noises for the main octaves (re-used for the others)
     noise_fns: Vec<Perlin>,
@@ -207,7 +91,7 @@ pub struct Procedural {
 
 
 impl Procedural {
-    pub fn new(conf: ProceduralConfig) -> Self {
+    pub fn new(conf: config::Terrain) -> Self {
         let columns = f64::from(conf.columns);
         let rows = f64::from(conf.rows);
 
@@ -740,7 +624,7 @@ mod tests {
 
     #[test]
     fn faces() {
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 4,
             columns: 4,
             ..Default::default()
@@ -765,7 +649,7 @@ mod tests {
 
     #[test]
     fn vertices() {
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 4,
             columns: 4,
             size: 4.0,
@@ -795,7 +679,7 @@ mod tests {
 
         assert_eq!(expected, verts);
 
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 8,
             columns: 4,
             size: 4.0,
@@ -841,7 +725,7 @@ mod tests {
 
         assert_eq!(expected, verts);
 
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 4,
             columns: 8,
             size: 4.0,
@@ -892,7 +776,7 @@ mod tests {
 
     #[test]
     fn steps_calculation() {
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 4,
             columns: 4,
             size: 4.0,
@@ -902,7 +786,7 @@ mod tests {
         let steps = Procedural::new(config).steps;
         assert_eq!((0.5, 0.5), steps);
 
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 8,
             columns: 4,
             size: 4.0,
@@ -912,7 +796,7 @@ mod tests {
         let steps = Procedural::new(config).steps;
         assert_eq!((0.25, 0.25), steps);
 
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 4,
             columns: 8,
             size: 4.0,
@@ -926,7 +810,7 @@ mod tests {
 
     #[test]
     fn rotation() {
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 4,
             columns: 4,
             rotation: 0.0,
@@ -935,7 +819,7 @@ mod tests {
         let values = Procedural::new(config).coords_for_noise(1.0, 1.0);
         assert_eq!((0.5, 0.5), values);
 
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 4,
             columns: 4,
             rotation: 1.0,
@@ -957,7 +841,7 @@ mod benches {
 
     #[bench]
     fn faces(b: &mut Bencher) {
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 128,
             columns: 128,
             ..Default::default()
@@ -969,7 +853,7 @@ mod benches {
 
     #[bench]
     fn verts(b: &mut Bencher) {
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 128,
             columns: 128,
             flat: true,
@@ -983,7 +867,7 @@ mod benches {
 
     #[bench]
     fn get_noise(b: &mut Bencher) {
-        let config = ProceduralConfig::default();
+        let config = config::Terrain::default();
         let terrain = Procedural::new(config);
 
         b.iter(|| terrain.get_z([0.0, 0.0]));
@@ -991,7 +875,7 @@ mod benches {
 
     #[bench]
     fn terrain(b: &mut Bencher) {
-        let config = ProceduralConfig {
+        let config = config::Terrain {
             rows: 128,
             columns: 128,
             ..Default::default()
