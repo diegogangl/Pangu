@@ -231,3 +231,126 @@ impl Smooth {
         multiplier
     }
 }
+
+
+#[derive(Clone, Debug)]
+pub struct ThermalErosion {
+
+    /// Enable the modifier
+    pub enabled: bool,
+
+    pub talus: f64,
+    pub iterations: u8,
+}
+
+
+impl Default for ThermalErosion {
+    fn default() -> Self {
+        ThermalErosion {
+            enabled: false,
+            talus: 0.6,
+            iterations: 1,
+        }
+    }
+}
+
+
+impl ThermalErosion {
+
+    pub fn run(&self, verts: &mut Vec<(f64, f64, f64)>) {
+        let size = (verts.len() as f64).sqrt() as u32;
+
+        let mut slope_max = 0.0;
+        let mut slope_index = 0;
+
+        let in_terrain = |x, y| x > 0 && x < size -1 && y > 0 && y < size - 1;
+
+        for _ in 0..self.iterations {
+            for x in 0..size {
+                for y in 0..size {
+
+                   // Current height
+                   let current = {
+                        let index = math::index_1d(x, y, size);
+                        verts[index].2
+                    };
+
+                    // Rotated Von Neuhmann neighbors
+                    let nw_diff = if in_terrain(x.saturating_sub(1), y + 1) {
+                         let index = math::index_1d(x - 1, y + 1, size);
+                         let height = verts[index].2;
+
+                         height - current
+                    } else {
+                         0.0
+                    };
+
+
+                    let sw_diff = if in_terrain(x.saturating_sub(1), y.saturating_sub(1)) {
+                         let index = math::index_1d(x - 1, y - 1, size);
+                         let height = verts[index].2;
+
+                         height - current
+                    } else {
+                         0.0
+                    };
+
+                    let se_diff = if in_terrain(x + 1, y.saturating_sub(1)) {
+                         let index = math::index_1d(x + 1, y - 1, size);
+                         let height = verts[index].2;
+
+                         height - current
+                    } else {
+                         0.0
+                    };
+
+                    let ne_diff = if in_terrain(x + 1, y + 1) {
+                         let index = math::index_1d(x + 1, y + 1, size);
+                         let height = verts[index].2;
+
+                         height - current
+                    } else {
+                          0.0
+                    };
+
+                    // Find lowest neighboor
+                    if nw_diff > 0.0 {
+                        slope_max = nw_diff;
+                        slope_index = math::index_1d(x - 1, y + 1, size);
+                    };
+
+                    if sw_diff > slope_max {
+                        slope_max = sw_diff;
+                        slope_index = math::index_1d(x - 1, y - 1, size);
+                    }
+
+
+                    if se_diff > slope_max {
+                        slope_max = se_diff;
+                        slope_index = math::index_1d(x + 1, y - 1, size);
+                    }
+
+
+                    if ne_diff > slope_max {
+                        slope_max = ne_diff;
+                        slope_index = math::index_1d(x + 1, y + 1, size);
+                    }
+
+                    if slope_max > self.talus {
+
+                       // Remove from current
+                       let removed = current - 1.5;
+                       let i = math::index_1d(x, y, size);
+                       verts[i] = (verts[i].0, verts[i].1, removed);
+
+                       // Add to neighbor
+                       let added = verts[slope_index].2 + 1.5;
+                       verts[slope_index] = (verts[slope_index].0,
+                                             verts[slope_index].1, added);
+                    }
+                }
+            }
+        }
+
+    }
+}

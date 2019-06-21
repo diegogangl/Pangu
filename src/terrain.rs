@@ -269,6 +269,8 @@ impl Procedural {
             }
         }
 
+        self.config.thermal.run(&mut verts);
+
         // Normalization
         for x in 0..conf.columns {
             for y in 0..conf.rows {

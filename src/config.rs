@@ -88,6 +88,9 @@ pub struct Terrain {
 
     // Smooth modifier
     pub smooth: Smooth,
+
+    // Thermal Erosion modifier
+    pub thermal: ThermalErosion,
 }
 
 
@@ -115,6 +118,7 @@ impl Default for Terrain {
             invert: false,
             terraces: Terraces::default(),
             smooth: Smooth::default(),
+            thermal: ThermalErosion::default(),
         }
     }
 }
@@ -185,6 +189,7 @@ impl Terrain {
             terraces: terraces,
             flat: false,
             smooth: smooth,
+            thermal: ThermalErosion::default(),
         };
 
         Ok(config)
