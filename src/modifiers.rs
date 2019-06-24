@@ -247,6 +247,9 @@ pub struct ThermalErosion {
     /// and moved to its lowest neighbor
     pub talus: f64,
 
+    /// Amount of soil to move
+    pub soil: f64,
+
     /// Number of times to run the algorithm on the terrain
     pub iterations: u8,
 }
@@ -257,6 +260,7 @@ impl Default for ThermalErosion {
         ThermalErosion {
             enabled: false,
             talus: 0.6,
+            soil: 0.1,
             iterations: 1,
         }
     }
@@ -352,12 +356,12 @@ impl ThermalErosion {
                     if slope_max > self.talus {
 
                        // Remove from current
-                       let removed = current - 1.5;
+                       let removed = current - self.soil;
                        let i = math::index_1d(x, y, size);
                        verts[i] = (verts[i].0, verts[i].1, removed);
 
                        // Add to neighbor
-                       let added = verts[slope_index].2 + 1.5;
+                       let added = verts[slope_index].2 + self.soil;
                        verts[slope_index] = (verts[slope_index].0,
                                              verts[slope_index].1, added);
                     }
