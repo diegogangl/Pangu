@@ -233,13 +233,21 @@ impl Smooth {
 }
 
 
+/// Thermal Erosion modifier
+///
+/// Simulates terrain breaking loose and falling down
+/// a slope and piling at the bottom
 #[derive(Clone, Debug)]
 pub struct ThermalErosion {
-
     /// Enable the modifier
     pub enabled: bool,
 
+    /// Talus angle in radians. Soil at the top of a slope whose
+    /// inclination is higher than this value will be broken
+    /// and moved to its lowest neighbor
     pub talus: f64,
+
+    /// Number of times to run the algorithm on the terrain
     pub iterations: u8,
 }
 
@@ -257,6 +265,11 @@ impl Default for ThermalErosion {
 
 impl ThermalErosion {
 
+    /// Run the thermal erosion simulation
+    ///
+    /// # Arguments
+    ///
+    /// * `verts` - Reference to the vertices vector
     pub fn run(&self, verts: &mut Vec<(f64, f64, f64)>) {
         let size = (verts.len() as f64).sqrt() as u32;
 
