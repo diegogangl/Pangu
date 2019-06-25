@@ -277,18 +277,16 @@ impl ThermalErosion {
     pub fn run(&self, verts: &mut Vec<(f64, f64, f64)>) {
         let size = (verts.len() as f64).sqrt() as u32;
 
-        let mut slope_max = 0.0;
-        let mut slope_index = 0;
-
-        //let in_terrain = |x, y| x > 0 && x < size - 1 && y > 0 && y < size - 1;
-
         for _ in 0..self.iterations {
             for x in 0..size {
                 for y in 0..size {
 
+                   let mut slope_max = 0.0;
+                   let mut slope_index = 0;
+
                    // Current height
-                   let center = math::index_1d(x, y, size);
-                   let current = verts[center].2;
+                   let center_idx = math::index_1d(x, y, size);
+                   let center = verts[center_idx].2;
 
                    // Rotated Von Neuhmann neighbors
                    let nw = if x > 0 && y < size - 1 {
@@ -321,13 +319,12 @@ impl ThermalErosion {
                         match index {
                             Some(i) => {
                                  let height = verts[*i].2;
-                                 let diff = height - current;
+                                 let diff = center - height;
 
                                  if diff > slope_max {
                                     slope_max = diff;
                                     slope_index = *i;
                                  }
-
                             },
 
                             _ => ()
@@ -339,11 +336,13 @@ impl ThermalErosion {
                     if slope_max > self.talus {
 
                        // Remove from current
-                       let removed = current - self.soil;
-                       verts[center] = (verts[center].0, verts[center].1, removed);
+                       let removed = center - (slope_max / 2.0);
+                       verts[center_idx] = (verts[center_idx].0,
+                                            verts[center_idx].1,
+                                            removed);
 
                        // Add to neighbor
-                       let added = verts[slope_index].2 + self.soil;
+                       let added = verts[slope_index].2 + (slope_max / 2.0);
                        verts[slope_index] = (verts[slope_index].0,
                                              verts[slope_index].1, added);
                     }
