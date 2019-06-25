@@ -280,85 +280,67 @@ impl ThermalErosion {
         let mut slope_max = 0.0;
         let mut slope_index = 0;
 
-        let in_terrain = |x, y| x > 0 && x < size -1 && y > 0 && y < size - 1;
+        //let in_terrain = |x, y| x > 0 && x < size - 1 && y > 0 && y < size - 1;
 
         for _ in 0..self.iterations {
             for x in 0..size {
                 for y in 0..size {
 
                    // Current height
-                   let current = {
-                        let index = math::index_1d(x, y, size);
-                        verts[index].2
-                    };
+                   let center = math::index_1d(x, y, size);
+                   let current = verts[center].2;
 
-                    // Rotated Von Neuhmann neighbors
-                    let nw_diff = if in_terrain(x.saturating_sub(1), y + 1) {
-                         let index = math::index_1d(x - 1, y + 1, size);
-                         let height = verts[index].2;
+                   // Rotated Von Neuhmann neighbors
+                   let nw = if x > 0 && y < size - 1 {
+                       Some(math::index_1d(x - 1, y + 1, size))
+                   } else {
+                       None
+                   };
 
-                         height - current
-                    } else {
-                         0.0
-                    };
+                   let sw = if x > 0 && y > 0 {
+                       Some(math::index_1d(x - 1, y - 1, size))
+                   } else {
+                       None
+                   };
 
+                   let se = if x < size - 1 && y > 0 {
+                       Some(math::index_1d(x + 1, y - 1, size))
+                   } else {
+                       None
+                   };
 
-                    let sw_diff = if in_terrain(x.saturating_sub(1), y.saturating_sub(1)) {
-                         let index = math::index_1d(x - 1, y - 1, size);
-                         let height = verts[index].2;
-
-                         height - current
-                    } else {
-                         0.0
-                    };
-
-                    let se_diff = if in_terrain(x + 1, y.saturating_sub(1)) {
-                         let index = math::index_1d(x + 1, y - 1, size);
-                         let height = verts[index].2;
-
-                         height - current
-                    } else {
-                         0.0
-                    };
-
-                    let ne_diff = if in_terrain(x + 1, y + 1) {
-                         let index = math::index_1d(x + 1, y + 1, size);
-                         let height = verts[index].2;
-
-                         height - current
-                    } else {
-                          0.0
-                    };
-
-                    // Find lowest neighboor
-                    if nw_diff > 0.0 {
-                        slope_max = nw_diff;
-                        slope_index = math::index_1d(x - 1, y + 1, size);
-                    };
-
-                    if sw_diff > slope_max {
-                        slope_max = sw_diff;
-                        slope_index = math::index_1d(x - 1, y - 1, size);
-                    }
+                   let ne = if x < size - 1 && y < size - 1 {
+                       Some(math::index_1d(x + 1, y + 1, size))
+                   } else {
+                       None
+                   };
 
 
-                    if se_diff > slope_max {
-                        slope_max = se_diff;
-                        slope_index = math::index_1d(x + 1, y - 1, size);
-                    }
+                   // Find lowest neighbor
+                   [nw, sw, se, ne].iter().for_each(|index|{
+                        match index {
+                            Some(i) => {
+                                 let height = verts[*i].2;
+                                 let diff = height - current;
+
+                                 if diff > slope_max {
+                                    slope_max = diff;
+                                    slope_index = *i;
+                                 }
+
+                            },
+
+                            _ => ()
+                        }
+                    });
 
 
-                    if ne_diff > slope_max {
-                        slope_max = ne_diff;
-                        slope_index = math::index_1d(x + 1, y + 1, size);
-                    }
-
+                    // Move
                     if slope_max > self.talus {
 
                        // Remove from current
                        let removed = current - self.soil;
-                       let i = math::index_1d(x, y, size);
-                       verts[i] = (verts[i].0, verts[i].1, removed);
+                       verts[center] = (verts[center].0, verts[center].1, removed);
 
                        // Add to neighbor
                        let added = verts[slope_index].2 + self.soil;
