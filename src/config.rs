@@ -167,6 +167,18 @@ impl Terrain {
         };
 
 
+        let thermal = if get!(params, "thermal") {
+            ThermalErosion {
+                enabled: true,
+                talus: get!(params, "thermal_talus"),
+                soil: get!(params, "thermal_soil"),
+                iterations: get!(params, "thermal_iterations"),
+            }
+        } else {
+            ThermalErosion::default()
+        };
+
+
         let config = Terrain {
             seed: get!(params, "seed"),
             rows: get!(params, "rows"),
@@ -189,7 +201,7 @@ impl Terrain {
             terraces: terraces,
             flat: false,
             smooth: smooth,
-            thermal: ThermalErosion::default(),
+            thermal: thermal,
         };
 
         Ok(config)

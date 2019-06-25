@@ -269,7 +269,9 @@ impl Procedural {
             }
         }
 
-        self.config.thermal.run(&mut verts);
+        if self.config.thermal.enabled {
+            self.config.thermal.run(&mut verts);
+        }
 
         // Normalization
         for x in 0..conf.columns {
