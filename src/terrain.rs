@@ -222,6 +222,11 @@ impl Procedural {
             }
         }
 
+        // Erosion Algorithms
+        if self.config.thermal.enabled {
+            self.config.thermal.run(&mut hmap);
+        }
+
         // Modifiers & Normalization
         for x in 0..columns {
             for y in 0..rows {

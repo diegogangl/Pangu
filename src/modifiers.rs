@@ -270,8 +270,8 @@ impl ThermalErosion {
     /// # Arguments
     ///
     /// * `verts` - Reference to the vertices vector
-    pub fn run(&self, verts: &mut Vec<(f64, f64, f64)>) {
-        let size = (verts.len() as f64).sqrt() as u32;
+    pub fn run(&self, hmap: &mut Vec<f64>) {
+        let size = (hmap.len() as f64).sqrt() as u32;
 
         for _ in 0..self.iterations {
             for x in 0..size {
@@ -285,7 +285,7 @@ impl ThermalErosion {
 
                    // Current height
                    let center_idx = math::index_1d(x, y, size);
-                   let center = verts[center_idx].2;
+                   let center = hmap[center_idx];
 
                    // Rotated Von Neuhmann neighbors
                    let nw = if x > 0 && y < size - 1 {
@@ -316,8 +316,7 @@ impl ThermalErosion {
                    [nw, sw, se, ne].iter().for_each(|index|{
                         match index {
                             Some(i) => {
-                                 let height = verts[*i].2;
-                                 let diff = center - height;
+                                 let diff = center - hmap[*i];
 
                                  if diff > slope_max {
                                     slope_max = diff;
@@ -339,15 +338,10 @@ impl ThermalErosion {
                        let magic_number = 4.0;
 
                        // Remove from current
-                       let removed = center - (slope_max / magic_number);
-                       verts[center_idx] = (verts[center_idx].0,
-                                            verts[center_idx].1,
-                                            removed);
+                       hmap[center_idx] -= slope_max / magic_number;
 
                        // Add to neighbor
-                       let added = verts[lowest_index].2 + (slope_max / magic_number);
-                       verts[lowest_index] = (verts[lowest_index].0,
-                                             verts[lowest_index].1, added);
+                       hmap[lowest_index] += slope_max / magic_number;
                     }
                 }
             }
