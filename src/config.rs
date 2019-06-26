@@ -171,7 +171,6 @@ impl Terrain {
             ThermalErosion {
                 enabled: true,
                 talus: get!(params, "thermal_talus"),
-                soil: get!(params, "thermal_soil"),
                 iterations: get!(params, "thermal_iterations"),
             }
         } else {
