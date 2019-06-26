@@ -14,6 +14,7 @@ use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
+pub type Heightmap = Vec<(f64)>;
 
 
 /// Macro to scale a point
@@ -181,129 +182,103 @@ impl Procedural {
     }
 
 
-    /// Generate list of vertices for the terrain mesh
+    /// Generate the heightmap for the terrain
     ///
-    /// Returns the 3D coordinates for the mesh as a vector
-    /// of tuples.
-    fn vertices(&self) -> Vertices {
-        let conf = &self.config;
+    /// Returns a flat Vector with values in the range [0..1]
+    fn heights(&self) -> Heightmap {
 
-        let half_x = f64::from(conf.columns - 1) / 2.0;
-        let half_y = f64::from(conf.rows - 1) / 2.0;
+        // Convenience
+        let columns = self.config.columns;
+        let rows = self.config.rows;
 
-        let capacity = (conf.columns * conf.rows) as usize;
-        let mut verts: Vertices = Vec::with_capacity(capacity);
-
-        debug!("Allocated vec with capacity: {:?}", capacity);
-
-        let scale = f64::from(max(conf.rows, conf.columns)) * (1.0 / conf.size);
-        debug!("Scale: {:?}", scale);
-
+        // Keep track of height range for normalization
         let mut heights_min = 0.0;
         let mut heights_max = 1.0;
+        let floor = self.config.sea_floor * self.config.height;
 
-        let floor = conf.sea_floor * conf.height;
-        let ceiling = conf.height;
+        // Allocation
+        let capacity = (columns * rows) as usize;
+        let mut hmap = Vec::with_capacity(capacity);
 
-        debug!("Calculated floor: {:?}", floor);
-        debug!("Calculated ceiling: {:?}", ceiling);
+        debug!("Allocated heightmap with capacity: {:?}", capacity);
 
-        // Convenience for seamless calculations
-        let x_extent = self.limits_xy.0;
-        let y_extent = self.limits_xy.1;
+        // Initial Generation
+        for x in 0..columns {
+            for y in 0..rows {
+                let co = self.coords_for_noise(x as f64, y as f64 );
 
-        for x in 0..conf.columns {
-            for y in 0..conf.rows {
-                let x = f64::from(x) - half_x;
-                let y = f64::from(y) - half_y;
+                let z = self.get_z([co.0, co.1]);
 
-                let co = self.coords_for_noise(x, y);
-                let mut z = if conf.flat {
-                    0.0
-
-                // Make seamless
-                } else if conf.is_seamless {
-                    let sw = self.get_z([co.0, co.1]);
-                    let se = self.get_z([co.0 + x_extent, co.1]);
-                    let nw = self.get_z([co.0, co.1 + y_extent]);
-                    let ne = self.get_z([co.0 + x_extent, co.1 + y_extent]);
-
-                    let x_blend = 1.0 - ((co.0 + 1.0) / x_extent);
-                    let y_blend = 1.0 - ((co.1 + 1.0) / y_extent);
-
-                    let y0 = math::lerp(se, sw, x_blend);
-                    let y1 = math::lerp(ne, nw, x_blend);
-
-                    let val = math::lerp(y1, y0, y_blend);
-
-                    // Keep track of min/max for normalization
-                    if val > heights_max {
-                        heights_max = val;
-                    }
-
-                    if val < heights_min {
-                        heights_min = val;
-                    }
-
-                    val
-                } else {
-                    let val = self.get_z([co.0, co.1]);
-
-                    // Keep track of min/max for normalization
-                    if val > heights_max {
-                        heights_max = val;
-                    }
-
-                    if val < heights_min {
-                        heights_min = val;
-                    }
-
-                    val
-                };
-
-                if conf.invert {
-                    z *= -1.0;
+                // Keep track of min/max for normalization
+                if z > heights_max {
+                    heights_max = z;
                 }
 
-                verts.push((x / scale, y / scale, z));
+                if z < heights_min {
+                    heights_min = z;
+                }
+
+                hmap.push(z);
             }
         }
 
-        if self.config.thermal.enabled {
-            self.config.thermal.run(&mut verts);
-        }
+        // Modifiers & Normalization
+        for x in 0..columns {
+            for y in 0..rows {
+                let i = math::index_1d(x, y, columns);
+                let mut z = hmap[i];
 
-        // Normalization
-        for x in 0..conf.columns {
-            for y in 0..conf.rows {
-                let i = math::index_1d(x, y, conf.columns);
-                let mut z = verts[i].2;
-
-                z = math::map_on_zero(
-                    z,
-                    heights_min,
-                    heights_max,
-                    self.config.height,
-                );
+                z = math::map_on_zero(z, heights_min,
+                                      heights_max, self.config.height);
 
                 if self.config.terraces.enabled {
                     z = self.config.terraces.run(z);
                 }
 
-                if z < floor {
-                    z = floor;
-                }
-
-                if floor > 0.0 {
-                    z -= floor;
-                }
-
-                // Smooth Modifier
                 if self.config.smooth.enabled {
                     z *= self.config.smooth.run(x, y);
                 }
 
-                verts[i] = (verts[i].0, verts[i].1, z);
+                if floor > 0.0 {
+                    z = if z < floor { floor } else { z - floor };
+                }
+
+                hmap[i] = z;
+            }
+        }
+
+
+        hmap
+    }
+
+
+    /// Generate list of vertices for the terrain mesh
+    ///
+    /// Returns the 3D coordinates for the mesh as a vector
+    /// of tuples.
+    fn vertices(&self) -> Vertices {
+        let hmap = self.heights();
+
+        let capacity = (self.config.columns * self.config.rows) as usize;
+        let mut verts: Vertices = Vec::with_capacity(capacity);
+
+        debug!("Allocated vertices with capacity: {:?}", capacity);
+
+        // Used to scale the mesh
+        let scale = max(self.config.rows, self.config.columns) as f64 * (1.0 / self.config.size);
+        debug!("Scale: {:?}", scale);
+
+        // Used to center the mesh in the scene
+        let half_x = ((self.config.columns - 1) as f64) / 2.0;
+        let half_y = ((self.config.rows - 1) as f64) / 2.0;
+
+        for x in 0..self.config.columns {
+            for y in 0..self.config.rows {
+                let i = math::index_1d(x, y, self.config.columns);
+                let x = ((x as f64) - half_x) / scale;
+                let y = ((y as f64) - half_y) / scale;
+
+                verts.push((x, y, hmap[i]));
             }
         }
 
