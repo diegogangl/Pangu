@@ -335,20 +335,24 @@ impl ThermalErosion {
                     // Move
                     if slope_max > self.talus {
 
+                       // According to the algorithm this should be 2.0,
+                       // but it causes oscillations. This value works
+                       // correctly for some reason, who am I to judge?
+                       let magic_number = 4.0;
+
                        // Remove from current
-                       let removed = center - (slope_max / 2.0);
+                       let removed = center - (slope_max / magic_number);
                        verts[center_idx] = (verts[center_idx].0,
                                             verts[center_idx].1,
                                             removed);
 
                        // Add to neighbor
-                       let added = verts[slope_index].2 + (slope_max / 2.0);
+                       let added = verts[slope_index].2 + (slope_max / magic_number);
                        verts[slope_index] = (verts[slope_index].0,
                                              verts[slope_index].1, added);
                     }
                 }
             }
         }
-
     }
 }
