@@ -281,8 +281,11 @@ impl ThermalErosion {
             for x in 0..size {
                 for y in 0..size {
 
+                   // Maximum slope found
                    let mut slope_max = 0.0;
-                   let mut slope_index = 0;
+
+                   // Index of the lowest neighbor (1D)
+                   let mut lowest_index = 0;
 
                    // Current height
                    let center_idx = math::index_1d(x, y, size);
@@ -291,6 +294,12 @@ impl ThermalErosion {
                    // Rotated Von Neuhmann neighbors
                    let nw = if x > 0 && y < size - 1 {
                        Some(math::index_1d(x - 1, y + 1, size))
+                   } else {
+                       None
+                   };
+
+                   let ne = if x < size - 1 && y < size - 1 {
+                       Some(math::index_1d(x + 1, y + 1, size))
                    } else {
                        None
                    };
@@ -307,13 +316,6 @@ impl ThermalErosion {
                        None
                    };
 
-                   let ne = if x < size - 1 && y < size - 1 {
-                       Some(math::index_1d(x + 1, y + 1, size))
-                   } else {
-                       None
-                   };
-
-
                    // Find lowest neighbor
                    [nw, sw, se, ne].iter().for_each(|index|{
                         match index {
@@ -323,7 +325,7 @@ impl ThermalErosion {
 
                                  if diff > slope_max {
                                     slope_max = diff;
-                                    slope_index = *i;
+                                    lowest_index = *i;
                                  }
                             },
 
@@ -332,7 +334,7 @@ impl ThermalErosion {
                     });
 
 
-                    // Move
+                    // Move soil
                     if slope_max > self.talus {
 
                        // According to the algorithm this should be 2.0,
@@ -347,9 +349,9 @@ impl ThermalErosion {
                                             removed);
 
                        // Add to neighbor
-                       let added = verts[slope_index].2 + (slope_max / magic_number);
-                       verts[slope_index] = (verts[slope_index].0,
-                                             verts[slope_index].1, added);
+                       let added = verts[lowest_index].2 + (slope_max / magic_number);
+                       verts[lowest_index] = (verts[lowest_index].0,
+                                             verts[lowest_index].1, added);
                     }
                 }
             }
