@@ -15,6 +15,7 @@ crate-type = ["cdylib"]
 noise = "0.5.1"
 log="0.4"
 simplelog = "0.5.3"
+rand = "0.7"
 
 [dependencies.pyo3]
 version = "0.6.0-alpha.4"

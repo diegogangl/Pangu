@@ -1,5 +1,6 @@
 use super::math;
 use super::curve::Curve;
+use rand::distributions::{Distribution, Uniform};
 
 
 /// Terraces modifier
@@ -322,7 +323,7 @@ impl ThermalErosion {
                                     slope_max = diff;
                                     lowest_index = *i;
                                  }
-                            },
+                             },
 
                             _ => ()
                         }
@@ -347,4 +348,78 @@ impl ThermalErosion {
             }
         }
     }
+}
+
+
+
+#[derive(Clone, Debug)]
+pub struct WaterErosion {
+
+    /// Enable the modifier
+    pub enabled: bool,
+
+    /// Number of times to run the algorithm on the terrain
+    pub iterations: u8,
+
+    pub evaporation: f64,
+    pub rain_rate: f64,
+    pub soil_capacity: f64,
+
+    size:  u32,
+    water: Vec<f64>,
+    sediment: Vec<f64>,
+    flux: Vec<(f64, f64, f64, f64)>,
+    velocity: Vec<(f64, f64)>,
+}
+
+
+impl WaterErosion {
+
+    fn rain(&mut self) {
+
+        let mut rng = rand::thread_rng();
+        let dist = Uniform::from(0..self.water.len() - 4);
+
+        for _ in 0..100 {
+            let x = dist.sample(&mut rng);
+            let y = dist.sample(&mut rng);
+            let i = math::index_1d(x as u32, y as u32, self.size);
+            self.water[i] += self.rain_rate;
+        }
+    }
+
+
+    fn evaporate(&mut self) {
+
+        for i in 0..self.water.len() {
+            let w = self.water[i] * (1.0 - self.evaporation);
+            self.water[i] = if w > 0.0 { w } else { 0.0 };
+        }
+    }
+
+
+    pub fn with_capacity(capacity: usize) -> Self {
+        WaterErosion {
+            enabled: true,
+            iterations: 1,
+            evaporation: 0.1,
+            rain_rate: 0.5,
+            soil_capacity: 0.1,
+            water: Vec::with_capacity(capacity),
+            sediment: Vec::with_capacity(capacity),
+            flux: Vec::with_capacity(capacity),
+            velocity: Vec::with_capacity(capacity),
+            size: (capacity as f64).sqrt() as u32,
+        }
+
+    }
+
+
+    pub fn run(&mut self, heights: &mut Vec<f64>) {
+        for _ in 0..self.iterations {
+            self.rain();
+            self.evaporate();
+
+        }
+   }
 }
