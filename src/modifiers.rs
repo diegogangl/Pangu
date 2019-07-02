@@ -351,6 +351,10 @@ impl ThermalErosion {
 }
 
 
+// TODO: Convert flux into a type (struct)
+// TODO: Add methods to get out flow safely
+// TODO: Convert velocity into a type (struct)
+
 
 #[derive(Clone, Debug)]
 pub struct WaterErosion {
@@ -368,8 +372,8 @@ pub struct WaterErosion {
     size:  u32,
     water: Vec<f64>,
     sediment: Vec<f64>,
-    flux: Vec<(f64, f64, f64, f64)>,
-    velocity: Vec<(f64, f64)>,
+    flux: Vec<[f64; 4]>,
+    velocity: Vec<[f64; 2]>,
 }
 
 
@@ -398,6 +402,160 @@ impl WaterErosion {
     }
 
 
+    fn flow(&mut self, heights: &mut Vec<f64>) {
+
+        // Outflux computation settings
+        ////////////////////////////////////////////////////////////
+        let a = 0.00005;        // Cross-sectional area of the pipe
+        let gravity = 9.81;
+
+        let flux_factor = a * gravity;
+
+
+        // Outflow Flux Computation with boundary conditions
+        ////////////////////////////////////////////////////////////
+        for x in 0..self.size {
+            for y in 0..self.size {
+                let center_idx = math::index_1d(x, y, self.size);
+                let center = heights[center_idx] + self.water[center_idx];
+
+                let l_flux = if x > 0 {
+                    let idx = math::index_1d(x - 1, y, self.size);
+                    let dh = center - (heights[idx] + self.water[idx]);
+                    let result = self.flux[idx][0] + flux_factor * dh;
+                    result.max(0.0)
+                } else {
+                    0.0
+                };
+
+
+                let r_flux = if x < self.size - 1 {
+                    let idx = math::index_1d(x + 1, y, self.size);
+                    let dh = center - (heights[idx] + self.water[idx]);
+                    let result = self.flux[idx][1] + flux_factor * dh;
+                    result.max(0.0)
+                } else {
+                    0.0
+                };
+
+                let b_flux = if y > 0 {
+                    let idx = math::index_1d(x, y - 1, self.size);
+                    let dh = center - (heights[idx] + self.water[idx]);
+                    let result = self.flux[idx][2] + flux_factor * dh;
+                    result.max(0.0)
+                } else {
+                    0.0
+                };
+
+                let t_flux = if y < self.size - 1 {
+                    let idx = math::index_1d(x, y + 1, self.size);
+                    let dh = center - (heights[idx] + self.water[idx]);
+                    let result = self.flux[idx][3] + flux_factor * dh;
+                    result.max(0.0)
+                } else {
+                    0.0
+                };
+
+                let total_flux = l_flux + r_flux + b_flux + t_flux;
+                let k = (self.water[center_idx] / total_flux).min(1.0);
+
+                self.flux[center_idx] = [l_flux * k, r_flux * k, b_flux * k, t_flux * k];
+            }
+        }
+
+
+        // Update water surface and velocity field
+        ////////////////////////////////////////////////////////////
+        for x in 0..self.size {
+            for y in 0..self.size {
+                let i = math::index_1d(x, y, self.size);
+                let in_flow = {
+                    let mut flow = 0.0;
+
+                    // R FLUX
+                    if x > 0 {
+                        let i = math::index_1d(x - 1, y, self.size);
+                        flow += self.flux[i][1];
+                    }
+
+                    // L FLUX
+                    if x < self.size - 1 {
+                        let i = math::index_1d(x + 1, y, self.size);
+                        flow += self.flux[i][0];
+                    }
+
+                    // T FLUX
+                    if y > 0 {
+                        let i = math::index_1d(y - 1, y, self.size);
+                        flow += self.flux[i][3];
+                    }
+
+                    // B FLUX
+                    if y < self.size - 1 {
+                        let i = math::index_1d(y + 1, y, self.size);
+                        flow += self.flux[i][2];
+                    }
+
+                    flow
+                };
+
+                let out_flow: f64 = self.flux[i].iter().sum();
+                let delta_v = in_flow - out_flow;
+                let old_water = self.water[i];
+                self.water[i] += delta_v;
+                self.water[i] = self.water[i].max(0.0);
+                let mean_water = (old_water + self.water[i]) / 2.0;
+
+                if mean_water == 0.0 {
+                    self.velocity[i] = [0.0, 0.0];
+                } else {
+                    // R FLUX
+                    let r_out = if x > 0 {
+                        let i = math::index_1d(x - 1, y, self.size);
+                        self.flux[i][1]
+                    } else {
+                        0.0
+                    };
+
+                    // L FLUX
+                    let l_out = if x < self.size - 1 {
+                        let i = math::index_1d(x + 1, y, self.size);
+                        self.flux[i][0]
+                    } else {
+                        0.0
+                    };
+
+                    // T FLUX
+                    let t_out = if y > 0 {
+                        let i = math::index_1d(y - 1, y, self.size);
+                        self.flux[i][3]
+                    } else {
+                        0.0
+                    };
+
+                    // B FLUX
+                    let b_out = if y < self.size - 1 {
+                        let i = math::index_1d(y + 1, y, self.size);
+                        self.flux[i][2]
+                    } else {
+                        0.0
+                    };
+
+                    let u = {
+                        ((r_out - self.flux[i][0] - l_out + self.flux[i][1]) / mean_water) / 2.0
+                    };
+
+                    let v = {
+                        ((t_out - self.flux[i][2] - b_out + self.flux[i][3]) / mean_water) / 2.0
+                    };
+
+                    self.velocity[i] = [u, v];
+                }
+            }
+        }
+    }
+
+
     pub fn with_capacity(capacity: usize) -> Self {
         WaterErosion {
             enabled: true,
@@ -418,6 +576,7 @@ impl WaterErosion {
     pub fn run(&mut self, heights: &mut Vec<f64>) {
         for _ in 0..self.iterations {
             self.rain();
+            self.flow(heights);
             self.evaporate();
 
         }
