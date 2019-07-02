@@ -91,6 +91,9 @@ pub struct Terrain {
 
     // Thermal Erosion modifier
     pub thermal: ThermalErosion,
+
+    // Hydraulic Erosion modifier
+    pub hydraulic: WaterErosion,
 }
 
 
@@ -119,6 +122,7 @@ impl Default for Terrain {
             terraces: Terraces::default(),
             smooth: Smooth::default(),
             thermal: ThermalErosion::default(),
+            hydraulic: WaterErosion::with_capacity(1),
         }
     }
 }
@@ -177,6 +181,13 @@ impl Terrain {
             ThermalErosion::default()
         };
 
+        let hydraulic = if get!(params, "fluvial") {
+            let capacity = (rows * columns) as usize;
+            WaterErosion::with_capacity(capacity)
+        } else {
+            WaterErosion::with_capacity(1)
+        };
+
 
         let config = Terrain {
             seed: get!(params, "seed"),
@@ -201,6 +212,7 @@ impl Terrain {
             flat: false,
             smooth: smooth,
             thermal: thermal,
+            hydraulic: hydraulic,
         };
 
         Ok(config)

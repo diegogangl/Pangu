@@ -185,7 +185,7 @@ impl Procedural {
     /// Generate the heightmap for the terrain
     ///
     /// Returns a flat Vector with values in the range [0..1]
-    fn heights(&self) -> Heightmap {
+    fn heights(&mut self) -> Heightmap {
 
         // Convenience
         let columns = self.config.columns;
@@ -227,6 +227,8 @@ impl Procedural {
             self.config.thermal.run(&mut hmap);
         }
 
+        self.config.hydraulic.run(&mut hmap);
+
         // Modifiers & Normalization
         for x in 0..columns {
             for y in 0..rows {
@@ -261,7 +263,7 @@ impl Procedural {
     ///
     /// Returns the 3D coordinates for the mesh as a vector
     /// of tuples.
-    fn vertices(&self) -> Vertices {
+    fn vertices(&mut self) -> Vertices {
         let hmap = self.heights();
 
         let capacity = (self.config.columns * self.config.rows) as usize;
@@ -455,14 +457,14 @@ impl Procedural {
 
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
-    pub fn build_mesh(&self) -> (Faces, Vertices) {
+    pub fn build_mesh(&mut self) -> (Faces, Vertices) {
         (self.faces(), self.vertices())
     }
 
 
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
-    pub fn build_vertices(&self) -> Vertices {
+    pub fn build_vertices(&mut self) -> Vertices {
         self.vertices()
     }
 }
