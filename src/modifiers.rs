@@ -433,7 +433,7 @@ impl WaterErosion {
 
         for i in 0..self.water.len() {
             let w = self.water[i] * (1.0 - self.evaporation);
-            self.water[i] = if w > 0.0 { w } else { 0.0 };
+            self.water[i] = w.max(0.0);
         }
     }
 
