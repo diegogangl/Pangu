@@ -443,10 +443,10 @@ impl WaterErosion {
 
         // Outflux computation settings
         ////////////////////////////////////////////////////////////
-        let a = 0.00005;        // Cross-sectional area of the pipe
+        let pipe_area = 0.005;        // Cross-sectional area of the pipe
         let gravity = 9.81;
 
-        let flux_factor = a * gravity;
+        let flux_factor = pipe_area * gravity;
 
 
         // Outflow Flux Computation with boundary conditions
