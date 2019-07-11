@@ -592,6 +592,80 @@ impl WaterErosion {
     }
 
 
+    fn erosion(&mut self, heights: &mut Vec<f64>) {
+        let kc = 1.0;                  // sediment capacity constant
+        let ks = 0.0001 * 12.0 * 10.0;  // dissolving constant
+        let kd = 0.0001 * 12.0 * 10.0;  // deposition constant
+
+        let up = [0.0, 0.0, 1.0];
+
+        for x in 0..self.size {
+            for y in 0..self.size {
+                let i = math::index_1d(x, y, self.size);
+
+                // local velocity
+                let u_v = self.velocity[i][0];
+                let v_v = self.velocity[i][1];
+
+                let normal = {
+                   let right = if x < self.size - 1 {
+                       let i = math::index_1d(x + 1, y, self.size);
+                       heights[i]
+                   } else {
+                       let i = math::index_1d(self.size - 1, y, self.size);
+                       heights[i]
+                   };
+
+                   let left = if x > 0 {
+                       let i = math::index_1d(x - 1, y, self.size);
+                       heights[i]
+                   } else {
+                       let i = math::index_1d(0, y, self.size);
+                       heights[i]
+                   };
+
+                   let top = if y < self.size - 1 {
+                       let i = math::index_1d(x, y + 1, self.size);
+                       heights[i]
+                   } else {
+                       let i = math::index_1d(x, self.size - 1, self.size);
+                       heights[i]
+                   };
+
+                   let bottom = if y > 0 {
+                       let i = math::index_1d(x, y - 1, self.size);
+                       heights[i]
+                   } else {
+                       let i = math::index_1d(x, 0, self.size);
+                       heights[i]
+                   };
+
+                   math::normalize(&[right - left, top - bottom , 2.0])
+                };
+
+                let cosa = math::dot(&normal, &up);
+                let sin_alpha = cosa.acos().sin().max(0.5);
+
+                // local sediment capacity of the flow
+                let capacity = kc * (u_v * u_v + v_v * v_v).sqrt()
+                                     * sin_alpha
+                                     * (self.water[i].min(0.01) / 0.01);
+
+                if capacity > self.sediment[i] {
+                    let d = ks * (capacity - self.sediment[i]);
+                    heights[i] -= d;
+                    self.sediment[i] += d;
+                }
+                // deposit onto ground
+                else {
+                    let d = kd * (self.sediment[i] - capacity);
+                    heights[i] += d;
+                    self.sediment[i] -= d;
+                }
+            }
+        }
+    }
+
     pub fn with_capacity(capacity: usize) -> Self {
         WaterErosion {
             enabled: false,
@@ -614,6 +688,7 @@ impl WaterErosion {
         for _ in 0..self.iterations {
             self.rain();
             self.flow(heights);
+            self.erosion(heights);
             self.evaporate();
 
         }
