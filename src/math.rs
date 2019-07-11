@@ -82,3 +82,54 @@ pub fn distance(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
 pub fn index_1d(x: u32, y: u32, size: u32) -> usize {
         (y * size + x) as usize
 }
+
+
+/// Calculate magnitude of a 3D Vector
+///
+/// # Arguments
+///
+/// * `vector` - Slice of 3 values for the vector
+pub fn magnitude(vector: &[f64]) -> f64 {
+
+    vector.iter()
+          .fold(0.0, |sum, val| sum + val.powi(2))
+          .sqrt()
+}
+
+
+/// Normalize a 3D Vector
+///
+/// # Arguments
+///
+/// * `vector` - Slice of 3 values for the vector
+pub fn normalize(vector: &[f64]) -> [f64; 3] {
+
+    assert_eq!(vector.len(), 3);
+
+    let mag = magnitude(vector);
+
+    [vector[0] / mag,
+     vector[1] / mag,
+     vector[2] / mag]
+}
+
+
+/// Calculate the dot product of two vectors
+///
+/// # Arguments
+///
+/// * `a - The first vector
+/// * `b - The first vector
+pub fn dot(a: &[f64], b: &[f64]) -> f64 {
+
+    assert_eq!(a.len(), b.len());
+
+    let mut product = 0.0;
+
+    for i in 0..a.len() {
+        product += a[i] * b[i];
+    }
+
+    product
+}
+
