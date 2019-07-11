@@ -522,13 +522,13 @@ impl WaterErosion {
 
                     // T FLUX
                     if y > 0 {
-                        let i = math::index_1d(y - 1, y, self.size);
+                        let i = math::index_1d(x, y - 1, self.size);
                         flow += self.flux[i][3];
                     }
 
                     // B FLUX
                     if y < self.size - 1 {
-                        let i = math::index_1d(y + 1, y, self.size);
+                        let i = math::index_1d(x, y + 1, self.size);
                         flow += self.flux[i][2];
                     }
 
@@ -563,7 +563,7 @@ impl WaterErosion {
 
                     // T FLUX
                     let t_out = if y > 0 {
-                        let i = math::index_1d(y - 1, y, self.size);
+                        let i = math::index_1d(x, y - 1, self.size);
                         self.flux[i][3]
                     } else {
                         0.0
@@ -571,7 +571,7 @@ impl WaterErosion {
 
                     // B FLUX
                     let b_out = if y < self.size - 1 {
-                        let i = math::index_1d(y + 1, y, self.size);
+                        let i = math::index_1d(x, y + 1, self.size);
                         self.flux[i][2]
                     } else {
                         0.0
