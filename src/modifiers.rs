@@ -351,6 +351,33 @@ impl ThermalErosion {
 }
 
 
+/// Velocity field for water erosion
+///
+/// Represents current velocity on a single cell
+#[derive(Clone, Debug)]
+pub struct Velocity {
+    pub u: f64,
+    pub v: f64,
+}
+
+impl Default for Velocity {
+    fn default() -> Self {
+        Velocity {
+            u: 0.0,
+            v: 0.0,
+        }
+    }
+}
+
+impl Velocity {
+
+    /// Get magnitude of current velocity
+    pub fn magnitude(&self) -> f64 {
+        (self.u.powi(2) + self.v.powi(2)).sqrt()
+    }
+}
+
+
 /// Water Erosion modifier
 ///
 /// Simulates erosion caused by water (rain and rivers). This
@@ -377,7 +404,7 @@ pub struct WaterErosion {
     sediment: Vec<f64>,
     sediment_tmp: Vec<f64>,
     flux: Vec<[f64; 4]>,
-    velocity: Vec<[f64; 2]>,
+    velocity: Vec<Velocity>,
 }
 
 
@@ -583,7 +610,8 @@ impl WaterErosion {
 
                 // Update velocity field
                 if mean_water == 0.0 {
-                    self.velocity[i] = [0.0, 0.0];
+                    self.velocity[i].u = 0.0;
+                    self.velocity[i].v = 0.0;
                 } else {
                     let r_in = if x > 0 {
                         let i = math::index_1d(x - 1, y, self.size);
@@ -613,15 +641,13 @@ impl WaterErosion {
                         0.0
                     };
 
-                    let u = {
+                    self.velocity[i].u = {
                         ((r_in - self.flux[i][0] - l_in + self.flux[i][1]) / mean_water) / 2.0
                     };
 
-                    let v = {
+                    self.velocity[i].v = {
                         ((t_in - self.flux[i][2] - b_in + self.flux[i][3]) / mean_water) / 2.0
                     };
-
-                    self.velocity[i] = [u, v];
                 }
             }
         }
@@ -638,8 +664,8 @@ impl WaterErosion {
                 let i = math::index_1d(x, y, self.size);
 
                 // Where flow comes from
-                let src_x = x as f64 - self.velocity[i][0];
-                let src_y = y as f64 - self.velocity[i][1];
+                let src_x = x as f64 - self.velocity[i].u;
+                let src_y = y as f64 - self.velocity[i].v;
 
                 let mut x0 = {
                     let val = src_x.floor();
@@ -722,10 +748,6 @@ impl WaterErosion {
             for y in 0..self.size {
                 let i = math::index_1d(x, y, self.size);
 
-                // local velocity
-                let u_v = self.velocity[i][0];
-                let v_v = self.velocity[i][1];
-
                 let normal = {
                    let right = if x < self.size - 1 {
                        let i = math::index_1d(x + 1, y, self.size);
@@ -766,9 +788,9 @@ impl WaterErosion {
                 let sin_alpha = cosa.acos().sin().max(0.5);
 
                 // local sediment capacity of the flow
-                let capacity = kc * (u_v * u_v + v_v * v_v).sqrt()
-                                     * sin_alpha
-                                     * (self.water[i].min(0.01) / 0.01);
+                let capacity = kc * self.velocity[i].magnitude()
+                                  * sin_alpha
+                                  * (self.water[i].min(0.01) / 0.01);
 
                 if capacity > self.sediment[i] {
                     let d = ks * (capacity - self.sediment[i]);
@@ -802,7 +824,7 @@ impl WaterErosion {
             sediment: vec![0.0; capacity],
             sediment_tmp: vec![0.0; capacity],
             flux: vec![[0.0, 0.0, 0.0, 0.0]; capacity],
-            velocity: vec![[0.0, 0.0]; capacity],
+            velocity: vec![Velocity::default(); capacity],
             size: (capacity as f64).sqrt() as u32,
         }
 
