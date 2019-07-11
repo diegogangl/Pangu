@@ -372,6 +372,7 @@ pub struct WaterErosion {
     size:  u32,
     water: Vec<f64>,
     sediment: Vec<f64>,
+    sediment_tmp: Vec<f64>,
     flux: Vec<[f64; 4]>,
     velocity: Vec<[f64; 2]>,
 }
@@ -592,6 +593,66 @@ impl WaterErosion {
     }
 
 
+    fn sediment_transport(&mut self) {
+        for x in 0..self.size {
+            for y in 0..self.size {
+                let i = math::index_1d(x, y, self.size);
+
+                // position where flow comes from
+                let src_x = x as f64 - self.velocity[i][0];
+                let src_y = y as f64 - self.velocity[i][1];
+
+                // integer coordinates
+                let mut x0 = {
+                    let val = src_x.floor();
+                    if val > 0.0 { val as u32 } else { 0 }
+                };
+
+                let mut y0 = {
+                    let val = src_y.floor();
+                    if val > 0.0 { val as u32 } else { 0 }
+                };
+
+                let mut x1 = x0 + 1;
+                let mut y1 = y0 + 1;
+
+                // interpolation factors
+                let fx = src_x - x0 as f64;
+                let fy = src_y - y0 as f64;
+
+                // clamp to grid borders
+                x0 = math::clamp(x0, 0, self.size - 1);
+                x1 = math::clamp(x1, 0, self.size - 1);
+                y0 = math::clamp(y0, 0, self.size - 1);
+                y1 = math::clamp(y1, 0, self.size - 1);
+
+                self.sediment_tmp[i] = {
+                  let index_1 = math::index_1d(x0, y0, self.size);
+                  let index_2 = math::index_1d(x1, y0, self.size);
+                  let lerp_1 = math::lerp(self.sediment[index_1], self.sediment[index_2], fx);
+
+                  let index_3 = math::index_1d(x0, y1, self.size);
+                  let index_4 = math::index_1d(x1, y1, self.size);
+                  let lerp_2 = math::lerp(self.sediment[index_3], self.sediment[index_4], fx);
+
+                  math::lerp(lerp_1, lerp_2, fy)
+                };
+
+            }
+        }
+
+
+       // write back new values
+        for x in 0..self.size {
+            for y in 0..self.size {
+                let i = math::index_1d(x, y, self.size);
+
+                self.sediment[i] = self.sediment_tmp[i]
+            }
+        }
+
+    }
+
     fn erosion(&mut self, heights: &mut Vec<f64>) {
         let kc = 1.0;                  // sediment capacity constant
         let ks = 0.0001 * 12.0 * 10.0;  // dissolving constant
@@ -689,6 +750,7 @@ impl WaterErosion {
             self.rain();
             self.flow(heights);
             self.erosion(heights);
+            self.sediment_transport();
             self.evaporate();
 
         }
