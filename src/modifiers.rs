@@ -599,10 +599,11 @@ impl WaterErosion {
             evaporation: 0.1,
             rain_rate: 0.5,
             soil_capacity: 0.1,
-            water: Vec::with_capacity(capacity),
-            sediment: Vec::with_capacity(capacity),
-            flux: Vec::with_capacity(capacity),
-            velocity: Vec::with_capacity(capacity),
+            water: vec![0.0; capacity],
+            sediment: vec![0.0; capacity],
+            sediment_tmp: vec![0.0; capacity],
+            flux: vec![[0.0, 0.0, 0.0, 0.0]; capacity],
+            velocity: vec![[0.0, 0.0]; capacity],
             size: (capacity as f64).sqrt() as u32,
         }
 
