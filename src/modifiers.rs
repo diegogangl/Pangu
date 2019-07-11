@@ -351,11 +351,14 @@ impl ThermalErosion {
 }
 
 
-// TODO: Convert flux into a type (struct)
-// TODO: Add methods to get out flow safely
-// TODO: Convert velocity into a type (struct)
-
-
+/// Water Erosion modifier
+///
+/// Simulates erosion caused by water (rain and rivers). This
+/// is based on the "Fast Hydraulic Erosion Simulation and
+/// Visualization on GPU" paper by Xing mei, et all.
+///
+/// This method is based on the virtual pipes model, with
+/// a field for the velocity of the running water.
 #[derive(Clone, Debug)]
 pub struct WaterErosion {
 
@@ -380,6 +383,10 @@ pub struct WaterErosion {
 
 impl WaterErosion {
 
+    /// Rain step
+    ///
+    /// New water is added every step. Rain drops fall down
+    /// in a random distribution with a ceratin amount of water.
     fn rain(&mut self) {
 
         let mut rng = rand::thread_rng();
@@ -430,6 +437,10 @@ impl WaterErosion {
     }
 
 
+    /// Evaporation step
+    ///
+    /// Some amount of water is evaporated into the air
+    /// every step due to air temperature.
     fn evaporate(&mut self) {
 
         for i in 0..self.water.len() {
@@ -439,18 +450,46 @@ impl WaterErosion {
     }
 
 
+    /// Flow and velocity fields update step
+    ///
+    /// The ouflow flux is calculated every step. Then, the water and
+    /// velocity maps are updated.
+    ///
+    /// # Outflow calculation
+    ///
+    /// Every cell exchanges water with its four neighbors through
+    /// virtual pipes. The flow map mantains the outflow flux (flow velocity)
+    /// for each cell. At each step this flux is accelerated by the
+    /// height difference of the cells (ground + water).
+    /// If the outflow flux is higher than the water of the cell, it gets
+    /// scaled down by the K factor to avoid negative water height.
+    ///
+    /// No water can flow out of the grid, so in boundary conditions the
+    /// outflow is zero.
+    ///
+    /// # Water map update
+    ///
+    /// The new water height at the current cell is calculated by collecting
+    /// the inflow flux and sending out the outflow flux (inflow - outflow).
+    ///
+    /// # Velocity update
+    ///
+    /// The velocity field is also updated from the outflow flux as the
+    /// average amount of water that passes through the cell per unit of time.
+    ///
+    /// # Arguments
+    ///
+    /// * `heights` - The heightmap
     fn flow(&mut self, heights: &mut Vec<f64>) {
 
-        // Outflux computation settings
-        ////////////////////////////////////////////////////////////
-        let pipe_area = 0.005;        // Cross-sectional area of the pipe
+        // Cross-sectional area of the pipe
+        let pipe_area = 0.005;
         let gravity = 9.81;
 
         let flux_factor = pipe_area * gravity;
 
 
-        // Outflow Flux Computation with boundary conditions
-        ////////////////////////////////////////////////////////////
+        // Calculate outflow flux
         for x in 0..self.size {
             for y in 0..self.size {
                 let center_idx = math::index_1d(x, y, self.size);
@@ -501,33 +540,32 @@ impl WaterErosion {
         }
 
 
-        // Update water surface and velocity field
-        ////////////////////////////////////////////////////////////
+        // Update water surface
         for x in 0..self.size {
             for y in 0..self.size {
                 let i = math::index_1d(x, y, self.size);
                 let in_flow = {
                     let mut flow = 0.0;
 
-                    // R FLUX
+                    // Right in flux
                     if x > 0 {
                         let i = math::index_1d(x - 1, y, self.size);
                         flow += self.flux[i][1];
                     }
 
-                    // L FLUX
+                    // Left in flux
                     if x < self.size - 1 {
                         let i = math::index_1d(x + 1, y, self.size);
                         flow += self.flux[i][0];
                     }
 
-                    // T FLUX
+                    // Top in flux
                     if y > 0 {
                         let i = math::index_1d(x, y - 1, self.size);
                         flow += self.flux[i][3];
                     }
 
-                    // B FLUX
+                    // Bottom in flux
                     if y < self.size - 1 {
                         let i = math::index_1d(x, y + 1, self.size);
                         flow += self.flux[i][2];
@@ -543,35 +581,32 @@ impl WaterErosion {
                 self.water[i] = self.water[i].max(0.0);
                 let mean_water = (old_water + self.water[i]) / 2.0;
 
+                // Update velocity field
                 if mean_water == 0.0 {
                     self.velocity[i] = [0.0, 0.0];
                 } else {
-                    // R FLUX
-                    let r_out = if x > 0 {
+                    let r_in = if x > 0 {
                         let i = math::index_1d(x - 1, y, self.size);
                         self.flux[i][1]
                     } else {
                         0.0
                     };
 
-                    // L FLUX
-                    let l_out = if x < self.size - 1 {
+                    let l_in = if x < self.size - 1 {
                         let i = math::index_1d(x + 1, y, self.size);
                         self.flux[i][0]
                     } else {
                         0.0
                     };
 
-                    // T FLUX
-                    let t_out = if y > 0 {
+                    let t_in = if y > 0 {
                         let i = math::index_1d(x, y - 1, self.size);
                         self.flux[i][3]
                     } else {
                         0.0
                     };
 
-                    // B FLUX
-                    let b_out = if y < self.size - 1 {
+                    let b_in = if y < self.size - 1 {
                         let i = math::index_1d(x, y + 1, self.size);
                         self.flux[i][2]
                     } else {
@@ -579,11 +614,11 @@ impl WaterErosion {
                     };
 
                     let u = {
-                        ((r_out - self.flux[i][0] - l_out + self.flux[i][1]) / mean_water) / 2.0
+                        ((r_in - self.flux[i][0] - l_in + self.flux[i][1]) / mean_water) / 2.0
                     };
 
                     let v = {
-                        ((t_out - self.flux[i][2] - b_out + self.flux[i][3]) / mean_water) / 2.0
+                        ((t_in - self.flux[i][2] - b_in + self.flux[i][3]) / mean_water) / 2.0
                     };
 
                     self.velocity[i] = [u, v];
@@ -592,17 +627,20 @@ impl WaterErosion {
         }
     }
 
-
+    /// Sediment transport step
+    ///
+    /// Every step the suspended sediment is transported with
+    /// the local velocity. The destination cell is calculated
+    /// from the velocity using the current cell as the origin.
     fn sediment_transport(&mut self) {
         for x in 0..self.size {
             for y in 0..self.size {
                 let i = math::index_1d(x, y, self.size);
 
-                // position where flow comes from
+                // Where flow comes from
                 let src_x = x as f64 - self.velocity[i][0];
                 let src_y = y as f64 - self.velocity[i][1];
 
-                // integer coordinates
                 let mut x0 = {
                     let val = src_x.floor();
                     if val > 0.0 { val as u32 } else { 0 }
@@ -616,11 +654,11 @@ impl WaterErosion {
                 let mut x1 = x0 + 1;
                 let mut y1 = y0 + 1;
 
-                // interpolation factors
+                // Calculate interpolation factors
                 let fx = src_x - x0 as f64;
                 let fy = src_y - y0 as f64;
 
-                // clamp to grid borders
+                // Clamp to grid borders
                 x0 = math::clamp(x0, 0, self.size - 1);
                 x1 = math::clamp(x1, 0, self.size - 1);
                 y0 = math::clamp(y0, 0, self.size - 1);
@@ -642,7 +680,7 @@ impl WaterErosion {
         }
 
 
-       // write back new values
+       // Write temp values to sediment map
         for x in 0..self.size {
             for y in 0..self.size {
                 let i = math::index_1d(x, y, self.size);
@@ -653,6 +691,26 @@ impl WaterErosion {
 
     }
 
+
+    /// Erosion step
+    ///
+    /// Every step some sediment is eroded from the ground (heights)
+    /// and transported by the water. At the same time, some
+    /// sediment will be deposited on the ground.
+    ///
+    /// Whether the sediment is eroded or deposited and how much
+    /// is controlled by the local capacity of the cell. This is
+    /// calculated from these factors:
+    ///
+    /// - The local tilt angle (normal of the cell)
+    /// - Local velocity
+    /// - Capacity constant
+    /// - Dissolving constant
+    /// - Deposition constant
+    ///
+    /// # Arguments
+    ///
+    /// * `heights` - The heightmap
     fn erosion(&mut self, heights: &mut Vec<f64>) {
         let kc = 1.0;                  // sediment capacity constant
         let ks = 0.0001 * 12.0 * 10.0;  // dissolving constant
@@ -727,6 +785,12 @@ impl WaterErosion {
         }
     }
 
+
+    /// Constructor
+    ///
+    /// # Arguments
+    ///
+    /// * `capacity` - How much memory to allocate for each map
     pub fn with_capacity(capacity: usize) -> Self {
         WaterErosion {
             enabled: false,
@@ -745,6 +809,11 @@ impl WaterErosion {
     }
 
 
+    /// Run the Hydraulic erosion simulation
+    ///
+    /// # Arguments
+    ///
+    /// * `heights` - The heightmap
     pub fn run(&mut self, heights: &mut Vec<f64>) {
         for _ in 0..self.iterations {
             self.rain();
