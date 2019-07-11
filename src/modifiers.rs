@@ -355,7 +355,7 @@ impl ThermalErosion {
 ///
 /// Represents current velocity on a single cell
 #[derive(Clone, Debug)]
-pub struct Velocity {
+struct Velocity {
     pub u: f64,
     pub v: f64,
 }
