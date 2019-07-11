@@ -382,7 +382,7 @@ impl WaterErosion {
     fn rain(&mut self) {
 
         let mut rng = rand::thread_rng();
-        let dist = Uniform::from(0..self.water.len() - 4);
+        let dist = Uniform::from(1..self.size - 2);
 
         for _ in 0..100 {
             let x = dist.sample(&mut rng);
