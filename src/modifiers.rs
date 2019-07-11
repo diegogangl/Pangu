@@ -594,10 +594,10 @@ impl WaterErosion {
 
     pub fn with_capacity(capacity: usize) -> Self {
         WaterErosion {
-            enabled: true,
-            iterations: 1,
-            evaporation: 0.1,
-            rain_rate: 0.5,
+            enabled: false,
+            iterations: 20,
+            evaporation: 0.00005,
+            rain_rate: 1.0 / 16.0,
             soil_capacity: 0.1,
             water: vec![0.0; capacity],
             sediment: vec![0.0; capacity],
