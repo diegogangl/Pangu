@@ -181,9 +181,17 @@ impl Terrain {
             ThermalErosion::default()
         };
 
-        let hydraulic = if get!(params, "fluvial") {
+        let hydraulic = if  get!(params, "fluvial") {
             let capacity = (rows * columns) as usize;
-            WaterErosion::with_capacity(capacity)
+            let mut w = WaterErosion::with_capacity(capacity);
+
+            w.enabled = true;
+            w.iterations =  get!(params, "fluvial_iterations");
+            w.evaporation =  get!(params, "fluvial_evaporation");
+            w.rain_rate =  get!(params, "fluvial_rain");
+            w.soil_capacity =  get!(params, "fluvial_soil");
+
+            w
         } else {
             WaterErosion::with_capacity(1)
         };
