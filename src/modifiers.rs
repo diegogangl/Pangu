@@ -389,6 +389,42 @@ impl WaterErosion {
             let y = dist.sample(&mut rng);
             let i = math::index_1d(x as u32, y as u32, self.size);
             self.water[i] += self.rain_rate;
+
+
+            {
+                let i = math::index_1d(x - 1 as u32, y - 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+            {
+                let i = math::index_1d(x as u32, y - 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
+            {
+                let i = math::index_1d(x - 1 as u32, y + 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
+            {
+                let i = math::index_1d(x + 1 as u32, y as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
+            {
+                let i = math::index_1d(x as u32, y + 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
+            {
+                let i = math::index_1d(x + 1 as u32, y + 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
+            {
+                let i = math::index_1d(x - 1 as u32, y + 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
         }
     }
 
