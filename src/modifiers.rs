@@ -739,15 +739,10 @@ impl WaterErosion {
             }
         }
 
-
-       // Write temp values to sediment map
-        for x in 0..self.size {
-            for y in 0..self.size {
-                let i = math::index_1d(x, y, self.size);
-
-                self.sediment[i] = self.sediment_tmp[i]
-            }
-        }
+        // Write temp values to sediment map
+        (0..self.sediment.len()).for_each(|i| {
+            self.sediment[i] = self.sediment_tmp[i];
+        });
 
     }
 
