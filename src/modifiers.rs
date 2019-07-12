@@ -500,11 +500,12 @@ impl WaterErosion {
     /// Some amount of water is evaporated into the air
     /// every step due to air temperature.
     fn evaporate(&mut self) {
+        let evaporation = 1.0 - self.evaporation;
 
-        for i in 0..self.water.len() {
-            let w = self.water[i] * (1.0 - self.evaporation);
-            self.water[i] = w.max(0.0);
-        }
+        self.water.iter_mut().for_each(|w| {
+            *w *= evaporation;
+            *w = w.max(0.0);
+        });
     }
 
 
