@@ -863,7 +863,7 @@ impl WaterErosion {
     }
 
 
-    /// Run the Hydraulic erosion simulation
+    /// Run the Water Erosion simulation
     ///
     /// # Arguments
     ///

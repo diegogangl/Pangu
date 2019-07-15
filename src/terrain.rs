@@ -227,8 +227,8 @@ impl Procedural {
             self.config.thermal.run(&mut hmap);
         }
 
-        if self.config.hydraulic.enabled {
-            self.config.hydraulic.run(&mut hmap);
+        if self.config.water.enabled {
+            self.config.water.run(&mut hmap);
         }
 
         // Modifiers & Normalization
