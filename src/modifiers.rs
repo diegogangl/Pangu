@@ -1,6 +1,8 @@
 use super::math;
 use super::curve::Curve;
 use rand::distributions::{Distribution, Uniform};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 
 
 /// Terraces modifier
@@ -445,9 +447,10 @@ impl WaterErosion {
     ///
     /// New water is added every step. Rain drops fall down
     /// in a random distribution with a ceratin amount of water.
-    fn rain(&mut self) {
+    fn rain(&mut self, seed: u8) {
 
-        let mut rng = rand::thread_rng();
+        let rand_seed = [seed; 32];
+        let mut rng = StdRng::from_seed(rand_seed);
         let dist = Uniform::from(1..self.size - 2);
 
         for _ in 0..100 {
@@ -866,8 +869,8 @@ impl WaterErosion {
     ///
     /// * `heights` - The heightmap
     pub fn run(&mut self, heights: &mut Vec<f64>) {
-        for _ in 0..self.iterations {
-            self.rain();
+        for time in 0..self.iterations {
+            self.rain(time as u8);
             self.flow(heights);
             self.erosion(heights);
             self.sediment_transport();
