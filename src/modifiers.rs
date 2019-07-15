@@ -770,7 +770,6 @@ impl WaterErosion {
     ///
     /// * `heights` - The heightmap
     fn erosion(&mut self, heights: &mut Vec<f64>) {
-        let kc = 1.0;                  // sediment capacity constant
         let ks = 0.0001 * 12.0 * 10.0;  // dissolving constant
         let kd = 0.0001 * 12.0 * 10.0;  // deposition constant
 
@@ -820,9 +819,10 @@ impl WaterErosion {
                 let sin_alpha = cosa.acos().sin().max(0.5);
 
                 // local sediment capacity of the flow
-                let capacity = kc * self.velocity[i].magnitude()
-                                  * sin_alpha
-                                  * (self.water[i].min(0.01) / 0.01);
+                let capacity = self.soil_capacity
+                               * self.velocity[i].magnitude()
+                               * sin_alpha
+                               * (self.water[i].min(0.01) / 0.01);
 
                 if capacity > self.sediment[i] {
                     let d = ks * (capacity - self.sediment[i]);
