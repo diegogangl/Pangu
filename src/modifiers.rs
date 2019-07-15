@@ -770,8 +770,8 @@ impl WaterErosion {
     ///
     /// * `heights` - The heightmap
     fn erosion(&mut self, heights: &mut Vec<f64>) {
-        let ks = 0.0001 * 12.0 * 10.0;  // dissolving constant
-        let kd = 0.0001 * 12.0 * 10.0;  // deposition constant
+        let ks = 0.01;  // Dissolving constant
+        let kd = 0.01;  // Deposition constant
 
         let up = [0.0, 0.0, 1.0];
 
