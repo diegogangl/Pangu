@@ -869,13 +869,19 @@ impl WaterErosion {
     ///
     /// * `heights` - The heightmap
     pub fn run(&mut self, heights: &mut Vec<f64>) {
+
+        debug!("Starting Water Erosion Simulation");
+        debug!("Iterations: {:?}", self.iterations);
+        debug!("Rain Rate: {:?}", self.rain_rate);
+        debug!("Evaporation: {:?}", self.evaporation);
+        debug!("Soil Capacity: {:?}", self.soil_capacity);
+
         for time in 0..self.iterations {
             self.rain(time as u8);
             self.flow(heights);
             self.erosion(heights);
             self.sediment_transport();
             self.evaporate();
-
         }
    }
 }
