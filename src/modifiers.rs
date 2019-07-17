@@ -581,10 +581,10 @@ impl WaterErosion {
 
         // Cross-sectional area of the pipe. Lowering this
         // makes the simulation more subtle.
-        let pipe_area = 0.005;
-        let gravity = 9.81;
+        const PIPE_AREA: f64 = 0.005;
+        const GRAVITY: f64 = 9.81;
 
-        let flux_factor = pipe_area * gravity;
+        let flux_factor = PIPE_AREA * GRAVITY;
 
 
         // Calculate outflow flux
