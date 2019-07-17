@@ -414,9 +414,17 @@ impl Outflow {
 /// A source of water
 #[derive(Clone, Copy, Debug)]
 pub struct Spring {
+
+    /// X coordinate
     pub x: u32,
+
+    /// Y coordinate
     pub y: u32,
+
+    /// Radius (size) of the spring
     pub radius: u32,
+
+    /// Amount of water added per-iteration
     pub amount: f64,
 }
 
@@ -450,21 +458,38 @@ pub struct WaterErosion {
     /// Number of times to run the algorithm on the terrain
     pub iterations: u8,
 
+    /// Rate of evaporation
     pub evaporation: f64,
+
+    /// Amount of water on each rain drop
     pub rain_rate: f64,
+
+    /// Global constant for how much soil water can hold
     pub soil_capacity: f64,
+
+    /// Springs (constant sources of water)
     pub springs: Vec<Spring>,
 
+    /// Size of the maps
     size:  u32,
+
+    /// Water map
     water: Vec<f64>,
+
+    /// Sediment map and temporary sediment map
     sediment: Vec<f64>,
     sediment_tmp: Vec<f64>,
+
+    /// Outflow map
     flux: Vec<Outflow>,
+
+    /// Velocity field map
     velocity: Vec<Velocity>,
 }
 
 
 impl WaterErosion {
+
     /// Rain step
     ///
     /// New water is added every step. Rain drops fall down
