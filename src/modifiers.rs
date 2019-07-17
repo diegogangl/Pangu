@@ -831,10 +831,15 @@ impl WaterErosion {
     ///
     /// * `heights` - The heightmap
     fn erosion(&mut self, heights: &mut Vec<f64>) {
-        let ks = 0.01;  // Dissolving constant
-        let kd = 0.01;  // Deposition constant
 
-        let up = [0.0, 0.0, 1.0];
+        /// Dissolving constant
+        const KS: f64 = 0.01;
+
+        /// Deposition constant
+        const KD: f64 = 0.01;
+
+        /// Vector pointing straight up
+        const UP: [f64; 3] = [0.0, 0.0, 1.0];
 
         for x in 0..self.size {
             for y in 0..self.size {
@@ -876,7 +881,7 @@ impl WaterErosion {
                    math::normalize(&[right - left, top - bottom , 2.0])
                 };
 
-                let cosa = math::dot(&normal, &up);
+                let cosa = math::dot(&normal, &UP);
                 let sin_alpha = cosa.acos().sin().max(0.5);
 
                 // local sediment capacity of the flow
@@ -886,13 +891,13 @@ impl WaterErosion {
                                * (self.water[i].min(0.01) / 0.01);
 
                 if capacity > self.sediment[i] {
-                    let d = ks * (capacity - self.sediment[i]);
+                    let d = KS * (capacity - self.sediment[i]);
                     heights[i] -= d;
                     self.sediment[i] += d;
                 }
                 // deposit onto ground
                 else {
-                    let d = kd * (self.sediment[i] - capacity);
+                    let d = KD * (self.sediment[i] - capacity);
                     heights[i] += d;
                     self.sediment[i] -= d;
                 }
