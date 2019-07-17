@@ -191,6 +191,15 @@ impl Terrain {
             w.rain_rate =  get!(params, "water_rain");
             w.soil_capacity =  get!(params, "water_soil");
 
+            let spring = Spring {
+                x: 30,
+                y: 40,
+                radius: 10,
+                amount: 1.0,
+            };
+
+            w.springs.push(spring);
+
             w
         } else {
             WaterErosion::with_capacity(1)

@@ -411,6 +411,28 @@ impl Outflow {
 }
 
 
+/// A source of water
+#[derive(Clone, Copy, Debug)]
+pub struct Spring {
+    pub x: u32,
+    pub y: u32,
+    pub radius: u32,
+    pub amount: f64,
+}
+
+
+impl Default for Spring {
+    fn default() -> Self {
+        Spring {
+            x: 1,
+            y: 1,
+            radius: 2,
+            amount: 1.0,
+        }
+    }
+}
+
+
 /// Water Erosion modifier
 ///
 /// Simulates erosion caused by water (rain and rivers). This
@@ -431,6 +453,7 @@ pub struct WaterErosion {
     pub evaporation: f64,
     pub rain_rate: f64,
     pub soil_capacity: f64,
+    pub springs: Vec<Spring>,
 
     size:  u32,
     water: Vec<f64>,
@@ -493,8 +516,49 @@ impl WaterErosion {
                 let i = math::index_1d(x - 1 as u32, y + 1 as u32, self.size);
                 self.water[i] += self.rain_rate;
             }
-
         }
+    }
+
+
+    /// Add water on an area around a coordinate
+    ///
+    /// # Arguments
+    ///
+    /// * `spring` - Source of water for this drop
+    fn drop_water(&mut self, spring: Spring) {
+        for x1 in 0..spring.radius * 2 {
+            for y1 in 0..spring.radius * 2 {
+                let x = if x1 < spring.radius {
+                    spring.x.checked_sub(x1)
+                } else {
+                    spring.x.checked_add(x1)
+                };
+
+                let y = if y1 < spring.radius {
+                    spring.y.checked_sub(y1)
+                } else {
+                    spring.y.checked_add(y1)
+                };
+
+                match (x, y) {
+                    (Some(x), Some(y)) => {
+                        let i = math::index_1d(x, y, self.size);
+                        self.water[i] += self.rain_rate;
+                    },
+
+                    // We hit a boundary, do nothing
+                    _ => (),
+                }
+            }
+        }
+    }
+
+
+    /// Add water from springs
+    fn add_springs_water(&mut self) {
+       self.springs.clone()
+                   .iter()
+                   .for_each(|s| self.drop_water(*s));
     }
 
 
@@ -544,7 +608,8 @@ impl WaterErosion {
     /// * `heights` - The heightmap
     fn flow(&mut self, heights: &mut Vec<f64>) {
 
-        // Cross-sectional area of the pipe
+        // Cross-sectional area of the pipe. Lowering this
+        // makes the simulation more subtle.
         let pipe_area = 0.005;
         let gravity = 9.81;
 
@@ -858,6 +923,7 @@ impl WaterErosion {
             flux: vec![Outflow::default(); capacity],
             velocity: vec![Velocity::default(); capacity],
             size: (capacity as f64).sqrt() as u32,
+            springs: vec![Spring::default(); 0],
         }
 
     }
@@ -878,6 +944,7 @@ impl WaterErosion {
 
         for time in 0..self.iterations {
             self.rain(time as u8);
+            self.add_springs_water();
             self.flow(heights);
             self.erosion(heights);
             self.sediment_transport();
