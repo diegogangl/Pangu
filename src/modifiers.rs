@@ -604,9 +604,11 @@ impl WaterErosion {
     /// * `heights` - The heightmap
     fn flow(&mut self, heights: &mut Vec<f64>) {
 
-        // Cross-sectional area of the pipe. Lowering this
-        // makes the simulation more subtle.
+        /// Cross-sectional area of the pipe. Lowering this
+        /// makes the simulation more subtle.
         const PIPE_AREA: f64 = 0.005;
+
+        /// Gravity speed
         const GRAVITY: f64 = 9.81;
 
         let flux_factor = PIPE_AREA * GRAVITY;
