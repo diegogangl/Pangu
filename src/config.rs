@@ -184,6 +184,7 @@ impl Terrain {
             ThermalErosion::default()
         };
 
+
         let water = if  get!(params, "water") {
             let capacity = (rows * columns) as usize;
             let mut w = WaterErosion::with_capacity(capacity);
@@ -192,16 +193,18 @@ impl Terrain {
             w.iterations =  get!(params, "water_iterations");
             w.evaporation =  get!(params, "water_evaporation");
             w.rain_rate =  get!(params, "water_rain");
-            w.soil_capacity =  get!(params, "water_soil");
+            w.soil_capacity = get!(params, "water_soil");
 
-            let spring = Spring {
-                x: 30,
-                y: 40,
-                radius: 10,
-                amount: 1.0,
-            };
+            let springs: Vec<&PyDict> = get!(params, "water_springs");
 
-            w.springs.push(spring);
+            for s in springs {
+               w.springs.push(Spring {
+                    x: get!(s, "x"),
+                    y: get!(s, "y"),
+                    radius: get!(s, "radius"),
+                    amount: get!(s, "amount"),
+               });
+            }
 
             w
         } else {
