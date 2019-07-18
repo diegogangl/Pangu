@@ -538,7 +538,7 @@ impl WaterErosion {
                     (Some(x), Some(y)) => {
                         if x > 0 && x < self.size - 1 && y > 0 && y < self.size - 1 {
                             let i = math::index_1d(x, y, self.size);
-                            self.water[i] += self.rain_rate;
+                            self.water[i] += spring.amount;
                         }
                     },
 
