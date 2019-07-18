@@ -14,7 +14,10 @@ use super::modifiers::*;
 /// * `key` - The key to look for in the dictionary
 macro_rules! get {
     ($params:expr, $key:expr) => {
-        $params.get_item($key).unwrap().extract()?
+        match $params.get_item($key) {
+            Some(v) => v.extract()?,
+            None => panic!("Missing key {}!", $key),
+        }
     };
 }
 
