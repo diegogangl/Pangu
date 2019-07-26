@@ -224,17 +224,15 @@ impl Procedural {
             hmap[x][y] = z
         }
 
-        /*
         // Erosion Algorithms
         if self.config.thermal.enabled {
             self.config.thermal.run(&mut hmap);
         }
-
+/*
         if self.config.water.enabled {
             self.config.water.run(&mut hmap);
         }
-        */
-
+*/
         // Modifiers & Normalization
         for (x, y) in hmap.iter_indices() {
             let mut z = math::map_on_zero(hmap[x][y], heights_min,

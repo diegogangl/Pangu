@@ -1,5 +1,6 @@
 use super::math;
 use super::curve::Curve;
+use super::map::Map2D;
 use rand::distributions::{Distribution, Uniform};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -273,64 +274,37 @@ impl ThermalErosion {
     /// # Arguments
     ///
     /// * `verts` - Reference to the vertices vector
-    pub fn run(&self, hmap: &mut Vec<f64>) {
-        let size = (hmap.len() as f64).sqrt() as u32;
-
+    pub fn run(&self, hmap: &mut Map2D) {
         for _ in 0..self.iterations {
-            for x in 0..size {
-                for y in 0..size {
-
+            for (x, y) in hmap.iter_indices() {
                    // Maximum slope found
                    let mut slope_max = 0.0;
 
-                   // Index of the lowest neighbor (1D)
-                   let mut lowest_index = 0;
+                   // Index of the lowest neighbor
+                   let mut lowest = (0, 0);
 
                    // Current height
-                   let center_idx = math::index_1d(x, y, size);
-                   let center = hmap[center_idx];
+                   let center = hmap[x][y];
 
                    // Rotated Von Neuhmann neighbors
-                   let nw = if x > 0 && y < size - 1 {
-                       Some(math::index_1d(x - 1, y + 1, size))
-                   } else {
-                       None
-                   };
+                   [(-1,  1),  
+                    ( 1,  1), 
+                    (-1, -1), 
+                    ( 1, -1)].iter().for_each(|target| {
+                        let neighbor = hmap.neighbor((x, y), *target);
 
-                   let ne = if x < size - 1 && y < size - 1 {
-                       Some(math::index_1d(x + 1, y + 1, size))
-                   } else {
-                       None
-                   };
-
-                   let sw = if x > 0 && y > 0 {
-                       Some(math::index_1d(x - 1, y - 1, size))
-                   } else {
-                       None
-                   };
-
-                   let se = if x < size - 1 && y > 0 {
-                       Some(math::index_1d(x + 1, y - 1, size))
-                   } else {
-                       None
-                   };
-
-                   // Find lowest neighbor
-                   [nw, sw, se, ne].iter().for_each(|index|{
-                        match index {
-                            Some(i) => {
-                                 let diff = center - hmap[*i];
+                        match neighbor {
+                            Some((val, x1, y1)) => {
+                                 let diff = center - val;
 
                                  if diff > slope_max {
                                     slope_max = diff;
-                                    lowest_index = *i;
+                                    lowest = (x1, y1);
                                  }
                              },
 
                             _ => ()
-                        }
-                    });
-
+                      }});
 
                     // Move soil
                     if slope_max > self.talus {
@@ -341,16 +315,17 @@ impl ThermalErosion {
                        let magic_number = 4.0;
 
                        // Remove from current
-                       hmap[center_idx] -= slope_max / magic_number;
+                       hmap[x][y] -= slope_max / magic_number;
 
                        // Add to neighbor
-                       hmap[lowest_index] += slope_max / magic_number;
+                       hmap[lowest.0][lowest.1] += slope_max / magic_number;
                     }
-                }
+
             }
         }
     }
-}
+ }
+
 
 
 /// Velocity field for water erosion
