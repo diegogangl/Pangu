@@ -582,7 +582,7 @@ impl WaterErosion {
     /// # Arguments
     ///
     /// * `heights` - The heightmap
-    fn flow(&mut self, heights: &mut Vec<f64>) {
+    fn flow(&mut self, heights: &mut Map2D) {
 
         /// Cross-sectional area of the pipe. Lowering this
         /// makes the simulation more subtle.
@@ -597,12 +597,15 @@ impl WaterErosion {
         // Calculate outflow flux
         for x in 0..self.size {
             for y in 0..self.size {
+                let xu = x as usize;
+                let yu = y as usize;
+
                 let center_idx = math::index_1d(x, y, self.size);
-                let center = heights[center_idx] + self.water[center_idx];
+                let center = heights[xu][yu] + self.water[center_idx];
 
                 let l_flux = if x > 0 {
                     let idx = math::index_1d(x - 1, y, self.size);
-                    let dh = center - (heights[idx] + self.water[idx]);
+                    let dh = center - (heights[xu-1][yu] + self.water[idx]);
                     let result = self.flux[center_idx].left + flux_factor * dh;
                     result.max(0.0)
                 } else {
@@ -612,7 +615,7 @@ impl WaterErosion {
 
                 let r_flux = if x < self.size - 1 {
                     let idx = math::index_1d(x + 1, y, self.size);
-                    let dh = center - (heights[idx] + self.water[idx]);
+                    let dh = center - (heights[xu+1][yu] + self.water[idx]);
                     let result = self.flux[center_idx].right + flux_factor * dh;
                     result.max(0.0)
                 } else {
@@ -621,7 +624,7 @@ impl WaterErosion {
 
                 let b_flux = if y > 0 {
                     let idx = math::index_1d(x, y - 1, self.size);
-                    let dh = center - (heights[idx] + self.water[idx]);
+                    let dh = center - (heights[xu][yu-1] + self.water[idx]);
                     let result = self.flux[center_idx].bottom + flux_factor * dh;
                     result.max(0.0)
                 } else {
@@ -630,7 +633,7 @@ impl WaterErosion {
 
                 let t_flux = if y < self.size - 1 {
                     let idx = math::index_1d(x, y + 1, self.size);
-                    let dh = center - (heights[idx] + self.water[idx]);
+                    let dh = center - (heights[xu][yu+1] + self.water[idx]);
                     let result = self.flux[center_idx].top + flux_factor * dh;
                     result.max(0.0)
                 } else {
@@ -812,7 +815,7 @@ impl WaterErosion {
     /// # Arguments
     ///
     /// * `heights` - The heightmap
-    fn erosion(&mut self, heights: &mut Vec<f64>) {
+    fn erosion(&mut self, heights: &mut Map2D) {
 
         /// Dissolving constant
         const KS: f64 = 0.01;
@@ -823,41 +826,36 @@ impl WaterErosion {
         /// Vector pointing straight up
         const UP: [f64; 3] = [0.0, 0.0, 1.0];
 
-        for x in 0..self.size {
-            for y in 0..self.size {
-                let i = math::index_1d(x, y, self.size);
+        for (x, y) in heights.iter_indices() {
+                let xu = x as u32;
+                let yu = y as u32;
+        
+                let i = math::index_1d(xu, yu, self.size);
 
                 let normal = {
-                   let right = if x < self.size - 1 {
-                       let i = math::index_1d(x + 1, y, self.size);
-                       heights[i]
+                   let right = if xu < self.size - 1 {
+                       heights[x + 1][y]
                    } else {
-                       let i = math::index_1d(self.size - 1, y, self.size);
-                       heights[i]
+                       heights[self.size as usize - 1][y]
                    };
 
                    let left = if x > 0 {
-                       let i = math::index_1d(x - 1, y, self.size);
-                       heights[i]
+                       heights[x - 1][y]
                    } else {
-                       let i = math::index_1d(0, y, self.size);
-                       heights[i]
+                       heights[0][y]
                    };
 
-                   let top = if y < self.size - 1 {
-                       let i = math::index_1d(x, y + 1, self.size);
-                       heights[i]
+                   let top = if yu < self.size - 1 {
+                       heights[x][y + 1]
                    } else {
-                       let i = math::index_1d(x, self.size - 1, self.size);
-                       heights[i]
+                       heights[x][self.size as usize - 1]
                    };
 
                    let bottom = if y > 0 {
-                       let i = math::index_1d(x, y - 1, self.size);
-                       heights[i]
+                       heights[x][y - 1]
                    } else {
-                       let i = math::index_1d(x, 0, self.size);
-                       heights[i]
+                       let i = math::index_1d(xu, 0, self.size);
+                       heights[x][0]
                    };
 
                    math::normalize(&[right - left, top - bottom , 2.0])
@@ -874,16 +872,15 @@ impl WaterErosion {
 
                 if capacity > self.sediment[i] {
                     let d = KS * (capacity - self.sediment[i]);
-                    heights[i] -= d;
+                    heights[x][y] -= d;
                     self.sediment[i] += d;
                 }
                 // deposit onto ground
                 else {
                     let d = KD * (self.sediment[i] - capacity);
-                    heights[i] += d;
+                    heights[x][y] += d;
                     self.sediment[i] -= d;
                 }
-            }
         }
     }
 
@@ -917,7 +914,7 @@ impl WaterErosion {
     /// # Arguments
     ///
     /// * `heights` - The heightmap
-    pub fn run(&mut self, heights: &mut Vec<f64>) {
+    pub fn run(&mut self, heights: &mut Map2D) {
 
         debug!("Starting Water Erosion Simulation");
         debug!("Iterations: {:?}", self.iterations);
