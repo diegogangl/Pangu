@@ -13,7 +13,7 @@ use std::fmt;
 /// all rows stored contiguos in memory. X represents rows,
 /// while Y represents columns.
 ///
-///      y=0    y=1   y=2     
+/// ---  y=0    y=1   y=2     
 /// x=0   1      2     3
 /// x=1   4      5     6
 /// x=2   7      8     9       
