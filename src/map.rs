@@ -255,21 +255,3 @@ mod tests {
 
     }
 }
-
-
-mod benches {
-    use super::*;
-    #[allow(unused_imports)]
-    use test::Bencher;
-
-
-    #[bench]
-    fn neighbor(b: &mut Bencher) {
-        let test_map = map2D![0.0, 1.0, 2.0;
-                              3.0, 4.0, 5.0;
-                              6.0, 7.0, 8.0];
-
-        b.iter(|| test_map.neighbor((1,1), (-1, 1)));
-    }
-
-}
