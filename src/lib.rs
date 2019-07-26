@@ -9,6 +9,7 @@ mod curve;
 mod terrain;
 mod modifiers;
 mod config;
+mod map;
 
 use pyo3::prelude::*;
 use pyo3::types::PyDict;

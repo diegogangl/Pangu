@@ -10,6 +10,7 @@ use noise::{NoiseFn, Perlin, Point2, Seedable};
 
 use super::math;
 use super::config;
+use super::map::Map2D;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -185,7 +186,7 @@ impl Procedural {
     /// Generate the heightmap for the terrain
     ///
     /// Returns a flat Vector with values in the range [0..1]
-    fn heights(&mut self) -> Heightmap {
+    fn heights(&mut self) -> Map2D {
 
         // Convenience
         let columns = self.config.columns;
@@ -198,30 +199,32 @@ impl Procedural {
 
         // Allocation
         let capacity = (columns * rows) as usize;
-        let mut hmap = Vec::with_capacity(capacity);
+        //let mut hmap = Vec::with_capacity(capacity);
+        let mut hmap = Map2D::with_size(columns as usize, rows as usize);
 
         debug!("Allocated heightmap with capacity: {:?}", capacity);
+        debug!("Allocated heightmap with size: {:?}", hmap.width());
+        debug!("Allocated heightmap with size: {:?}", hmap.height());
 
         // Initial Generation
-        for x in 0..columns {
-            for y in 0..rows {
-                let co = self.coords_for_noise(x as f64, y as f64 );
+        for (x, y) in hmap.iter_indices() {
+            let co = self.coords_for_noise(x as f64, y as f64 );
 
-                let z = self.get_z([co.0, co.1]);
+            let z = self.get_z([co.0, co.1]);
 
-                // Keep track of min/max for normalization
-                if z > heights_max {
-                    heights_max = z;
-                }
-
-                if z < heights_min {
-                    heights_min = z;
-                }
-
-                hmap.push(z);
+            // Keep track of min/max for normalization
+            if z > heights_max {
+                heights_max = z;
             }
+
+            if z < heights_min {
+                heights_min = z;
+            }
+
+            hmap[x][y] = z
         }
 
+        /*
         // Erosion Algorithms
         if self.config.thermal.enabled {
             self.config.thermal.run(&mut hmap);
@@ -230,32 +233,27 @@ impl Procedural {
         if self.config.water.enabled {
             self.config.water.run(&mut hmap);
         }
+        */
 
         // Modifiers & Normalization
-        for x in 0..columns {
-            for y in 0..rows {
-                let i = math::index_1d(x, y, columns);
-                let mut z = hmap[i];
+        for (x, y) in hmap.iter_indices() {
+            let mut z = math::map_on_zero(hmap[x][y], heights_min,
+                                          heights_max, self.config.height);
 
-                z = math::map_on_zero(z, heights_min,
-                                      heights_max, self.config.height);
-
-                if self.config.terraces.enabled {
-                    z = self.config.terraces.run(z);
-                }
-
-                if self.config.smooth.enabled {
-                    z *= self.config.smooth.run(x, y);
-                }
-
-                if floor > 0.0 {
-                    z = if z < floor { floor } else { z - floor };
-                }
-
-                hmap[i] = z;
+            if self.config.terraces.enabled {
+                z = self.config.terraces.run(z);
             }
-        }
 
+            if self.config.smooth.enabled {
+                z *= self.config.smooth.run(x as u32, y as u32);
+            }
+
+            if floor > 0.0 {
+                z = if z < floor { floor } else { z - floor };
+            }
+
+            hmap[x][y] = z;
+        }
 
         hmap
     }
@@ -281,13 +279,12 @@ impl Procedural {
         let half_x = ((self.config.columns - 1) as f64) / 2.0;
         let half_y = ((self.config.rows - 1) as f64) / 2.0;
 
-        for x in 0..self.config.columns {
-            for y in 0..self.config.rows {
-                let i = math::index_1d(x, y, self.config.columns);
-                let x = ((x as f64) - half_x) / scale;
-                let y = ((y as f64) - half_y) / scale;
+        for x in 0..self.config.columns as usize {
+            for y in 0..self.config.rows as usize {
+                let scaled_x = ((x as f64) - half_x) / scale;
+                let scaled_y = ((y as f64) - half_y) / scale;
 
-                verts.push((x, y, hmap[i]));
+                verts.push((scaled_x, scaled_y, hmap[x][y]));
             }
         }
 
@@ -501,7 +498,7 @@ mod tests {
         assert_eq!(expected, faces);
     }
 
-
+/*
     #[test]
     fn vertices() {
         let config = config::Terrain {
@@ -626,7 +623,7 @@ mod tests {
         ];
 
         assert_eq!(expected, verts);
-    }
+    } */
 
 
     #[test]
@@ -705,7 +702,7 @@ mod benches {
         b.iter(|| terrain.faces());
     }
 
-
+/*
     #[bench]
     fn verts(b: &mut Bencher) {
         let config = config::Terrain {
@@ -736,6 +733,6 @@ mod benches {
             ..Default::default()
         };
         let terrain = Procedural::new(config);
-        b.iter(|| terrain.build_mesh());
-    }
+        b.iter(|| terrain.build_mesh()); 
+    } */
 }
