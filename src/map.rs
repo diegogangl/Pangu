@@ -117,7 +117,7 @@ impl Map2D {
         match (target_x, target_y) {
             (Some(x), Some(y)) => { 
                 if self.is_inside(x, y) {
-                    Some((self.index(x)[y].clone(), x, y)) 
+                    Some((self.index(x)[y], x, y)) 
                 } else {
                     None
                 }
