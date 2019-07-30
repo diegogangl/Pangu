@@ -228,14 +228,14 @@ impl Terrain {
             mix: get!(params, "mix"),
             ridgedness: get!(params, "ridgedness"),
             sea_floor: get!(params, "sea_floor"),
-            height: height,
+            height,
             is_seamless: get!(params, "seamless"),
             invert: get!(params, "invert"),
-            terraces: terraces,
+            terraces,
             flat: false,
-            smooth: smooth,
-            thermal: thermal,
-            water: water,
+            smooth,
+            thermal,
+            water,
         };
 
         Ok(config)
