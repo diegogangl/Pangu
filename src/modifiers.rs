@@ -845,7 +845,6 @@ impl WaterErosion {
                    let bottom = if y > 0 {
                        heights[x][y - 1]
                    } else {
-                       let i = math::index_1d(xu, 0, self.size);
                        heights[x][0]
                    };
 
