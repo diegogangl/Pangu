@@ -89,24 +89,24 @@ pub struct Procedural {
 
 
 impl Procedural {
-    pub fn new(conf: config::Terrain) -> Self {
-        let columns = f64::from(conf.columns);
-        let rows = f64::from(conf.rows);
+    pub fn new(config: config::Terrain) -> Self {
+        let columns = f64::from(config.columns);
+        let rows = f64::from(config.rows);
 
         // Calculate correct boundaries for the noise. Boundaries are
         // calculated fromt he ratio between rows and columns as well as
         // the scale setting.
         let limit_x = if columns > rows {
-            conf.scale
+            config.scale
         } else {
-            conf.scale * (columns / rows)
+            config.scale * (columns / rows)
         };
 
 
         let limit_y = if columns > rows {
-            conf.scale / (columns / rows)
+            config.scale / (columns / rows)
         } else {
-            conf.scale
+            config.scale
         };
 
         debug!("Bound limits are x: {:?}, y: {:?}", limit_x, limit_y);
@@ -124,22 +124,22 @@ impl Procedural {
         let mut noise_fns = Vec::with_capacity(6);
 
         for i in 0..6 {
-            noise_fns.push(Perlin::new().set_seed(conf.seed + i));
+            noise_fns.push(Perlin::new().set_seed(config.seed + i));
         }
 
 
         // Setup persistence values for the octaves. These are used
         // in the main noise function.
-        let base = 1.0 - conf.plains;
+        let base = 1.0 - config.plains;
 
         let persistences = vec![
             base,
-            conf.mountainess,
-            base * conf.mountainess,
+            config.mountainess,
+            base * config.mountainess,
             // Final octaves
-            conf.roughness / 2.0,
-            conf.roughness / 4.0,
-            conf.roughness / 8.0,
+            config.roughness / 2.0,
+            config.roughness / 4.0,
+            config.roughness / 8.0,
             // Blend terrain
             base.powi(2),
             base / 2.0,
@@ -149,11 +149,11 @@ impl Procedural {
 
         // All done!
         Procedural {
-            config: conf,
-            noise_fns: noise_fns,
-            persistences: persistences,
-            limits_xy: limits_xy,
-            steps: steps,
+            config,
+            noise_fns,
+            persistences,
+            limits_xy,
+            steps,
         }
     }
 

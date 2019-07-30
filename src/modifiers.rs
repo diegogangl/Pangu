@@ -23,7 +23,6 @@ pub struct Terraces {
     pub curve: Curve,
 }
 
-
 impl Default for Terraces {
     fn default() -> Self {
         Terraces {
