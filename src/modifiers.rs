@@ -292,18 +292,15 @@ impl ThermalErosion {
                     ( 1, -1)].iter().for_each(|target| {
                         let neighbor = hmap.neighbor((x, y), *target);
 
-                        match neighbor {
-                            Some((val, x1, y1)) => {
-                                 let diff = center - val;
+                        if let Some((val, x1, y1)) = neighbor {
+                            let diff = center - val;
 
-                                 if diff > slope_max {
-                                    slope_max = diff;
-                                    lowest = (x1, y1);
-                                 }
-                             },
-
-                            _ => ()
-                      }});
+                            if diff > slope_max {
+                                slope_max = diff;
+                                lowest = (x1, y1);
+                            }
+                        };
+                    });
 
                     // Move soil
                     if slope_max > self.talus {
@@ -508,21 +505,16 @@ impl WaterErosion {
                     spring.y.checked_add(y1)
                 };
 
-                match (x, y) {
-                    (Some(x), Some(y)) => {
-                        if x < self.size && y < self.size  {
-                            let dist = ((x1*x1 + y1*y1) as f64).sqrt();
-                            let rad2 = (spring.radius * spring.radius) as f64;
+                if let (Some(x), Some(y)) = (x, y) {
+                    if x < self.size && y < self.size  {
+                        let dist = ((x1*x1 + y1*y1) as f64).sqrt();
+                        let rad2 = (spring.radius * spring.radius) as f64;
 
-                            if dist <= rad2 {
-                                let i = math::index_1d(x, y, self.size);
-                                self.water[i] += spring.amount * (rad2 - dist);
-                            }
+                        if dist <= rad2 {
+                            let i = math::index_1d(x, y, self.size);
+                            self.water[i] += spring.amount * (rad2 - dist);
                         }
-                    },
-
-                    // We hit a boundary, do nothing
-                    _ => (),
+                    }
                 }
             }
         }
