@@ -130,15 +130,18 @@ impl Procedural {
 
         // Setup persistence values for the octaves. These are used
         // in the main noise function.
-        let base = 1.0 - config.plains;
+        let base = config.plains;
 
         let persistences = vec![
             base,
-            config.mountainess,
-            base * config.mountainess,
+            //config.mountainess,
+            0.2,
+            0.1,
+            0.05,
+            1.05,
             // Final octaves
+            config.roughness / 1.0,
             config.roughness / 2.0,
-            config.roughness / 4.0,
             config.roughness / 8.0,
             // Blend terrain
             base.powi(2),
@@ -210,7 +213,7 @@ impl Procedural {
         for (x, y) in hmap.iter_indices() {
             let co = self.coords_for_noise(x as f64, y as f64 );
 
-            let z = self.get_z([co.0, co.1]);
+            let z = self.valley_z([co.0, co.1]);
 
             // Keep track of min/max for normalization
             if z > heights_max {
@@ -320,6 +323,58 @@ impl Procedural {
     }
 
 
+    fn valley_z(&self, point: Point2<f64>) -> f64 {
+        let mut result;
+        let mut warp;
+        let mut current_point;
+        
+        // Settings
+        // - persistencia 1 -> para controlar diferencias entre hills
+        // - powf -> Distancia entre hills (para hacer V-shaped)
+        // - Deformation -> Make winding
+        // - Persitencias > 1 -> Controlar details
+
+
+        //---------------------------------------------------------------------
+        // DOMAIN WARPING
+        //---------------------------------------------------------------------
+
+        let domain_scale = 1.5;
+
+        current_point = scale!(point, domain_scale);
+        warp = self.noise_fns[0].get(current_point);
+
+        current_point = scale!(current_point, domain_scale);
+        warp += self.noise_fns[1].get(current_point) * 0.2;
+
+        current_point = scale!(current_point, domain_scale);
+        warp += self.noise_fns[2].get(current_point) * 0.1;
+
+        warp *= self.config.deformation;
+        
+
+        //---------------------------------------------------------------------
+        // Basic shape of the terrain
+
+        current_point = scale!(current_point, 0.2, warp);
+        let signal = self.noise_fns[0].get(current_point) * 0.75;
+        result = signal.abs().powf(1.5);
+
+        current_point = scale!(current_point, 2.5, warp * result);
+        let signal = self.noise_fns[1].get(current_point) * self.persistences[1];
+        result += signal.powi(2);
+
+        current_point = scale!(current_point, 2.0, warp * result);
+        let signal = self.noise_fns[2].get(current_point) * self.persistences[2];
+        result += signal.powi(2);
+
+        current_point = scale!(current_point, 2.0, warp * result);
+        let signal = self.noise_fns[2].get(current_point) * self.persistences[3];
+        result += signal.powi(2);
+    
+        result
+    }
+
     /// Get noise value
     ///
     /// # Arguments
@@ -327,7 +382,7 @@ impl Procedural {
     fn get_z(&self, point: Point2<f64>) -> f64 {
         let mut result;
         let mut domain;
-        let mut blend;
+        //let mut blend;
         let mut current_point;
         let divisor = 1.0 + self.config.plains;
 
@@ -335,10 +390,10 @@ impl Procedural {
         //---------------------------------------------------------------------
         // BLEND MASK
         //---------------------------------------------------------------------
-        let mask_control = self.config.mix;
-        current_point = scale!(point, mask_control);
+        //let mask_control = self.config.mix;
+        current_point = scale!(point, 0.2);
 
-        let mut mask = self.noise_fns[0].get(current_point);
+        let mask = self.noise_fns[5].get(current_point);
 
 
         //---------------------------------------------------------------------
@@ -366,62 +421,73 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Basic shape of the terrain
 
-        let signal = self.noise_fns[0].get(point) * self.persistences[0];
-        result = ridge!(self, signal);
+        current_point = scale!(current_point, 0.2, domain);
+        let signal = self.noise_fns[0].get(current_point) * self.persistences[0];
+        //result = ridge!(self, signal);
+        result = signal;
 
 
         //---------------------------------------------------------------------
         // Large features of the terrain
 
-        current_point = scale!(point, 1.5, domain);
+        current_point = scale!(point, 1.2, domain);
 
         result += {
             let mut signal = self.noise_fns[1].get(current_point);
-            signal = mountainess!(self, signal, 1, divisor);
-            ridge!(self, signal)
+            //signal = mountainess!(self, signal, 1, divisor);
+            //ridge!(self, signal)
+            signal.abs() * self.persistences[1]
         };
 
 
         //---------------------------------------------------------------------
         // Larger details
 
-        current_point = scale!(current_point, 2.0, domain);
+        current_point = scale!(current_point, 1.2, domain);
 
         result += {
             let mut signal = self.noise_fns[2].get(current_point);
-            signal = mountainess!(self, signal, 2, divisor);
-            ridge!(self, signal)
+            //signal = mountainess!(self, signal, 2, divisor);
+            //ridge!(self, signal)
+            signal.abs() * self.persistences[2]
         };
 
         //---------------------------------------------------------------------
         // Medium details
 
-        current_point = scale!(current_point, 2.0, domain);
+        //current_point = scale!(current_point, 2.0, domain);
 
-        result += {
-            let signal = self.noise_fns[3].get(current_point);
-            mountainess!(self, signal, 3, divisor) * result
-        };
+        //result += {
+            //let signal = self.noise_fns[3].get(current_point);
+            //mountainess!(self, signal, 3, divisor) * result
+        //};
 
 
         //---------------------------------------------------------------------
         // Small details
 
-        current_point = scale!(current_point, 1.2, domain);
+        //current_point = scale!(current_point, 2.0, domain);
 
-        result += self.noise_fns[4].get(current_point)
-                  * self.persistences[4]
-                  * result;
+        //result += self.noise_fns[4].get(current_point)
+                  //* self.persistences[4]
+                  //* result;
 
 
         //---------------------------------------------------------------------
         // Fine details
 
-        current_point = scale!(current_point, 1.4, domain);
-        result += self.noise_fns[5].get(current_point)
-                  * self.persistences[5]
-                  * result;
+        //current_point = scale!(current_point, 2.0, domain);
+        //result += self.noise_fns[5].get(current_point)
+                  //* self.persistences[5]
+                  //* result;
 
+        //---------------------------------------------------------------------
+        // Fine details
+
+        //current_point = scale!(current_point, 2.0, domain);
+        //result += self.noise_fns[1].get(current_point)
+                  //* self.persistences[5]
+                  //* result;
 
         //---------------------------------------------------------------------
         // BLEND NOISE
@@ -430,25 +496,26 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Basic shape of the terrain
 
-        let signal = self.noise_fns[3].get(point) * self.persistences[6];
-        blend = ridge!(self, signal);
+        //let signal = self.noise_fns[3].get(point) * self.persistences[6];
+        //blend = ridge!(self, signal);
 
 
         //---------------------------------------------------------------------
         // Extra-details
 
-        current_point = scale!(point, 2.0, domain);
+        //current_point = scale!(point, 2.0, domain);
 
-        blend += {
-            let signal =
-                self.noise_fns[1].get(current_point) * self.persistences[7];
-            ridge!(self, signal)
-        };
+        //blend += {
+            //let signal =
+                //self.noise_fns[1].get(current_point) * self.persistences[7];
+            //ridge!(self, signal)
+        //};
 
         // Make sure there are no holes in the ground when using a high
         // plains setting
-        mask += self.config.plains;
-        math::lerp(result, blend, mask)
+        //mask += self.config.plains;
+        //math::lerp(result, blend, mask)
+        result 
     }
 
 
