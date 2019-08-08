@@ -365,6 +365,7 @@ impl Procedural {
             self.config.hills.detail * 0.5,
             self.config.hills.detail * 0.25,
             self.config.hills.detail * 0.1,
+            self.config.hills.detail * 0.05,
         ];
 
         current_point = scale!(current_point, 2.5, warp * result);
@@ -377,6 +378,10 @@ impl Procedural {
 
         current_point = scale!(current_point, 2.0, warp * result);
         let signal = self.noise_fns[2].get(current_point) * persistences[2];
+        result += signal.powi(2);
+
+        current_point = scale!(current_point, 2.0, warp * result);
+        let signal = self.noise_fns[3].get(current_point) * persistences[3];
         result += signal.powi(2);
     
         result
