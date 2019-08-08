@@ -22,6 +22,30 @@ macro_rules! get {
 }
 
 
+/// Settings for the Smooth Hills Terrain type
+///
+/// These settings are only specific to this terrain
+/// type.
+#[derive(Clone, Debug)]
+pub struct SmoothHills {
+    pub difference: f64,
+    pub flat: f64,
+    pub detail: f64,
+    pub twist: f64,
+}
+
+impl Default for SmoothHills {
+    fn default() -> Self {
+        SmoothHills {
+            difference: 0.0,
+            flat: 0.0,
+            detail: 0.0,
+            twist: 0.0,
+        }
+    }
+}
+
+
 /// Settings for a Procedural Terrain
 ///
 /// This is only a structure to hold parameters for
@@ -97,6 +121,9 @@ pub struct Terrain {
 
     // Hydraulic Erosion modifier
     pub water: WaterErosion,
+
+    // Settings for Smooth Hills 
+    pub hills: SmoothHills,
 }
 
 
@@ -126,6 +153,7 @@ impl Default for Terrain {
             smooth: Smooth::default(),
             thermal: ThermalErosion::default(),
             water: WaterErosion::with_capacity(1),
+            hills: SmoothHills::default(),
         }
     }
 }
@@ -236,6 +264,7 @@ impl Terrain {
             smooth,
             thermal,
             water,
+            hills: SmoothHills::default(),
         };
 
         Ok(config)
