@@ -239,6 +239,17 @@ impl Terrain {
             WaterErosion::with_capacity(1)
         };
 
+        let hills = if get!(params, "type_hills") {
+            SmoothHills {
+                difference: get!(params, "hills_difference"),
+                flat: get!(params, "hills_flat"),
+                detail: get!(params, "hills_detail"),
+                twist: get!(params, "hills_twist"),
+            } 
+        } else {
+            SmoothHills::default()
+        };
+
 
         let config = Terrain {
             seed: get!(params, "seed"),
@@ -264,7 +275,7 @@ impl Terrain {
             smooth,
             thermal,
             water,
-            hills: SmoothHills::default(),
+            hills,
         };
 
         Ok(config)
