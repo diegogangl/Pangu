@@ -339,7 +339,7 @@ impl Procedural {
         // DOMAIN WARPING
         //---------------------------------------------------------------------
 
-        let domain_scale = 1.5;
+        let domain_scale = 1.5; 
 
         current_point = scale!(point, domain_scale);
         warp = self.noise_fns[0].get(current_point);
@@ -350,26 +350,33 @@ impl Procedural {
         current_point = scale!(current_point, domain_scale);
         warp += self.noise_fns[2].get(current_point) * 0.1;
 
-        warp *= self.config.deformation;
+        warp *= self.config.hills.twist;
         
 
         //---------------------------------------------------------------------
         // Basic shape of the terrain
 
+        let diff = self.config.hills.difference;
         current_point = scale!(current_point, 0.2, warp);
-        let signal = self.noise_fns[0].get(current_point) * 0.75;
-        result = signal.abs().powf(1.5);
+        let signal = self.noise_fns[0].get(current_point);
+        result = signal.abs().powf(self.config.hills.flat) * diff; 
+
+        let persistences = [
+            self.config.hills.detail * 0.5,
+            self.config.hills.detail * 0.25,
+            self.config.hills.detail * 0.1,
+        ];
 
         current_point = scale!(current_point, 2.5, warp * result);
-        let signal = self.noise_fns[1].get(current_point) * self.persistences[1];
+        let signal = self.noise_fns[1].get(current_point) * persistences[0];
+        result += signal.powi(2).abs();
+
+        current_point = scale!(current_point, 2.0, warp * result);
+        let signal = self.noise_fns[2].get(current_point) * persistences[1];
         result += signal.powi(2);
 
         current_point = scale!(current_point, 2.0, warp * result);
-        let signal = self.noise_fns[2].get(current_point) * self.persistences[2];
-        result += signal.powi(2);
-
-        current_point = scale!(current_point, 2.0, warp * result);
-        let signal = self.noise_fns[2].get(current_point) * self.persistences[3];
+        let signal = self.noise_fns[2].get(current_point) * persistences[2];
         result += signal.powi(2);
     
         result
