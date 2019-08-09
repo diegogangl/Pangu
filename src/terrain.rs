@@ -213,7 +213,8 @@ impl Procedural {
         for (x, y) in hmap.iter_indices() {
             let co = self.coords_for_noise(x as f64, y as f64 );
 
-            let z = self.valley_z([co.0, co.1]);
+            //let z = self.valley_z([co.0, co.1]);
+            let z = self.mountain_z([co.0, co.1]);
 
             // Keep track of min/max for normalization
             if z > heights_max {
@@ -386,6 +387,84 @@ impl Procedural {
     
         result
     }
+
+
+    fn mountain_z(&self, point: Point2<f64>) -> f64 {
+        let mut result;
+        let mut domain;
+        let mut current_point;
+        let mut amp = 1.0;
+    
+
+        //---------------------------------------------------------------------
+        // DOMAIN WARPING
+        //---------------------------------------------------------------------
+
+        let domain_scale = 1.5;
+
+        current_point = scale!(point, domain_scale);
+        domain = self.noise_fns[1].get(current_point);
+
+        current_point = scale!(current_point, domain_scale);
+        domain += self.noise_fns[1].get(current_point) * 0.5;
+
+        current_point = scale!(current_point, domain_scale);
+        domain += self.noise_fns[2].get(current_point) * 0.25;
+
+        domain *= 0.1;
+
+
+        //---------------------------------------------------------------------
+        // BASE FRACTAL NOISE
+        //---------------------------------------------------------------------
+
+        //---------------------------------------------------------------------
+        // Basic shape of the terrain
+
+        current_point = scale!(current_point, 0.2, domain);
+        let signal = self.noise_fns[0].get(current_point);
+        //result = ridge!(self, signal);
+        result = 1.0 - signal.abs();
+        amp *= 0.5 * result.min(0.0).max(1.0);
+        
+        current_point = scale!(current_point, 2.0, domain * amp);
+        let signal = self.noise_fns[1].get(current_point);
+        //result = ridge!(self, signal);
+        result += (1.0 - signal.abs()) * amp * 0.5;
+        amp *= 0.5 * result.min(0.0).max(1.0);
+        
+        current_point = scale!(current_point, 2.0, domain * amp);
+        let signal = self.noise_fns[2].get(current_point);
+        //result = ridge!(self, signal);
+        result += (1.0 - signal.abs()) * amp * 0.25;
+        amp *= 0.5 * result.min(0.0).max(1.0);
+        
+        current_point = scale!(current_point, 2.0, domain * amp);
+        let signal = self.noise_fns[3].get(current_point);
+        //result = ridge!(self, signal);
+        result += (1.0 - signal.abs()) * amp * 0.1;
+        amp *= 0.5 * result.min(0.0).max(1.0);
+        
+        current_point = scale!(current_point, 2.0 );
+        let signal = self.noise_fns[4].get(current_point);
+        //result = ridge!(self, signal);
+        result += signal * amp * result * 0.25;
+        amp *= 0.5 * result.min(0.0).max(1.0);
+        
+        current_point = scale!(current_point, 2.0 );
+        let signal = self.noise_fns[5].get(current_point);
+        //result = ridge!(self, signal);
+        result += signal * amp * result * 0.15;
+        amp *= 0.5 * result.min(0.0).max(1.0);
+        
+        current_point = scale!(current_point, 2.0 );
+        let signal = self.noise_fns[2].get(current_point);
+        //result = ridge!(self, signal);
+        result += signal * amp * result * 0.25;
+
+        result
+    }
+
 
     /// Get noise value
     ///
