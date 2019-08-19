@@ -52,19 +52,18 @@ macro_rules! scale {
 /// * `signal` - The signal from the noise function
 /// * `level` - Level at which the ridgedness should be activated
 macro_rules! ridge {
-    ($self:ident, $signal:ident) => {
-        math::lerp($signal + ($signal.abs() * -1.0),
+    ($signal:ident, $factor:ident) => {
+        math::lerp(1.0 - $signal.abs(),
              $signal,
-             $self.config.ridgedness)
+             $factor)
     };
 }
 
-macro_rules! mountainess {
-    ($self:ident, $signal:ident, $persistence:expr, $divisor:ident) => {
-        (($signal + ($signal.abs() + $self.config.plains)) / $divisor)
-            * $self.persistences[$persistence]
-    };
-}
+//macro_rules! ridge {
+    //($self:ident, $signal:ident, $divisor:ident) => {
+        //(($signal + ($signal.abs() + $self.config.plains)) / $divisor)
+    //};
+//}
 
 
 /// Representation of a terrain
@@ -403,7 +402,7 @@ impl Procedural {
         let domain_scale = 1.5;
 
         current_point = scale!(point, domain_scale);
-        domain = self.noise_fns[1].get(current_point);
+        domain = self.noise_fns[0].get(current_point);
 
         current_point = scale!(current_point, domain_scale);
         domain += self.noise_fns[1].get(current_point) * 0.5;
@@ -411,7 +410,9 @@ impl Procedural {
         current_point = scale!(current_point, domain_scale);
         domain += self.noise_fns[2].get(current_point) * 0.25;
 
-        domain *= 0.1;
+        //domain *= 0.1;
+        domain *= self.config.mountains.twist;
+        //domain *= 0.3;
 
 
         //---------------------------------------------------------------------
@@ -421,46 +422,46 @@ impl Procedural {
         //---------------------------------------------------------------------
         // Basic shape of the terrain
 
+        let gain = 0.5; 
+        let divisor = self.config.mountains.option1;
+        let divisor_1 = self.config.mountains.option2;
+        let divisor_2 =  self.config.mountains.option2;
+        let divisor_3 =  0.5 + self.config.mountains.option3;
+        let rough = self.config.mountains.roughness;
+
         current_point = scale!(current_point, 0.2, domain);
         let signal = self.noise_fns[0].get(current_point);
-        //result = ridge!(self, signal);
-        result = 1.0 - signal.abs();
-        amp *= 0.5 * result.min(0.0).max(1.0);
+        result = ridge!(signal, divisor) * 0.75;
+        amp *= gain * result.min(0.01).max(1.0);
         
-        current_point = scale!(current_point, 2.0, domain * amp);
+        current_point = scale!(current_point, divisor_3, domain * amp);
         let signal = self.noise_fns[1].get(current_point);
-        //result = ridge!(self, signal);
-        result += (1.0 - signal.abs()) * amp * 0.5;
-        amp *= 0.5 * result.min(0.0).max(1.0);
+        result += ridge!(signal, divisor_1) * amp * 0.5;
+        amp *= gain * result.min(0.01).max(1.0);
         
         current_point = scale!(current_point, 2.0, domain * amp);
         let signal = self.noise_fns[2].get(current_point);
-        //result = ridge!(self, signal);
-        result += (1.0 - signal.abs()) * amp * 0.25;
-        amp *= 0.5 * result.min(0.0).max(1.0);
+        result += ridge!(signal, divisor_2) * amp * 0.25; 
+        amp *= gain * result.min(0.01).max(1.0);
         
         current_point = scale!(current_point, 2.0, domain * amp);
         let signal = self.noise_fns[3].get(current_point);
-        //result = ridge!(self, signal);
-        result += (1.0 - signal.abs()) * amp * 0.1;
-        amp *= 0.5 * result.min(0.0).max(1.0);
+        result += (1.0 - signal.abs()) * amp * (rough / 2.0);
+        amp *= gain * result.min(0.01).max(1.0);
         
         current_point = scale!(current_point, 2.0 );
         let signal = self.noise_fns[4].get(current_point);
-        //result = ridge!(self, signal);
-        result += signal * amp * result * 0.25;
-        amp *= 0.5 * result.min(0.0).max(1.0);
+        result += signal * amp * result * rough;
+        amp *= gain * result.min(0.01).max(1.0);
         
-        current_point = scale!(current_point, 2.0 );
+        current_point = scale!(current_point, 2.0);
         let signal = self.noise_fns[5].get(current_point);
-        //result = ridge!(self, signal);
-        result += signal * amp * result * 0.15;
-        amp *= 0.5 * result.min(0.0).max(1.0);
+        result += signal * amp * result * rough;
+        amp *= gain * result.min(0.01).max(1.0);
         
-        current_point = scale!(current_point, 2.0 );
+        current_point = scale!(current_point, 2.0);
         let signal = self.noise_fns[2].get(current_point);
-        //result = ridge!(self, signal);
-        result += signal * amp * result * 0.25;
+        result += signal * amp * rough / (result.min(0.001).max(1.0));
 
         result
     }

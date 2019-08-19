@@ -46,6 +46,33 @@ impl Default for SmoothHills {
 }
 
 
+
+/// Settings for the Mountainous Terrain type
+///
+/// These settings are only specific to this terrain
+/// type.
+#[derive(Clone, Debug)]
+pub struct Mountainous {
+    pub option1: f64,
+    pub option2: f64,
+    pub option3: f64,
+    pub roughness: f64,
+    pub twist: f64,
+}
+
+impl Default for Mountainous {
+    fn default() -> Self {
+        Mountainous {
+            option1: 0.0,
+            option2: 0.0,
+            option3: 0.0,
+            roughness: 0.0,
+            twist: 0.0,
+        }
+    }
+}
+
+
 /// Settings for a Procedural Terrain
 ///
 /// This is only a structure to hold parameters for
@@ -124,6 +151,7 @@ pub struct Terrain {
 
     // Settings for Smooth Hills 
     pub hills: SmoothHills,
+    pub mountains: Mountainous,
 }
 
 
@@ -154,6 +182,7 @@ impl Default for Terrain {
             thermal: ThermalErosion::default(),
             water: WaterErosion::with_capacity(1),
             hills: SmoothHills::default(),
+            mountains: Mountainous::default(),
         }
     }
 }
@@ -250,6 +279,17 @@ impl Terrain {
             SmoothHills::default()
         };
 
+        let mountains = if get!(params, "type_mountains") {
+            Mountainous {
+                option1: get!(params, "mountains_option1"),
+                option2: get!(params, "mountains_option2"),
+                option3: get!(params, "mountains_option3"),
+                roughness: get!(params, "mountains_roughness"),
+                twist: get!(params, "mountains_twist"),
+            }
+        } else {
+            Mountainous::default()
+        };
 
         let config = Terrain {
             seed: get!(params, "seed"),
@@ -276,6 +316,7 @@ impl Terrain {
             thermal,
             water,
             hills,
+            mountains,
         };
 
         Ok(config)
