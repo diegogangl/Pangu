@@ -449,7 +449,7 @@ impl Procedural {
         result += (1.0 - signal.abs()) * amp * (rough / 2.0);
         amp *= gain * result.min(0.01).max(1.0);
         
-        current_point = scale!(current_point, 2.0 );
+        current_point = scale!(current_point, 2.0, domain * amp);
         let signal = self.noise_fns[4].get(current_point);
         result += signal * amp * result * rough;
         amp *= gain * result.min(0.01).max(1.0);
@@ -459,7 +459,7 @@ impl Procedural {
         result += signal * amp * result * rough;
         amp *= gain * result.min(0.01).max(1.0);
         
-        current_point = scale!(current_point, 2.0);
+        current_point = scale!(current_point, 3.0, domain);
         let signal = self.noise_fns[2].get(current_point);
         result += signal * amp * rough / (result.min(0.001).max(1.0));
 
