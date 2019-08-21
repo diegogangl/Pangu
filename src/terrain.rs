@@ -323,26 +323,20 @@ impl Procedural {
     }
 
 
-    fn valley_z(&self, point: Point2<f64>) -> f64 {
-        let mut result;
-        let mut warp;
-        let mut current_point;
+    /// Get noise for Smooth Hills terrain
+    ///
+    /// # Arguments
+    /// * `point` - The coordinates in 3D space for the noise
+    fn hills_z(&self, point: Point2<f64>) -> f64 {
         
-        // Settings
-        // - persistencia 1 -> para controlar diferencias entre hills
-        // - powf -> Distancia entre hills (para hacer V-shaped)
-        // - Deformation -> Make winding
-        // - Persitencias > 1 -> Controlar details
-
-
         //---------------------------------------------------------------------
         // DOMAIN WARPING
         //---------------------------------------------------------------------
 
         let domain_scale = 1.5; 
 
-        current_point = scale!(point, domain_scale);
-        warp = self.noise_fns[0].get(current_point);
+        let mut current_point = scale!(point, domain_scale);
+        let mut warp = self.noise_fns[0].get(current_point);
 
         current_point = scale!(current_point, domain_scale);
         warp += self.noise_fns[1].get(current_point) * 0.2;
@@ -354,12 +348,17 @@ impl Procedural {
         
 
         //---------------------------------------------------------------------
+        // FRACTAL NOISE
+        //---------------------------------------------------------------------
+        
         // Basic shape of the terrain
-
-        let diff = self.config.hills.difference;
         current_point = scale!(current_point, 0.2, warp);
-        let signal = self.noise_fns[0].get(current_point);
-        result = signal.abs().powf(self.config.hills.flat) * diff; 
+        let mut result = { 
+            let signal = self.noise_fns[0].get(current_point);
+
+            (signal.abs().powf(self.config.hills.flat) 
+                * self.config.hills.difference)
+        };
 
         let persistences = [
             self.config.hills.detail * 0.5,
@@ -368,22 +367,34 @@ impl Procedural {
             self.config.hills.detail * 0.05,
         ];
 
+        // Octave 1
         current_point = scale!(current_point, 2.5, warp * result);
-        let signal = self.noise_fns[1].get(current_point) * persistences[0];
-        result += signal.powi(2).abs();
+        result += { 
+            let signal = self.noise_fns[1].get(current_point) * persistences[0];
+            signal.powi(2).abs()
+        };
 
+        // Octave 2
         current_point = scale!(current_point, 2.0, warp * result);
-        let signal = self.noise_fns[2].get(current_point) * persistences[1];
-        result += signal.powi(2);
+        result += { 
+            let signal = self.noise_fns[2].get(current_point) * persistences[1];
+            signal.powi(2)
+        };
 
+        // Octave 3
         current_point = scale!(current_point, 2.0, warp * result);
-        let signal = self.noise_fns[2].get(current_point) * persistences[2];
-        result += signal.powi(2);
+        result += { 
+            let signal = self.noise_fns[2].get(current_point) * persistences[2];
+            signal.powi(2)
+        };
 
+        // Octave 4
         current_point = scale!(current_point, 2.0, warp * result);
-        let signal = self.noise_fns[3].get(current_point) * persistences[3];
-        result += signal.powi(2);
-    
+        result += { 
+            let signal = self.noise_fns[3].get(current_point) * persistences[3];
+            signal.powi(2)
+        };
+
         result
     }
 

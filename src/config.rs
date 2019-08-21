@@ -28,9 +28,17 @@ macro_rules! get {
 /// type.
 #[derive(Clone, Debug)]
 pub struct SmoothHills {
+
+    // General scale (first octave)
     pub difference: f64,
+
+    // Flat area between hills
     pub flat: f64,
+
+    // Noise on hills
     pub detail: f64,
+
+    // Amount of domain warping to apply
     pub twist: f64,
 }
 
