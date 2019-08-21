@@ -298,9 +298,9 @@ impl Terrain {
 
         let mountains = if get!(params, "type_mountains") {
             Mountainous {
-                ridgedness: get!(params, "mountains_option1"),
-                sharpness: get!(params, "mountains_option2"),
-                breakup: get!(params, "mountains_option3"),
+                ridgedness: get!(params, "mountains_ridgedness"),
+                sharpness: get!(params, "mountains_sharpness"),
+                breakup: get!(params, "mountains_breakup"),
                 roughness: get!(params, "mountains_roughness"),
                 twist: get!(params, "mountains_twist"),
             }
