@@ -53,19 +53,28 @@ impl Default for SmoothHills {
 /// type.
 #[derive(Clone, Debug)]
 pub struct Mountainous {
-    pub option1: f64,
-    pub option2: f64,
-    pub option3: f64,
+    // Ridgedness (spikey-ness) of the mountains
+    pub ridgedness: f64,
+
+    // Sharpness of the medium terrain features
+    pub sharpness: f64,
+
+    // Number of mountains (scale at the 3rd octave)
+    pub breakup: f64,
+
+    // Terrain roughness (persistence of higher octaves)
     pub roughness: f64,
+
+    // Amount of domain warping to apply
     pub twist: f64,
 }
 
 impl Default for Mountainous {
     fn default() -> Self {
         Mountainous {
-            option1: 0.0,
-            option2: 0.0,
-            option3: 0.0,
+            ridgedness: 0.0,
+            sharpness: 0.0,
+            breakup: 0.0,
             roughness: 0.0,
             twist: 0.0,
         }
@@ -281,9 +290,9 @@ impl Terrain {
 
         let mountains = if get!(params, "type_mountains") {
             Mountainous {
-                option1: get!(params, "mountains_option1"),
-                option2: get!(params, "mountains_option2"),
-                option3: get!(params, "mountains_option3"),
+                ridgedness: get!(params, "mountains_option1"),
+                sharpness: get!(params, "mountains_option2"),
+                breakup: get!(params, "mountains_option3"),
                 roughness: get!(params, "mountains_roughness"),
                 twist: get!(params, "mountains_twist"),
             }

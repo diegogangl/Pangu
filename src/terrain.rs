@@ -387,22 +387,23 @@ impl Procedural {
         result
     }
 
-
-    fn mountain_z(&self, point: Point2<f64>) -> f64 {
-        let mut result;
-        let mut domain;
-        let mut current_point;
-        let mut amp = 1.0;
     
-
+    /// Get noise for mountainous terrain
+    ///
+    /// Loosely based on Giliam de Carpentier's "Swiss Turbulence"
+    ///
+    /// # Arguments
+    /// * `point` - The coordinates in 3D space for the noise
+    fn mountain_z(&self, point: Point2<f64>) -> f64 {
+    
         //---------------------------------------------------------------------
         // DOMAIN WARPING
         //---------------------------------------------------------------------
 
         let domain_scale = 1.5;
 
-        current_point = scale!(point, domain_scale);
-        domain = self.noise_fns[0].get(current_point);
+        let mut current_point = scale!(point, domain_scale);
+        let mut domain = self.noise_fns[0].get(current_point);
 
         current_point = scale!(current_point, domain_scale);
         domain += self.noise_fns[1].get(current_point) * 0.5;
@@ -410,58 +411,93 @@ impl Procedural {
         current_point = scale!(current_point, domain_scale);
         domain += self.noise_fns[2].get(current_point) * 0.25;
 
-        //domain *= 0.1;
         domain *= self.config.mountains.twist;
-        //domain *= 0.3;
 
 
         //---------------------------------------------------------------------
-        // BASE FRACTAL NOISE
+        // FRACTAL NOISE
         //---------------------------------------------------------------------
 
-        //---------------------------------------------------------------------
-        // Basic shape of the terrain
+        // Aliases for settings
+        let ridgedness = self.config.mountains.ridgedness;
+        let sharpness = self.config.mountains.sharpness;
+        let breakup =  0.5 + self.config.mountains.breakup;
+        let roughness = self.config.mountains.roughness;
 
-        let gain = 0.5; 
-        let divisor = self.config.mountains.option1;
-        let divisor_1 = self.config.mountains.option2;
-        let divisor_2 =  self.config.mountains.option2;
-        let divisor_3 =  0.5 + self.config.mountains.option3;
-        let rough = self.config.mountains.roughness;
+        // Amplitude to multiply each octave
+        let mut amp = 1.0;
 
+        // Simple macro to increase amplitude after each octave
+        macro_rules! increase_amp {
+            ($amp:ident, $result:ident) => ($amp *= 0.5 * $result.min(0.01).max(1.0));
+        }
+
+        // Octave 0
         current_point = scale!(current_point, 0.2, domain);
-        let signal = self.noise_fns[0].get(current_point);
-        result = ridge!(signal, divisor) * 0.75;
-        amp *= gain * result.min(0.01).max(1.0);
+        let mut result = {
+                    let signal = self.noise_fns[0].get(current_point);
+                    ridge!(signal, ridgedness) * 0.75
+        };
+
+        increase_amp!(amp, result);
         
-        current_point = scale!(current_point, divisor_3, domain * amp);
-        let signal = self.noise_fns[1].get(current_point);
-        result += ridge!(signal, divisor_1) * amp * 0.5;
-        amp *= gain * result.min(0.01).max(1.0);
+
+        // Octave 1
+        current_point = scale!(current_point, breakup, domain * amp);
+        result += { 
+                    let signal = self.noise_fns[1].get(current_point);
+                    ridge!(signal, sharpness) * amp * 0.5
+        };
+
+        increase_amp!(amp, result);
         
+
+        // Octave 2
         current_point = scale!(current_point, 2.0, domain * amp);
-        let signal = self.noise_fns[2].get(current_point);
-        result += ridge!(signal, divisor_2) * amp * 0.25; 
-        amp *= gain * result.min(0.01).max(1.0);
+        result += {
+                    let signal = self.noise_fns[2].get(current_point);
+                    ridge!(signal, sharpness) * amp * 0.25
+        };
+
+        increase_amp!(amp, result);
         
+
+        // Octave 3
         current_point = scale!(current_point, 2.0, domain * amp);
-        let signal = self.noise_fns[3].get(current_point);
-        result += (1.0 - signal.abs()) * amp * (rough / 2.0);
-        amp *= gain * result.min(0.01).max(1.0);
+        result += {
+                    let signal = self.noise_fns[3].get(current_point);
+                    (1.0 - signal.abs()) * amp * (roughness / 2.0)
+        };
+
+        increase_amp!(amp, result);
         
+
+        // Octave 4
         current_point = scale!(current_point, 2.0, domain * amp);
-        let signal = self.noise_fns[4].get(current_point);
-        result += signal * amp * result * rough;
-        amp *= gain * result.min(0.01).max(1.0);
+        result += {
+                    let signal = self.noise_fns[4].get(current_point);
+                    signal * amp * result * roughness
+        };
+
+        increase_amp!(amp, result);
         
+
+        // Octave 5
         current_point = scale!(current_point, 2.0);
-        let signal = self.noise_fns[5].get(current_point);
-        result += signal * amp * result * rough;
-        amp *= gain * result.min(0.01).max(1.0);
+        result += {
+                    let signal = self.noise_fns[5].get(current_point);
+                    signal * amp * result * roughness
+        };
+
+        increase_amp!(amp, result);
         
+        
+        // Octave 6
         current_point = scale!(current_point, 3.0, domain);
-        let signal = self.noise_fns[2].get(current_point);
-        result += signal * amp * rough / (result.min(0.001).max(1.0));
+        result += { 
+                    let signal = self.noise_fns[2].get(current_point);
+                    signal * amp * roughness / (result.min(0.001).max(1.0))
+        };
 
         result
     }
