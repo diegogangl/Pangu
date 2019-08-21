@@ -22,6 +22,17 @@ macro_rules! get {
 }
 
 
+/// Type of terrain to generate
+///
+/// This option affects the settings and noise
+/// function used.
+#[derive(Clone, Debug)]
+pub enum TerrainType {
+    SmoothHills,
+    Mountainous,
+}
+
+
 /// Settings for the Smooth Hills Terrain type
 ///
 /// These settings are only specific to this terrain
@@ -168,7 +179,12 @@ pub struct Terrain {
 
     // Settings for Smooth Hills 
     pub hills: SmoothHills,
+
+    // Settings for Mountainous terrain
     pub mountains: Mountainous,
+
+    // Type of terrain to generate
+    pub terrain_type: TerrainType,
 }
 
 
@@ -200,6 +216,7 @@ impl Default for Terrain {
             water: WaterErosion::with_capacity(1),
             hills: SmoothHills::default(),
             mountains: Mountainous::default(),
+            terrain_type: TerrainType::SmoothHills,
         }
     }
 }
@@ -308,6 +325,12 @@ impl Terrain {
             Mountainous::default()
         };
 
+        let terrain_type = if get!(params, "type_mountains") {
+            TerrainType::Mountainous
+        } else {
+            TerrainType::SmoothHills
+        };
+
         let config = Terrain {
             seed: get!(params, "seed"),
             rows: get!(params, "rows"),
@@ -334,6 +357,7 @@ impl Terrain {
             water,
             hills,
             mountains,
+            terrain_type,
         };
 
         Ok(config)

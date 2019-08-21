@@ -10,6 +10,7 @@ use noise::{NoiseFn, Perlin, Point2, Seedable};
 
 use super::math;
 use super::config;
+use super::config::TerrainType;
 use super::map::Map2D;
 use std::cmp::max;
 
@@ -212,8 +213,10 @@ impl Procedural {
         for (x, y) in hmap.iter_indices() {
             let co = self.coords_for_noise(x as f64, y as f64 );
 
-            //let z = self.valley_z([co.0, co.1]);
-            let z = self.mountain_z([co.0, co.1]);
+            let z = match self.config.terrain_type {
+                TerrainType::SmoothHills => self.hills_z(co),
+                TerrainType::Mountainous => self.mountain_z(co),
+            };
 
             // Keep track of min/max for normalization
             if z > heights_max {
@@ -302,7 +305,7 @@ impl Procedural {
     ///
     /// * `x`: Value for X axis
     /// * `y`: Value for y axis
-    fn coords_for_noise(&self, x: f64, y: f64) -> (f64, f64) {
+    fn coords_for_noise(&self, x: f64, y: f64) -> [f64; 2] {
         let conf = &self.config;
 
         let x2 = if conf.rotation != 0.0 {
@@ -319,7 +322,7 @@ impl Procedural {
             self.steps.1 * (y + conf.offset_y)
         };
 
-        (x2, y2)
+        [x2, y2]
     }
 
 
