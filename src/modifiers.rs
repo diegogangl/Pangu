@@ -472,15 +472,39 @@ impl WaterErosion {
         let dist = Uniform::from(1..self.size - 2);
 
         for _ in 0..100 {
+            let x = dist.sample(&mut rng);
+            let y = dist.sample(&mut rng);
+            let i = math::index_1d(x as u32, y as u32, self.size);
+            self.water[i] += self.rain_rate;
 
-            let spring = Spring {
-                x: dist.sample(&mut rng),
-                y: dist.sample(&mut rng),
-                radius: 2,
-                amount: self.rain_rate,
-            };
+            {
+                let i = math::index_1d(x - 1 as u32, y - 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+            {
+                let i = math::index_1d(x as u32, y - 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
 
-            self.drop_water(spring);
+            {
+                let i = math::index_1d(x - 1 as u32, y + 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
+            {
+                let i = math::index_1d(x + 1 as u32, y as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
+            {
+                let i = math::index_1d(x as u32, y + 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
+
+            {
+                let i = math::index_1d(x + 1 as u32, y + 1 as u32, self.size);
+                self.water[i] += self.rain_rate;
+            }
         }
     }
 
