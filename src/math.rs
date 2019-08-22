@@ -72,6 +72,24 @@ pub fn distance(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
 }
 
 
+/// Calculate distance between two points 
+///
+/// This formula doesn't use the square root
+///
+/// # Arguments
+/// 
+/// * `x1` - X coordinate of the first point
+/// * `y1` - y coordinate of the first point
+/// * `x2` - X coordinate of the second point
+/// * `y2` - y coordinate of the second point
+pub fn simple_distance(x0: u32, y0: u32, x1: u32, y1: u32) -> f64 {
+    let dist_x = if x0 > x1 { x0 - x1 } else { x1 - x0 };
+    let dist_y = if y0 > y1 { y0 - y1 } else { y1 - y0 };
+
+    (dist_x as f64).powi(2) + (dist_y as f64).powi(2)
+}
+
+
 /// Convert a 2D index to 1D
 ///
 /// # Arguments

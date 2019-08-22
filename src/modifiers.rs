@@ -507,12 +507,14 @@ impl WaterErosion {
 
                 if let (Some(x), Some(y)) = (x, y) {
                     if x < self.size && y < self.size  {
-                        let dist = ((x1*x1 + y1*y1) as f64).sqrt();
-                        let rad2 = (spring.radius * spring.radius) as f64;
+                        let dist = math::simple_distance(spring.x, spring.y, x, y);
+                        let rad2 = (spring.radius as f64).powi(2);
 
-                        if dist <= rad2 {
+                        if dist < rad2 as f64 {
                             let i = math::index_1d(x, y, self.size);
-                            self.water[i] += spring.amount * (rad2 - dist);
+                            let amount = spring.amount * 0.002 * (rad2 - dist);
+                            self.water[i] += amount;
+                            
                         }
                     }
                 }
