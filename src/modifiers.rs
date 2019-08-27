@@ -182,12 +182,12 @@ impl Smooth {
         let center_x = self.columns / 2.0;
         let center_y = self.rows / 2.0;
 
-        let max_dist = math::distance(center_x, center_y,
-                                      self.columns - self.radial_size.0,
-                                      self.rows - self.radial_size.1);
+        let max_dist = math::distance([center_x, center_y],
+                                      [self.columns - self.radial_size.0,
+                                      self.rows - self.radial_size.1]);
 
-        let dist = math::distance(center_x, center_y, x as f64, y as f64);
-        let normalized = (dist / max_dist).min(1.0);
+        let dist = math::distance([center_x, center_y], [x as f64, y as f64]);
+        let normalized = (dist.sqrt() / max_dist.sqrt()).min(1.0);
 
         // Normalized with a power of <1 creates pointy terrains
         math::lerp(0.0, 1.0, normalized.powf(self.radial_fac - normalized))
@@ -531,10 +531,10 @@ impl WaterErosion {
 
                 if let (Some(x), Some(y)) = (x, y) {
                     if x < self.size && y < self.size  {
-                        let dist = math::simple_distance(spring.x, spring.y, x, y);
+                        let dist = math::distance([spring.x, spring.y], [x, y]) as f64;
                         let rad2 = (spring.radius as f64).powi(2);
 
-                        if dist < rad2 as f64 {
+                        if dist < rad2 {
                             let i = math::index_1d(x, y, self.size);
                             let amount = spring.amount * 0.002 * (rad2 - dist);
                             self.water[i] += amount;
