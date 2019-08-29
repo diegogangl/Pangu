@@ -168,6 +168,10 @@ impl Map2D {
         x > 0 && x < self.width - 1 && y > 0 && y < self.height() - 1
     }
 
+
+    /// Iterate over map indices
+    ///
+    /// Returns X and Y coordinates
     pub fn iter_indices(&self) -> impl Iterator<Item = (usize, usize)> {
         let height = self.height();
     
