@@ -200,8 +200,37 @@ impl Map2D {
             .map(move |i| (i / height, i % height))
     }
 
-    /// Get a neighbor value safely
+
+    /// Get neighbor coordinates without checks
     ///
+    /// This function takes an origin oordinate and a direction. 
+    /// There are no checks for whether this is inside the grid, or
+    /// if the arithmetic will overflow. Use with caution!
+    ///
+    /// # Arguments
+    ///
+    /// * `origin` - Tuple of X and Y coordinates
+    /// * `step` - Tuple of directions in X and Y (eg. -1, 1)
+    ///
+    /// # Panics
+    ///
+    /// This will panic if the arithmetic overflows
+    pub fn find(&self, origin: Coords, step: (isize, isize)) -> Coords {
+        let target_x = if step.0 < 0 {
+                origin.0 - (step.0.abs() as usize)
+            } else {
+                origin.0 + (step.0 as usize)
+            };
+
+        let target_y = if step.1 < 0 {
+                origin.1 + (step.1 as usize)
+            } else {
+                origin.1 - (step.1.abs() as usize)
+            };
+
+        (target_x, target_y)
+    }
+
     /// This function takes a set of coordinates and a direction. 
     /// If the target coordinates are found inside the map, it returns 
     /// the value and neighbor coordinates. Otherwise it returns
