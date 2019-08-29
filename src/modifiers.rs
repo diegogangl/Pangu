@@ -285,15 +285,11 @@ impl ThermalErosion {
                    // Current height
                    let center = hmap[x][y];
 
-                   // Rotated Von Neuhmann neighbors
-                   [(-1,  1),  
-                    ( 1,  1), 
-                    (-1, -1), 
-                    ( 1, -1)].iter().for_each(|target| {
-                        let neighbor = hmap.neighbor((x, y), *target);
+                   neighbors::VON_NEUMANN.iter().for_each(|target| {
+                        let neighbor = hmap.safe_find((x, y), *target);
 
-                        if let Some((val, x1, y1)) = neighbor {
-                            let diff = center - val;
+                        if let Some((x1, y1)) = neighbor {
+                            let diff = center - hmap[x1][y1];
 
                             if diff > slope_max {
                                 slope_max = diff;
