@@ -141,12 +141,6 @@ impl Map2D {
         self.contents.extend(row);
     }
 
-    /// Remove the first row of the map
-    pub fn pop_row(&mut self) {
-        for _ in 0..self.width {
-            self.contents.pop();
-        }
-    }
 
     /// Check if coordinates are inside the map
     ///
