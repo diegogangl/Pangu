@@ -6,6 +6,7 @@ extern crate test;
 use std::ops::{Index, IndexMut};
 use std::fmt;
 
+type Coords = (usize, usize);
 
 
 /// Utility macro to generate a 2DMap quickly
