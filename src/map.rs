@@ -285,24 +285,47 @@ mod tests {
                               3.0, 4.0, 5.0;
                               6.0, 7.0, 8.0];
 
-        let fail = test_map.neighbor((0, 0), (0, -1));
+        let fail = test_map.safe_find((0, 0), (0, -1));
         assert!(fail.is_none());
 
-        let fail2 = test_map.neighbor((0, 0), (-1, 0));
+        let fail2 = test_map.safe_find((0, 0), (-1, 0));
         assert!(fail2.is_none());
 
-        let fail3 = test_map.neighbor((0, 0), (-1, -1));
+        let fail3 = test_map.safe_find((0, 0), (-1, -1));
         assert!(fail3.is_none());
 
-        let in_grid = test_map.neighbor((1, 1), (1, -1));
+        let in_grid = test_map.safe_find((1, 1), (1, -1));
         assert!(in_grid.is_some());
+        assert_eq!((2, 0), in_grid.unwrap());
+    }
 
-        println!("{:?}", test_map);
 
+    #[test]
+    fn test_is_inside() {
+        let test_map = map2D![0.0, 1.0, 2.0;
+                              3.0, 4.0, 5.0;
+                              6.0, 7.0, 8.0];
+
+        assert!(test_map.is_inside(1, 2));
+        assert_eq!(false, test_map.is_inside(5, 6));
+    }
+
+
+    #[test]
+    fn test_iter_indices() {
+        let test_map = map2D![0.0, 1.0, 2.0;
+                              3.0, 4.0, 5.0;
+                              6.0, 7.0, 8.0];
+    
         for (x,y) in test_map.iter_indices() {
-            let value = test_map[x][y];
-            println!("x: {}, y: {}, value: {:?}", x, y, value);
+            test_map[x][y] = 1.0;
         }
 
+    
+        for (x,y) in test_map.iter_indices() {
+            assert_eq!(1.0, test_map[x][y]);
+        }
     }
+
+
 }
