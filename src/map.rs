@@ -231,33 +231,38 @@ impl Map2D {
         (target_x, target_y)
     }
 
+
+    /// Get neighbor coordinates safely
+    ///
     /// This function takes a set of coordinates and a direction. 
     /// If the target coordinates are found inside the map, it returns 
-    /// the value and neighbor coordinates. Otherwise it returns
+    /// the neighbor coordinates. Otherwise it returns
     /// `None`. It also returns `None` in case of overflows.
     ///
     /// # Arguments
     ///
-    /// * `src` - Tuple of X and Y coordinates
-    /// * `dir` - Tuple of directions in X and Y (eg. -1, 1)
-    pub fn neighbor(&self, src: (usize, usize), dir: (isize, isize)) -> Option<(f64, usize, usize)> {
+    /// * `origin` - Tuple of X and Y coordinates
+    /// * `step` - Tuple of directions in X and Y (eg. -1, 1)
+    pub fn safe_find(&self, origin: Coords, step: (isize, isize)) -> Option<Coords> {
 
-        let target_x = if dir.0 < 0 {
-                src.0.checked_sub(dir.0.abs() as usize)
+        let target_x = if step.0 < 0 {
+                origin.0.checked_sub(step.0.abs() as usize)
             } else {
-                src.0.checked_add(dir.0 as usize)
+                origin.0.checked_add(step.0 as usize)
             };
 
-        let target_y = if dir.1 < 0 {
-                src.1.checked_sub(dir.1.abs() as usize)
+
+        let target_y = if step.1 < 0 {
+                origin.1.checked_sub(step.1.abs() as usize)
             } else {
-                src.1.checked_add(dir.1 as usize)
+                origin.1.checked_add(step.1 as usize)
             };
+
 
         match (target_x, target_y) {
             (Some(x), Some(y)) => { 
                 if self.is_inside(x, y) {
-                    Some((self.index(x)[y], x, y)) 
+                    Some((x, y)) 
                 } else {
                     None
                 }
