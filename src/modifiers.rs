@@ -1,6 +1,6 @@
 use super::math;
 use super::curve::Curve;
-use super::map::Map2D;
+use super::map::{Map2D, neighbors};
 use rand::distributions::{Distribution, Uniform};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -445,7 +445,7 @@ pub struct WaterErosion {
     size:  u32,
 
     /// Water map
-    water: Vec<f64>,
+    water: Map2D,
 
     /// Sediment map and temporary sediment map
     sediment: Vec<f64>,
@@ -472,39 +472,14 @@ impl WaterErosion {
         let dist = Uniform::from(1..self.size - 2);
 
         for _ in 0..100 {
-            let x = dist.sample(&mut rng);
-            let y = dist.sample(&mut rng);
-            let i = math::index_1d(x as u32, y as u32, self.size);
-            self.water[i] += self.rain_rate;
+            let x = dist.sample(&mut rng) as usize;
+            let y = dist.sample(&mut rng) as usize;
+            self.water[x][y] += self.rain_rate;
 
-            {
-                let i = math::index_1d(x - 1 as u32, y - 1 as u32, self.size);
-                self.water[i] += self.rain_rate;
-            }
-            {
-                let i = math::index_1d(x as u32, y - 1 as u32, self.size);
-                self.water[i] += self.rain_rate;
-            }
-
-            {
-                let i = math::index_1d(x - 1 as u32, y + 1 as u32, self.size);
-                self.water[i] += self.rain_rate;
-            }
-
-            {
-                let i = math::index_1d(x + 1 as u32, y as u32, self.size);
-                self.water[i] += self.rain_rate;
-            }
-
-            {
-                let i = math::index_1d(x as u32, y + 1 as u32, self.size);
-                self.water[i] += self.rain_rate;
-            }
-
-            {
-                let i = math::index_1d(x + 1 as u32, y + 1 as u32, self.size);
-                self.water[i] += self.rain_rate;
-            }
+            neighbors::MOORE.iter().for_each(|dir|{
+                let (x1, y1) = self.water.find((x, y), *dir);
+                self.water[x1][y1] += self.rain_rate;
+            });
         }
     }
 
@@ -535,10 +510,8 @@ impl WaterErosion {
                         let rad2 = (spring.radius as f64).powi(2);
 
                         if dist < rad2 {
-                            let i = math::index_1d(x, y, self.size);
                             let amount = spring.amount * 0.002 * (rad2 - dist);
-                            self.water[i] += amount;
-                            
+                            self.water[x as usize][y as usize] += amount;
                         }
                     }
                 }
@@ -562,9 +535,8 @@ impl WaterErosion {
     fn evaporate(&mut self) {
         let evaporation = 1.0 - self.evaporation;
 
-        self.water.iter_mut().for_each(|w| {
-            *w *= evaporation;
-            *w = w.max(0.0);
+        self.water.iter_indices().for_each(|(x, y)| {
+            self.water[x][y] = (self.water[x][y] * evaporation).max(0.0);
         });
     }
 
@@ -618,11 +590,10 @@ impl WaterErosion {
                 let yu = y as usize;
 
                 let center_idx = math::index_1d(x, y, self.size);
-                let center = heights[xu][yu] + self.water[center_idx];
+                let center = heights[xu][yu] + self.water[xu][yu];
 
                 let l_flux = if x > 0 {
-                    let idx = math::index_1d(x - 1, y, self.size);
-                    let dh = center - (heights[xu-1][yu] + self.water[idx]);
+                    let dh = center - (heights[xu-1][yu] + self.water[xu-1][yu]);
                     let result = self.flux[center_idx].left + flux_factor * dh;
                     result.max(0.0)
                 } else {
@@ -631,8 +602,7 @@ impl WaterErosion {
 
 
                 let r_flux = if x < self.size - 1 {
-                    let idx = math::index_1d(x + 1, y, self.size);
-                    let dh = center - (heights[xu+1][yu] + self.water[idx]);
+                    let dh = center - (heights[xu+1][yu] + self.water[xu+1][yu]);
                     let result = self.flux[center_idx].right + flux_factor * dh;
                     result.max(0.0)
                 } else {
@@ -640,8 +610,7 @@ impl WaterErosion {
                 };
 
                 let b_flux = if y > 0 {
-                    let idx = math::index_1d(x, y - 1, self.size);
-                    let dh = center - (heights[xu][yu-1] + self.water[idx]);
+                    let dh = center - (heights[xu][yu-1] + self.water[xu][yu-1]);
                     let result = self.flux[center_idx].bottom + flux_factor * dh;
                     result.max(0.0)
                 } else {
@@ -649,8 +618,7 @@ impl WaterErosion {
                 };
 
                 let t_flux = if y < self.size - 1 {
-                    let idx = math::index_1d(x, y + 1, self.size);
-                    let dh = center - (heights[xu][yu+1] + self.water[idx]);
+                    let dh = center - (heights[xu][yu+1] + self.water[xu][yu+1]);
                     let result = self.flux[center_idx].top + flux_factor * dh;
                     result.max(0.0)
                 } else {
@@ -658,7 +626,7 @@ impl WaterErosion {
                 };
 
                 let total_flux = l_flux + r_flux + b_flux + t_flux;
-                let k = (self.water[center_idx] / total_flux).min(1.0);
+                let k = (self.water[xu][yu] / total_flux).min(1.0);
 
                 self.flux[center_idx].left = l_flux * k;
                 self.flux[center_idx].right = r_flux * k;
@@ -672,8 +640,12 @@ impl WaterErosion {
         for x in 0..self.size {
             for y in 0..self.size {
                 let i = math::index_1d(x, y, self.size);
+                let xu = x as usize;
+                let yu = y as usize;
+
                 let in_flow = {
                     let mut flow = 0.0;
+
 
                     // Right in flux
                     if x > 0 {
@@ -703,10 +675,10 @@ impl WaterErosion {
                 };
 
                 let delta_v = in_flow - self.flux[i].total();
-                let old_water = self.water[i];
-                self.water[i] += delta_v;
-                self.water[i] = self.water[i].max(0.0);
-                let mean_water = (old_water + self.water[i]) / 2.0;
+                let old_water = self.water[xu][yu];
+                self.water[xu][yu] += delta_v;
+                self.water[xu][yu] = self.water[xu][yu].max(0.0);
+                let mean_water = (old_water + self.water[xu][yu]) / 2.0;
 
                 // Update velocity field
                 if mean_water == 0.0 {
@@ -884,7 +856,7 @@ impl WaterErosion {
                 let capacity = self.soil_capacity
                                * self.velocity[i].magnitude()
                                * sin_alpha
-                               * (self.water[i].min(0.01) / 0.01);
+                               * (self.water[x][y].min(0.01) / 0.01);
 
                 if capacity > self.sediment[i] {
                     let d = KS * (capacity - self.sediment[i]);
@@ -913,7 +885,7 @@ impl WaterErosion {
             evaporation: 0.00005,
             rain_rate: 1.0 / 16.0,
             soil_capacity: 0.1,
-            water: vec![0.0; capacity],
+            water: Map2D::new(),
             sediment: vec![0.0; capacity],
             sediment_tmp: vec![0.0; capacity],
             flux: vec![Outflow::default(); capacity],
