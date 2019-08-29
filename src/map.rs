@@ -7,6 +7,22 @@ use std::ops::{Index, IndexMut};
 use std::fmt;
 
 
+/// Neighborhood types
+///
+/// Neighborhoods to use with iterators. They don't include
+/// the center cell.
+pub mod neighbors {
+    
+    // Moore Neighborhood
+    pub const MOORE: [(isize, isize); 6] = [(-1, -1), ( 0, -1), (-1,  1), 
+                                            ( 1,  0), ( 0,  1), ( 1,  1)];
+
+    // Rotated Von Neumann Neighborhood
+    pub const VON_NEUMANN: [(isize, isize); 4]  = [(-1,  1),  (1,  1), 
+                                                   (-1, -1),  (1, -1)];
+}
+
+
 /// Represents a 2D vector for floating point values
 /// 
 /// This struct holds a 2D vector in row-major order, with
