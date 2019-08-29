@@ -7,6 +7,26 @@ use std::ops::{Index, IndexMut};
 use std::fmt;
 
 
+
+/// Utility macro to generate a 2DMap quickly
+///
+/// # Arguments
+///
+/// * `x` - The rows to push into the map
+macro_rules! map2D {
+    () => (Map2D::new());
+    ( $( $($x:expr),* );* ) => {{
+            let mut tmp_vec2 = Map2D::new();
+
+            $(
+                tmp_vec2.push_row(vec![$( $x ),*]);
+            )*
+
+            tmp_vec2
+        }};
+}
+
+
 /// Neighborhood types
 ///
 /// Neighborhoods to use with iterators. They don't include
@@ -215,24 +235,6 @@ impl Map2D {
             _ => None
         }
     }
-}
-
-/// Utility macro to generate a 2DMap quickly
-///
-/// # Arguments
-///
-/// * `x` - The rows to push into the map
-macro_rules! map2D {
-    () => (Map2D::new());
-    ( $( $($x:expr),* );* ) => {{
-            let mut tmp_vec2 = Map2D::new();
-
-            $(
-                tmp_vec2.push_row(vec![$( $x ),*]);
-            )*
-
-            tmp_vec2
-        }};
 }
 
 
