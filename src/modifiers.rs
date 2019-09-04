@@ -273,7 +273,7 @@ impl ThermalErosion {
     /// # Arguments
     ///
     /// * `verts` - Reference to the vertices vector
-    pub fn run(&self, hmap: &mut Map2D) {
+    pub fn run(&self, hmap: &mut Map2D<f64>) {
         for _ in 0..self.iterations {
             for (x, y) in hmap.iter_indices() {
                    // Maximum slope found
@@ -441,7 +441,7 @@ pub struct WaterErosion {
     size:  u32,
 
     /// Water map
-    water: Map2D,
+    water: Map2D<f64>,
 
     /// Sediment map and temporary sediment map
     sediment: Vec<f64>,
@@ -567,7 +567,7 @@ impl WaterErosion {
     /// # Arguments
     ///
     /// * `heights` - The heightmap
-    fn flow(&mut self, heights: &mut Map2D) {
+    fn flow(&mut self, heights: &mut Map2D<f64>) {
 
         /// Cross-sectional area of the pipe. Lowering this
         /// makes the simulation more subtle.
@@ -800,7 +800,7 @@ impl WaterErosion {
     /// # Arguments
     ///
     /// * `heights` - The heightmap
-    fn erosion(&mut self, heights: &mut Map2D) {
+    fn erosion(&mut self, heights: &mut Map2D<f64>) {
 
         /// Dissolving constant
         const KS: f64 = 0.01;
@@ -874,14 +874,16 @@ impl WaterErosion {
     /// # Arguments
     ///
     /// * `capacity` - How much memory to allocate for each map
-    pub fn with_capacity(capacity: usize) -> Self {
+    pub fn with_size(rows: usize, columns: usize) -> Self {
+        let capacity = (rows * columns) as usize;
+
         WaterErosion {
             enabled: false,
             iterations: 20,
             evaporation: 0.00005,
             rain_rate: 1.0 / 16.0,
             soil_capacity: 0.1,
-            water: Map2D::new(),
+            water: Map2D::with_size(columns, rows, 0.0),
             sediment: vec![0.0; capacity],
             sediment_tmp: vec![0.0; capacity],
             flux: vec![Outflow::default(); capacity],
@@ -898,7 +900,7 @@ impl WaterErosion {
     /// # Arguments
     ///
     /// * `heights` - The heightmap
-    pub fn run(&mut self, heights: &mut Map2D) {
+    pub fn run(&mut self, heights: &mut Map2D<f64>) {
 
         debug!("Starting Water Erosion Simulation");
         debug!("Iterations: {:?}", self.iterations);

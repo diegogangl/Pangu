@@ -58,17 +58,19 @@ pub mod neighbors {
 /// If the struct is constructed with `with_size` it will
 /// be initialized with 0.0.
 #[derive(Clone)]
-pub struct Map2D {
+pub struct Map2D<T> {
     // The vector containing the elements
-    contents: Vec<f64>,
+    contents: Vec<T>,
 
     // Width of each row
     width: usize,
 }
 
 
-impl Index<usize> for Map2D {
-    type Output = [f64];
+impl<T> Index<usize> for Map2D<T> 
+where T: std::clone::Clone
+{
+    type Output = [T];
 
     /// Immutable index implementation
     ///
@@ -81,7 +83,7 @@ impl Index<usize> for Map2D {
     /// # Panics
     ///
     /// Panics if the selected row is larger than the total rows.
-    fn index(&self, row: usize) -> &[f64] {
+    fn index(&self, row: usize) -> &[T] {
         assert!(row < self.height());
         let pos = row * self.width;
 
@@ -90,11 +92,13 @@ impl Index<usize> for Map2D {
 }
 
 
-impl IndexMut<usize> for Map2D {
+impl<T> IndexMut<usize> for Map2D<T> 
+where T: std::clone::Clone
+{
     /// Mutable index implementation
     ///
     /// The mutable version of [the immutable index](Map2D::index)
-    fn index_mut(&mut self, row: usize) -> &mut [f64] {
+    fn index_mut(&mut self, row: usize) -> &mut [T] {
         assert!(row < self.height());
         let pos = row * self.width;
 
@@ -103,7 +107,8 @@ impl IndexMut<usize> for Map2D {
 }
 
 
-impl fmt::Debug for Map2D {
+impl<T> fmt::Debug for Map2D<T> 
+where T: std::fmt::Debug + std::clone::Clone {
     /// Debug format implementation
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -127,7 +132,9 @@ impl fmt::Debug for Map2D {
 }
 
 
-impl Map2D {
+impl<T> Map2D<T> 
+where T: std::clone::Clone
+{
     /// Return a new Map2D with no size or elements
     pub fn new() -> Self {
         Map2D {
@@ -145,10 +152,10 @@ impl Map2D {
     ///
     /// * `width` - Width of the 2D vector
     /// * `height` - Height of the 2D vector
-    pub fn with_size(width: usize, height: usize) -> Self {
+    pub fn with_size(width: usize, height: usize, initial: T) -> Self {
         assert!(width > 0);
         Map2D {
-            contents: vec![0.0; width * height],
+            contents: vec![initial; width * height],
             width: width,
         }
     }
@@ -176,7 +183,7 @@ impl Map2D {
     ///
     /// Panics if the length of the row is different than
     /// the rest of the map.
-    pub fn push_row(&mut self, row: Vec<f64>) {
+    pub fn push_row(&mut self, row: Vec<T>) {
         if self.width > 0 {
             assert_eq!(row.len(), self.width);
         } else {

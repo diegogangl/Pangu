@@ -213,7 +213,7 @@ impl Default for Terrain {
             terraces: Terraces::default(),
             smooth: Smooth::default(),
             thermal: ThermalErosion::default(),
-            water: WaterErosion::with_capacity(1),
+            water: WaterErosion::with_size(1, 1),
             hills: SmoothHills::default(),
             mountains: Mountainous::default(),
             terrain_type: TerrainType::SmoothHills,
@@ -277,8 +277,7 @@ impl Terrain {
 
 
         let water = if  get!(params, "water") {
-            let capacity = (rows * columns) as usize;
-            let mut w = WaterErosion::with_capacity(capacity);
+            let mut w = WaterErosion::with_size(rows as usize, columns as usize);
 
             w.enabled = true;
             w.iterations =  get!(params, "water_iterations");
@@ -299,7 +298,7 @@ impl Terrain {
 
             w
         } else {
-            WaterErosion::with_capacity(1)
+            WaterErosion::with_size(1, 1)
         };
 
         let hills = if get!(params, "type_hills") {

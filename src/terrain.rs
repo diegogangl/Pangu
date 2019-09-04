@@ -189,7 +189,7 @@ impl Procedural {
     /// Generate the heightmap for the terrain
     ///
     /// Returns a flat Vector with values in the range [0..1]
-    fn heights(&mut self) -> Map2D {
+    fn heights(&mut self) -> Map2D<f64> {
 
         // Convenience
         let columns = self.config.columns;
@@ -203,7 +203,7 @@ impl Procedural {
         // Allocation
         let capacity = (columns * rows) as usize;
         //let mut hmap = Vec::with_capacity(capacity);
-        let mut hmap = Map2D::with_size(columns as usize, rows as usize);
+        let mut hmap = Map2D::with_size(columns as usize, rows as usize, 0.0);
 
         debug!("Allocated heightmap with capacity: {:?}", capacity);
         debug!("Allocated heightmap with size: {:?}", hmap.width());
