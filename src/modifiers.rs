@@ -569,14 +569,14 @@ impl WaterErosion {
     /// * `heights` - The heightmap
     fn flow(&mut self, heights: &mut Map2D<f64>) {
 
-        /// Cross-sectional area of the pipe. Lowering this
-        /// makes the simulation more subtle.
-        const PIPE_AREA: f64 = 0.005;
-
-        /// Gravity speed
-        const GRAVITY: f64 = 9.81;
-
-        let flux_factor = PIPE_AREA * GRAVITY;
+        // Flux factor = Pipe area * Gravity
+        //
+        //  Pipe area = 0.005
+        /// (Cross-sectional area of the pipe. Lowering this
+        /// makes the simulation more subtle)
+        ///
+        /// Gravity = 9.81
+        const FLUX_FACTOR: f64 = 0.04905;
 
 
         // Calculate outflow flux
@@ -590,7 +590,7 @@ impl WaterErosion {
 
                 let l_flux = if x > 0 {
                     let dh = center - (heights[xu-1][yu] + self.water[xu-1][yu]);
-                    let result = self.flux[center_idx].left + flux_factor * dh;
+                    let result = self.flux[center_idx].left + FLUX_FACTOR * dh;
                     result.max(0.0)
                 } else {
                     0.0
@@ -599,7 +599,7 @@ impl WaterErosion {
 
                 let r_flux = if x < self.size - 1 {
                     let dh = center - (heights[xu+1][yu] + self.water[xu+1][yu]);
-                    let result = self.flux[center_idx].right + flux_factor * dh;
+                    let result = self.flux[center_idx].right + FLUX_FACTOR * dh;
                     result.max(0.0)
                 } else {
                     0.0
@@ -607,7 +607,7 @@ impl WaterErosion {
 
                 let b_flux = if y > 0 {
                     let dh = center - (heights[xu][yu-1] + self.water[xu][yu-1]);
-                    let result = self.flux[center_idx].bottom + flux_factor * dh;
+                    let result = self.flux[center_idx].bottom + FLUX_FACTOR * dh;
                     result.max(0.0)
                 } else {
                     0.0
@@ -615,7 +615,7 @@ impl WaterErosion {
 
                 let t_flux = if y < self.size - 1 {
                     let dh = center - (heights[xu][yu+1] + self.water[xu][yu+1]);
-                    let result = self.flux[center_idx].top + flux_factor * dh;
+                    let result = self.flux[center_idx].top + FLUX_FACTOR * dh;
                     result.max(0.0)
                 } else {
                     0.0
