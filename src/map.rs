@@ -223,16 +223,16 @@ impl Map2D {
     ///
     /// This will panic if the arithmetic overflows
     pub fn find(&self, origin: Coords, step: (isize, isize)) -> Coords {
-        let target_x = if step.0 < 0 {
-            origin.0 - (step.0.abs() as usize)
+        let target_x: usize = if step.0 < 0 {
+            origin.0.wrapping_sub(step.0.abs() as usize)
         } else {
-            origin.0 + (step.0 as usize)
+            origin.0.wrapping_add(step.0 as usize)
         };
 
-        let target_y = if step.1 < 0 {
-            origin.1 + (step.1 as usize)
+        let target_y: usize = if step.1 < 0 {
+            origin.1.wrapping_sub(step.1.abs() as usize)
         } else {
-            origin.1 - (step.1.abs() as usize)
+            origin.1.wrapping_add(step.1 as usize)
         };
 
         (target_x, target_y)
