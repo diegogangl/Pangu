@@ -444,8 +444,8 @@ pub struct WaterErosion {
     water: Map2D<f64>,
 
     /// Sediment map and temporary sediment map
-    sediment: Vec<f64>,
-    sediment_tmp: Vec<f64>,
+    sediment: Map2D<f64>,
+    sediment_tmp: Map2D<f64>,
 
     /// Outflow map
     flux: Vec<Outflow>,
@@ -727,9 +727,8 @@ impl WaterErosion {
     /// the local velocity. The destination cell is calculated
     /// from the velocity using the current cell as the origin.
     fn sediment_transport(&mut self) {
-        for x in 0..self.size {
-            for y in 0..self.size {
-                let i = math::index_1d(x, y, self.size);
+        for (x, y) in self.sediment.iter_indices() {
+                let i = math::index_1d(x as u32, y as u32, self.size);
 
                 // Where flow comes from
                 let src_x = x as f64 - self.velocity[i].u;
@@ -737,12 +736,12 @@ impl WaterErosion {
 
                 let mut x0 = {
                     let val = src_x.floor();
-                    if val > 0.0 { val as u32 } else { 0 }
+                    if val > 0.0 { val as usize } else { 0 }
                 };
 
                 let mut y0 = {
                     let val = src_y.floor();
-                    if val > 0.0 { val as u32 } else { 0 }
+                    if val > 0.0 { val as usize } else { 0 }
                 };
 
                 let mut x1 = x0 + 1;
@@ -753,31 +752,27 @@ impl WaterErosion {
                 let fy = src_y - y0 as f64;
 
                 // Clamp to grid borders
-                x0 = math::clamp(x0, 0, self.size - 1);
-                x1 = math::clamp(x1, 0, self.size - 1);
-                y0 = math::clamp(y0, 0, self.size - 1);
-                y1 = math::clamp(y1, 0, self.size - 1);
+                let size = (self.size as usize) - 1;
+                x0 = math::clamp(x0, 0, size);
+                x1 = math::clamp(x1, 0, size);
+                y0 = math::clamp(y0, 0, size);
+                y1 = math::clamp(y1, 0, size);
 
-                self.sediment_tmp[i] = {
-                  let index_1 = math::index_1d(x0, y0, self.size);
-                  let index_2 = math::index_1d(x1, y0, self.size);
-                  let lerp_1 = math::lerp(self.sediment[index_1], self.sediment[index_2], fx);
+                self.sediment_tmp[x][y] = {
+                  let lerp_1 = math::lerp(self.sediment[x0][y0], 
+                                          self.sediment[x1][y0], fx);
 
-                  let index_3 = math::index_1d(x0, y1, self.size);
-                  let index_4 = math::index_1d(x1, y1, self.size);
-                  let lerp_2 = math::lerp(self.sediment[index_3], self.sediment[index_4], fx);
+                  let lerp_2 = math::lerp(self.sediment[x0][y1], 
+                                          self.sediment[x1][y1], fx);
 
                   math::lerp(lerp_1, lerp_2, fy)
                 };
-
-            }
         }
 
         // Write temp values to sediment map
-        (0..self.sediment.len()).for_each(|i| {
-            self.sediment[i] = self.sediment_tmp[i];
-        });
-
+        for (x, y) in self.sediment.iter_indices() {
+            self.sediment[x][y] = self.sediment_tmp[x][y];
+        }
     }
 
 
@@ -854,16 +849,17 @@ impl WaterErosion {
                                * sin_alpha
                                * (self.water[x][y].min(0.01) / 0.01);
 
-                if capacity > self.sediment[i] {
-                    let d = KS * (capacity - self.sediment[i]);
+                if capacity > self.sediment[x][y] {
+                    let d = KS * (capacity - self.sediment[x][y]);
                     heights[x][y] -= d;
-                    self.sediment[i] += d;
+                    self.sediment[x][y] += d;
                 }
+
                 // deposit onto ground
                 else {
-                    let d = KD * (self.sediment[i] - capacity);
+                    let d = KD * (self.sediment[x][y] - capacity);
                     heights[x][y] += d;
-                    self.sediment[i] -= d;
+                    self.sediment[x][y] -= d;
                 }
         }
     }
@@ -884,8 +880,8 @@ impl WaterErosion {
             rain_rate: 1.0 / 16.0,
             soil_capacity: 0.1,
             water: Map2D::with_size(columns, rows, 0.0),
-            sediment: vec![0.0; capacity],
-            sediment_tmp: vec![0.0; capacity],
+            sediment: Map2D::with_size(columns, rows, 0.0),
+            sediment_tmp: Map2D::with_size(columns, rows, 0.0),
             flux: vec![Outflow::default(); capacity],
             velocity: vec![Velocity::default(); capacity],
             size: (capacity as f64).sqrt() as u32,
