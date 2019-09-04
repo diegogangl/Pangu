@@ -451,7 +451,7 @@ pub struct WaterErosion {
     flux: Vec<Outflow>,
 
     /// Velocity field map
-    velocity: Vec<Velocity>,
+    velocity: Map2D<Velocity>,
 }
 
 
@@ -678,8 +678,8 @@ impl WaterErosion {
 
                 // Update velocity field
                 if mean_water == 0.0 {
-                    self.velocity[i].u = 0.0;
-                    self.velocity[i].v = 0.0;
+                    self.velocity[xu][yu].u = 0.0;
+                    self.velocity[xu][yu].v = 0.0;
                 } else {
                     let r_in = if x > 0 {
                         let i = math::index_1d(x - 1, y, self.size);
@@ -709,11 +709,11 @@ impl WaterErosion {
                         0.0
                     };
 
-                    self.velocity[i].u = {
+                    self.velocity[xu][yu].u = {
                         ((r_in - self.flux[i].left - l_in + self.flux[i].right) / mean_water) / 2.0
                     };
 
-                    self.velocity[i].v = {
+                    self.velocity[xu][yu].v = {
                         ((t_in - self.flux[i].bottom - b_in + self.flux[i].top) / mean_water) / 2.0
                     };
                 }
@@ -728,11 +728,10 @@ impl WaterErosion {
     /// from the velocity using the current cell as the origin.
     fn sediment_transport(&mut self) {
         for (x, y) in self.sediment.iter_indices() {
-                let i = math::index_1d(x as u32, y as u32, self.size);
 
                 // Where flow comes from
-                let src_x = x as f64 - self.velocity[i].u;
-                let src_y = y as f64 - self.velocity[i].v;
+                let src_x = x as f64 - self.velocity[x][y].u;
+                let src_y = y as f64 - self.velocity[x][y].v;
 
                 let mut x0 = {
                     let val = src_x.floor();
@@ -810,8 +809,6 @@ impl WaterErosion {
                 let xu = x as u32;
                 let yu = y as u32;
         
-                let i = math::index_1d(xu, yu, self.size);
-
                 let normal = {
                    let right = if xu < self.size - 1 {
                        heights[x + 1][y]
@@ -845,7 +842,7 @@ impl WaterErosion {
 
                 // local sediment capacity of the flow
                 let capacity = self.soil_capacity
-                               * self.velocity[i].magnitude()
+                               * self.velocity[x][y].magnitude()
                                * sin_alpha
                                * (self.water[x][y].min(0.01) / 0.01);
 
@@ -883,7 +880,7 @@ impl WaterErosion {
             sediment: Map2D::with_size(columns, rows, 0.0),
             sediment_tmp: Map2D::with_size(columns, rows, 0.0),
             flux: vec![Outflow::default(); capacity],
-            velocity: vec![Velocity::default(); capacity],
+            velocity: Map2D::with_size(columns, rows, Velocity::default()),
             size: (capacity as f64).sqrt() as u32,
             springs: vec![Spring::default(); 0],
         }
