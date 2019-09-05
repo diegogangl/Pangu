@@ -216,14 +216,6 @@ impl Procedural {
         for (x, y) in hmap.iter_indices() {
             let mut z = hmap[x][y];
 
-            if self.config.terraces.enabled {
-                z = self.config.terraces.run(z);
-            }
-
-            if self.config.smooth.enabled {
-                z *= self.config.smooth.run(x as u32, y as u32);
-            }
-
             if self.config.invert {
                 z = math::map_on_zero(z, heights_max, 
                                       heights_min, self.config.height);
@@ -231,6 +223,14 @@ impl Procedural {
             } else {
                 z = math::map_on_zero(z, heights_min, 
                                       heights_max, self.config.height);
+            }
+
+            if self.config.terraces.enabled {
+                z = self.config.terraces.run(z);
+            }
+
+            if self.config.smooth.enabled {
+                z *= self.config.smooth.run(x as u32, y as u32);
             }
 
             hmap[x][y] = z;
