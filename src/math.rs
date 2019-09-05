@@ -80,18 +80,6 @@ pub fn distance<T>(p1: [T; 2], p2: [T; 2]) -> T
 }
 
 
-/// Convert a 2D index to 1D
-///
-/// # Arguments
-///
-/// * `x` - X coordinate
-/// * `y` - Y coordinate
-/// * `size` - Length of rows or columns
-pub fn index_1d(x: u32, y: u32, size: u32) -> usize {
-        (y * size + x) as usize
-}
-
-
 /// Calculate magnitude of a 3D Vector
 ///
 /// # Arguments

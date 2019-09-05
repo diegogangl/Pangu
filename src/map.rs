@@ -215,6 +215,17 @@ where T: std::clone::Clone
     }
 
 
+    /// Convert coordinates to 1D index
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X coordinate
+    /// * `y` - Y coordinate
+    pub fn index_1d(&self, x: usize, y: usize) -> usize {
+            (y * self.width + x) 
+    }
+
+
     /// Get neighbor coordinates without checks
     ///
     /// This function takes an origin oordinate and a direction.
@@ -341,5 +352,15 @@ mod tests {
         for (x, y) in test_map.iter_indices() {
             assert_eq!(1.0, test_map[x][y]);
         }
+    }
+
+
+    #[test]
+    fn test_index_1d() {
+        let test_map = map2D![0.0, 1.0, 2.0;
+                              3.0, 4.0, 5.0;
+                              6.0, 7.0, 8.0];
+    
+        assert_eq!(4, test_map.index_1d(1, 1));
     }
 }
