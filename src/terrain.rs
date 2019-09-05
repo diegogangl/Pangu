@@ -241,8 +241,7 @@ impl Procedural {
 
         // Modifiers & Normalization
         for (x, y) in hmap.iter_indices() {
-            let mut z = math::map_on_zero(hmap[x][y], heights_min,
-                                          heights_max, self.config.height);
+            let mut z = hmap[x][y];
 
             if self.config.terraces.enabled {
                 z = self.config.terraces.run(z);
@@ -254,6 +253,15 @@ impl Procedural {
 
             if floor > 0.0 {
                 z = if z < floor { floor } else { z - floor };
+            }
+
+            if self.config.invert {
+                z = math::map_on_zero(z, heights_max, 
+                                      heights_min, self.config.height);
+                z -= heights_max;
+            } else {
+                z = math::map_on_zero(z, heights_min, 
+                                      heights_max, self.config.height);
             }
 
             hmap[x][y] = z;
