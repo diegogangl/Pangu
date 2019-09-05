@@ -135,24 +135,6 @@ pub struct Terrain {
     /// Make grid flat. Used for testing
     pub flat: bool,
 
-    /// Roughness for the terrain
-    pub roughness: f64,
-
-    /// How plain the base terrain is
-    pub plains: f64,
-
-    /// Mountainess
-    pub mountainess: f64,
-
-    /// Intensity of domain warping
-    pub deformation: f64,
-
-    /// Mixing between plains and mountains
-    pub mix: f64,
-
-    /// Ridgedness
-    pub ridgedness: f64,
-
     /// Maximum Height
     pub height: f64,
 
@@ -196,12 +178,6 @@ impl Default for Terrain {
             scale: 2.0,
             size: 5.0,
             seed: 0,
-            roughness: 0.1,
-            plains:0.5,
-            deformation: 0.1,
-            mountainess: 0.5,
-            mix: 0.5,
-            ridgedness: 0.0,
             height: 3.0,
             flat: false,
             is_seamless: false,
@@ -335,12 +311,6 @@ impl Terrain {
             offset_x: get!(params, "offset_x"),
             offset_y: get!(params, "offset_y"),
             rotation: get!(params, "rotation"),
-            roughness: get!(params, "roughness"),
-            plains: get!(params, "plains"),
-            deformation: get!(params, "deformation"),
-            mountainess: get!(params, "mountainess"),
-            mix: get!(params, "mix"),
-            ridgedness: get!(params, "ridgedness"),
             height,
             is_seamless: get!(params, "seamless"),
             invert: get!(params, "invert"),

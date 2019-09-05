@@ -76,9 +76,6 @@ pub struct Procedural {
     /// Perlin noises for the main octaves (re-used for the others)
     noise_fns: Vec<Perlin>,
 
-    /// Persistence values
-    persistences: Vec<f64>,
-
     /// Steps to scale coordinates for the X and Y axis
     steps: (f64, f64),
 
@@ -128,33 +125,10 @@ impl Procedural {
         }
 
 
-        // Setup persistence values for the octaves. These are used
-        // in the main noise function.
-        let base = config.plains;
-
-        let persistences = vec![
-            base,
-            //config.mountainess,
-            0.2,
-            0.1,
-            0.05,
-            1.05,
-            // Final octaves
-            config.roughness / 1.0,
-            config.roughness / 2.0,
-            config.roughness / 8.0,
-            // Blend terrain
-            base.powi(2),
-            base / 2.0,
-        ];
-
-        debug!("Calculated persistences: {:?}", persistences);
-
         // All done!
         Procedural {
             config,
             noise_fns,
-            persistences,
             limits_xy,
             steps,
         }
