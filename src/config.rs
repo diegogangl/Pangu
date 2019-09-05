@@ -153,9 +153,6 @@ pub struct Terrain {
     /// Ridgedness
     pub ridgedness: f64,
 
-    /// Sea Floor
-    pub sea_floor: f64,
-
     /// Maximum Height
     pub height: f64,
 
@@ -205,7 +202,6 @@ impl Default for Terrain {
             mountainess: 0.5,
             mix: 0.5,
             ridgedness: 0.0,
-            sea_floor: 0.0,
             height: 3.0,
             flat: false,
             is_seamless: false,
@@ -345,7 +341,6 @@ impl Terrain {
             mountainess: get!(params, "mountainess"),
             mix: get!(params, "mix"),
             ridgedness: get!(params, "ridgedness"),
-            sea_floor: get!(params, "sea_floor"),
             height,
             is_seamless: get!(params, "seamless"),
             invert: get!(params, "invert"),

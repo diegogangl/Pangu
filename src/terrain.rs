@@ -198,7 +198,6 @@ impl Procedural {
         // Keep track of height range for normalization
         let mut heights_min = 0.0;
         let mut heights_max = 1.0;
-        let floor = self.config.sea_floor * self.config.height;
 
         // Allocation
         let capacity = (columns * rows) as usize;
@@ -249,10 +248,6 @@ impl Procedural {
 
             if self.config.smooth.enabled {
                 z *= self.config.smooth.run(x as u32, y as u32);
-            }
-
-            if floor > 0.0 {
-                z = if z < floor { floor } else { z - floor };
             }
 
             if self.config.invert {
