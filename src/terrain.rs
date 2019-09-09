@@ -165,8 +165,8 @@ impl Procedural {
         let mut hmap = Map2D::with_size(columns as usize, rows as usize, 0.0);
 
         debug!("Allocated heightmap with capacity: {:?}", capacity);
-        debug!("Allocated heightmap with size: {:?}", hmap.width());
-        debug!("Allocated heightmap with size: {:?}", hmap.height());
+        debug!("Allocated heightmap with width: {:?} ", hmap.width());
+        debug!("Allocated heightmap with height: {:?}", hmap.height());
 
         // Initial Generation
         for (x, y) in hmap.iter_indices() {
