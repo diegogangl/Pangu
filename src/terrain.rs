@@ -747,18 +747,29 @@ mod benches {
             ..Default::default()
         };
 
-        let terrain = Procedural::new(config);
+        let mut terrain = Procedural::new(config);
 
         b.iter(|| terrain.vertices());
     }
 
+
     #[bench]
-    fn get_noise(b: &mut Bencher) {
+    fn get_smooth_hills(b: &mut Bencher) {
         let config = config::Terrain::default();
         let terrain = Procedural::new(config);
 
-        b.iter(|| terrain.get_z([0.0, 0.0]));
+        b.iter(|| terrain.hills_z([0.0, 0.0]));
     }
+
+
+    #[bench]
+    fn get_mountainous(b: &mut Bencher) {
+        let config = config::Terrain::default();
+        let terrain = Procedural::new(config);
+
+        b.iter(|| terrain.mountain_z([0.0, 0.0]));
+    }
+
 
     #[bench]
     fn terrain(b: &mut Bencher) {
@@ -767,7 +778,7 @@ mod benches {
             columns: 128,
             ..Default::default()
         };
-        let terrain = Procedural::new(config);
+        let mut terrain = Procedural::new(config);
         b.iter(|| terrain.build_mesh()); 
-    } */
+    }
 }
