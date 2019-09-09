@@ -60,12 +60,6 @@ macro_rules! ridge {
     };
 }
 
-//macro_rules! ridge {
-    //($self:ident, $signal:ident, $divisor:ident) => {
-        //(($signal + ($signal.abs() + $self.config.plains)) / $divisor)
-    //};
-//}
-
 
 /// Representation of a terrain
 #[derive(Clone, Debug)]
