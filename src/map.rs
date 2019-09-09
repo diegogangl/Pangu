@@ -209,9 +209,9 @@ where T: std::clone::Clone
     ///
     /// Returns X and Y coordinates
     pub fn iter_indices(&self) -> impl Iterator<Item = (usize, usize)> {
-        let height = self.height();
+        let width = self.width;
 
-        (0..self.contents.len()).map(move |i| (i / height, i % height))
+        (0..self.contents.len()).map(move |i| (i / width, i % width))
     }
 
 
@@ -340,17 +340,31 @@ mod tests {
 
     #[test]
     fn test_iter_indices() {
-        let mut test_map = map2D![0.0, 1.0, 2.0;
-                                  3.0, 4.0, 5.0;
-                                  6.0, 7.0, 8.0];
+        let test_map = map2D![0.0, 1.0, 2.0;
+                              3.0, 4.0, 5.0;
+                              6.0, 7.0, 8.0];
 
         for (x, y) in test_map.iter_indices() {
-            test_map[x][y] = 1.0;
+            assert!(y < test_map.width());
+            assert!(x < test_map.height());
         }
 
 
+        let test_map = map2D![0.0, 1.0, 2.0;
+                              3.0, 4.0, 5.0];
+
         for (x, y) in test_map.iter_indices() {
-            assert_eq!(1.0, test_map[x][y]);
+            assert!(y < test_map.width());
+            assert!(x < test_map.height());
+        }
+
+        let test_map = map2D![0.0, 1.0;
+                              2.0, 3.0;
+                              4.0, 5.0];
+
+        for (x, y) in test_map.iter_indices() {
+            assert!(y < test_map.width());
+            assert!(x < test_map.height());
         }
     }
 
