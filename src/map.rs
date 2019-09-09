@@ -201,7 +201,7 @@ where T: std::clone::Clone
     /// * `x` - X coordinate
     /// * `y` - y coordinate
     pub fn is_inside(&self, x: usize, y: usize) -> bool {
-        x > 0 && x < self.width - 1 && y > 0 && y < self.height() - 1
+        x < self.width && y < self.height()
     }
 
 
