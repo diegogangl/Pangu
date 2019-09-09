@@ -251,11 +251,12 @@ impl Procedural {
         debug!("Scale: {:?}", scale);
 
         // Used to center the mesh in the scene
-        let half_x = ((self.config.columns - 1) as f64) / 2.0;
-        let half_y = ((self.config.rows - 1) as f64) / 2.0;
+        let half_x = ((self.config.rows - 1) as f64) / 2.0;
+        let half_y = ((self.config.columns - 1) as f64) / 2.0;
 
-        for x in 0..self.config.columns as usize {
-            for y in 0..self.config.rows as usize {
+        for y in 0..self.config.columns as usize {
+            for x in 0..self.config.rows as usize {
+
                 let scaled_x = ((x as f64) - half_x) / scale;
                 let scaled_y = ((y as f64) - half_y) / scale;
 
