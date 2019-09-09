@@ -1,17 +1,15 @@
 #![allow(dead_code)]
 
 /// Terrain generation core
-
-
 extern crate noise;
 extern crate test;
 
 use noise::{NoiseFn, Perlin, Point2, Seedable};
 
-use super::math;
 use super::config;
 use super::config::TerrainType;
 use super::map::Map2D;
+use super::math;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -35,10 +33,7 @@ macro_rules! scale {
     };
 
     ($var:ident, $fac:expr, $warp:expr) => {
-        [
-            $var[0] * $fac + $warp,
-            $var[1] * $fac + $warp
-        ]
+        [$var[0] * $fac + $warp, $var[1] * $fac + $warp]
     };
 }
 
@@ -54,9 +49,7 @@ macro_rules! scale {
 /// * `level` - Level at which the ridgedness should be activated
 macro_rules! ridge {
     ($signal:ident, $factor:ident) => {
-        math::lerp(1.0 - $signal.abs(),
-             $signal,
-             $factor)
+        math::lerp(1.0 - $signal.abs(), $signal, $factor)
     };
 }
 
@@ -158,7 +151,6 @@ impl Procedural {
     ///
     /// Returns a flat Vector with values in the range [0..1]
     fn heights(&mut self) -> Map2D<f64> {
-
         // Convenience
         let columns = self.config.columns;
         let rows = self.config.rows;
@@ -178,7 +170,7 @@ impl Procedural {
 
         // Initial Generation
         for (x, y) in hmap.iter_indices() {
-            let co = self.coords_for_noise(x as f64, y as f64 );
+            let co = self.coords_for_noise(x as f64, y as f64);
 
             let z = match self.config.terrain_type {
                 TerrainType::SmoothHills => self.hills_z(co),
@@ -211,12 +203,22 @@ impl Procedural {
             let mut z = hmap[x][y];
 
             if self.config.invert {
-                z = math::map_on_zero(z, heights_max, 
-                                      heights_min, self.config.height);
+                z = math::map_on_zero(
+                    z,
+                    heights_max,
+                    heights_min,
+                    self.config.height,
+                );
+
                 z -= heights_max;
+
             } else {
-                z = math::map_on_zero(z, heights_min, 
-                                      heights_max, self.config.height);
+                z = math::map_on_zero(
+                    z,
+                    heights_min,
+                    heights_max,
+                    self.config.height,
+                );
             }
 
             if self.config.terraces.enabled {
@@ -247,7 +249,9 @@ impl Procedural {
         debug!("Allocated vertices with capacity: {:?}", capacity);
 
         // Used to scale the mesh
-        let scale = max(self.config.rows, self.config.columns) as f64 * (1.0 / self.config.size);
+        let scale = max(self.config.rows, self.config.columns) as f64
+            * (1.0 / self.config.size);
+        
         debug!("Scale: {:?}", scale);
 
         // Used to center the mesh in the scene
@@ -256,7 +260,6 @@ impl Procedural {
 
         for y in 0..self.config.columns as usize {
             for x in 0..self.config.rows as usize {
-
                 let scaled_x = ((x as f64) - half_x) / scale;
                 let scaled_y = ((y as f64) - half_y) / scale;
 
@@ -303,12 +306,11 @@ impl Procedural {
     /// # Arguments
     /// * `point` - The coordinates in 3D space for the noise
     fn hills_z(&self, point: Point2<f64>) -> f64 {
-        
         //---------------------------------------------------------------------
         // DOMAIN WARPING
         //---------------------------------------------------------------------
 
-        let domain_scale = 1.5; 
+        let domain_scale = 1.5;
 
         let mut current_point = scale!(point, domain_scale);
         let mut warp = self.noise_fns[0].get(current_point);
@@ -320,18 +322,18 @@ impl Procedural {
         warp += self.noise_fns[2].get(current_point) * 0.1;
 
         warp *= self.config.hills.twist;
-        
+
 
         //---------------------------------------------------------------------
         // FRACTAL NOISE
         //---------------------------------------------------------------------
-        
+
         // Basic shape of the terrain
         current_point = scale!(current_point, 0.2, warp);
-        let mut result = { 
+        let mut result = {
             let signal = self.noise_fns[0].get(current_point);
 
-            (signal.abs().powf(self.config.hills.flat) 
+            (signal.abs().powf(self.config.hills.flat)
                 * self.config.hills.difference)
         };
 
@@ -344,28 +346,28 @@ impl Procedural {
 
         // Octave 1
         current_point = scale!(current_point, 2.5, warp * result);
-        result += { 
+        result += {
             let signal = self.noise_fns[1].get(current_point) * persistences[0];
             signal.powi(2).abs()
         };
 
         // Octave 2
         current_point = scale!(current_point, 2.0, warp * result);
-        result += { 
+        result += {
             let signal = self.noise_fns[2].get(current_point) * persistences[1];
             signal.powi(2)
         };
 
         // Octave 3
         current_point = scale!(current_point, 2.0, warp * result);
-        result += { 
+        result += {
             let signal = self.noise_fns[2].get(current_point) * persistences[2];
             signal.powi(2)
         };
 
         // Octave 4
         current_point = scale!(current_point, 2.0, warp * result);
-        result += { 
+        result += {
             let signal = self.noise_fns[3].get(current_point) * persistences[3];
             signal.powi(2)
         };
@@ -373,7 +375,7 @@ impl Procedural {
         result
     }
 
-    
+
     /// Get noise for mountainous terrain
     ///
     /// Loosely based on Giliam de Carpentier's "Swiss Turbulence"
@@ -381,7 +383,6 @@ impl Procedural {
     /// # Arguments
     /// * `point` - The coordinates in 3D space for the noise
     fn mountain_z(&self, point: Point2<f64>) -> f64 {
-    
         //---------------------------------------------------------------------
         // DOMAIN WARPING
         //---------------------------------------------------------------------
@@ -407,7 +408,7 @@ impl Procedural {
         // Aliases for settings
         let ridgedness = self.config.mountains.ridgedness;
         let sharpness = self.config.mountains.sharpness;
-        let breakup =  0.5 + self.config.mountains.breakup;
+        let breakup = 0.5 + self.config.mountains.breakup;
         let roughness = self.config.mountains.roughness;
 
         // Amplitude to multiply each octave
@@ -415,74 +416,76 @@ impl Procedural {
 
         // Simple macro to increase amplitude after each octave
         macro_rules! increase_amp {
-            ($amp:ident, $result:ident) => ($amp *= 0.5 * $result.min(0.01).max(1.0));
+            ($amp:ident, $result:ident) => {
+                $amp *= 0.5 * $result.min(0.01).max(1.0)
+            };
         }
 
         // Octave 0
         current_point = scale!(current_point, 0.2, domain);
         let mut result = {
-                    let signal = self.noise_fns[0].get(current_point);
-                    ridge!(signal, ridgedness) * 0.75
+            let signal = self.noise_fns[0].get(current_point);
+            ridge!(signal, ridgedness) * 0.75
         };
 
         increase_amp!(amp, result);
-        
+
 
         // Octave 1
         current_point = scale!(current_point, breakup, domain * amp);
-        result += { 
-                    let signal = self.noise_fns[1].get(current_point);
-                    ridge!(signal, sharpness) * amp * 0.5
+        result += {
+            let signal = self.noise_fns[1].get(current_point);
+            ridge!(signal, sharpness) * amp * 0.5
         };
 
         increase_amp!(amp, result);
-        
+
 
         // Octave 2
         current_point = scale!(current_point, 2.0, domain * amp);
         result += {
-                    let signal = self.noise_fns[2].get(current_point);
-                    ridge!(signal, sharpness) * amp * 0.25
+            let signal = self.noise_fns[2].get(current_point);
+            ridge!(signal, sharpness) * amp * 0.25
         };
 
         increase_amp!(amp, result);
-        
+
 
         // Octave 3
         current_point = scale!(current_point, 2.0, domain * amp);
         result += {
-                    let signal = self.noise_fns[3].get(current_point);
-                    (1.0 - signal.abs()) * amp * (roughness / 2.0)
+            let signal = self.noise_fns[3].get(current_point);
+            (1.0 - signal.abs()) * amp * (roughness / 2.0)
         };
 
         increase_amp!(amp, result);
-        
+
 
         // Octave 4
         current_point = scale!(current_point, 2.0, domain * amp);
         result += {
-                    let signal = self.noise_fns[4].get(current_point);
-                    signal * amp * result * roughness
+            let signal = self.noise_fns[4].get(current_point);
+            signal * amp * result * roughness
         };
 
         increase_amp!(amp, result);
-        
+
 
         // Octave 5
         current_point = scale!(current_point, 2.0);
         result += {
-                    let signal = self.noise_fns[5].get(current_point);
-                    signal * amp * result * roughness
+            let signal = self.noise_fns[5].get(current_point);
+            signal * amp * result * roughness
         };
 
         increase_amp!(amp, result);
-        
-        
+
+
         // Octave 6
         current_point = scale!(current_point, 3.0, domain);
-        result += { 
-                    let signal = self.noise_fns[2].get(current_point);
-                    signal * amp * roughness / (result.min(0.001).max(1.0))
+        result += {
+            let signal = self.noise_fns[2].get(current_point);
+            signal * amp * roughness / (result.min(0.001).max(1.0))
         };
 
         result
@@ -546,23 +549,22 @@ mod tests {
         let verts = Procedural::new(config).vertices();
 
 
-
         let expected = vec![
-            (-1.5, -1.5, 0.0), 
+            (-1.5, -1.5, 0.0),
             (-0.5, -1.5, 0.0),
-            (0.5, -1.5, 0.0), 
+            (0.5, -1.5, 0.0),
             (1.5, -1.5, 0.0),
             (-1.5, -0.5, 0.0),
             (-0.5, -0.5, 0.0),
             (0.5, -0.5, 0.0),
             (1.5, -0.5, 0.0),
             (-1.5, 0.5, 0.0),
-            (-0.5, 0.5, 0.0), 
+            (-0.5, 0.5, 0.0),
             (0.5, 0.5, 0.0),
-            (1.5, 0.5, 0.0), 
-            (-1.5, 1.5, 0.0), 
-            (-0.5, 1.5, 0.0), 
-            (0.5, 1.5, 0.0), 
+            (1.5, 0.5, 0.0),
+            (-1.5, 1.5, 0.0),
+            (-0.5, 1.5, 0.0),
+            (0.5, 1.5, 0.0),
             (1.5, 1.5, 0.0),
         ];
 
@@ -578,13 +580,38 @@ mod tests {
         let verts = Procedural::new(config).vertices();
 
         let expected = vec![
-(-1.75, -0.75, 0.0), (-1.25, -0.75, 0.0), (-0.75, -0.75, 0.0), (-0.25, -0.75, 0.0), (0.25, -0.75,
-    0.0), (0.75, -0.75, 0.0), (1.25, -0.75, 0.0), (1.75, -0.75, 0.0), (-1.75, -0.25, 0.0), (-1.25,
-    -0.25, 0.0), (-0.75, -0.25, 0.0), (-0.25, -0.25, 0.0), (0.25, -0.25, 0.0), (0.75, -0.25, 0.0),
-    (1.25, -0.25, 0.0), (1.75, -0.25, 0.0), (-1.75, 0.25, 0.0), (-1.25, 0.25, 0.0), (-0.75, 0.25,
-        0.0), (-0.25, 0.25, 0.0), (0.25, 0.25, 0.0), (0.75, 0.25, 0.0), (1.25, 0.25, 0.0), (1.75,
-        0.25, 0.0), (-1.75, 0.75, 0.0), (-1.25, 0.75, 0.0), (-0.75, 0.75, 0.0), (-0.25, 0.75, 0.0),
-        (0.25, 0.75, 0.0), (0.75, 0.75, 0.0), (1.25, 0.75, 0.0), (1.75, 0.75, 0.0)
+            (-1.75, -0.75, 0.0),
+            (-1.25, -0.75, 0.0),
+            (-0.75, -0.75, 0.0),
+            (-0.25, -0.75, 0.0),
+            (0.25, -0.75, 0.0),
+            (0.75, -0.75, 0.0),
+            (1.25, -0.75, 0.0),
+            (1.75, -0.75, 0.0),
+            (-1.75, -0.25, 0.0),
+            (-1.25, -0.25, 0.0),
+            (-0.75, -0.25, 0.0),
+            (-0.25, -0.25, 0.0),
+            (0.25, -0.25, 0.0),
+            (0.75, -0.25, 0.0),
+            (1.25, -0.25, 0.0),
+            (1.75, -0.25, 0.0),
+            (-1.75, 0.25, 0.0),
+            (-1.25, 0.25, 0.0),
+            (-0.75, 0.25, 0.0),
+            (-0.25, 0.25, 0.0),
+            (0.25, 0.25, 0.0),
+            (0.75, 0.25, 0.0),
+            (1.25, 0.25, 0.0),
+            (1.75, 0.25, 0.0),
+            (-1.75, 0.75, 0.0),
+            (-1.25, 0.75, 0.0),
+            (-0.75, 0.75, 0.0),
+            (-0.25, 0.75, 0.0),
+            (0.25, 0.75, 0.0),
+            (0.75, 0.75, 0.0),
+            (1.25, 0.75, 0.0),
+            (1.75, 0.75, 0.0),
         ];
 
 
@@ -601,17 +628,42 @@ mod tests {
         let verts = Procedural::new(config).vertices();
 
         let expected = vec![
-(-0.75, -1.75, 0.0), (-0.25, -1.75, 0.0), (0.25, -1.75, 0.0), (0.75, -1.75, 0.0), (-0.75, -1.25,
-    0.0), (-0.25, -1.25, 0.0), (0.25, -1.25, 0.0), (0.75, -1.25, 0.0), (-0.75, -0.75, 0.0), (-0.25,
-    -0.75, 0.0), (0.25, -0.75, 0.0), (0.75, -0.75, 0.0), (-0.75, -0.25, 0.0), (-0.25, -0.25, 0.0),
-    (0.25, -0.25, 0.0), (0.75, -0.25, 0.0), (-0.75, 0.25, 0.0), (-0.25, 0.25, 0.0), (0.25, 0.25,
-        0.0), (0.75, 0.25, 0.0), (-0.75, 0.75, 0.0), (-0.25, 0.75, 0.0), (0.25, 0.75, 0.0), (0.75,
-        0.75, 0.0), (-0.75, 1.25, 0.0), (-0.25, 1.25, 0.0), (0.25, 1.25, 0.0), (0.75, 1.25, 0.0),
-        (-0.75, 1.75, 0.0), (-0.25, 1.75, 0.0), (0.25, 1.75, 0.0), (0.75, 1.75, 0.0)
+            (-0.75, -1.75, 0.0),
+            (-0.25, -1.75, 0.0),
+            (0.25, -1.75, 0.0),
+            (0.75, -1.75, 0.0),
+            (-0.75, -1.25, 0.0),
+            (-0.25, -1.25, 0.0),
+            (0.25, -1.25, 0.0),
+            (0.75, -1.25, 0.0),
+            (-0.75, -0.75, 0.0),
+            (-0.25, -0.75, 0.0),
+            (0.25, -0.75, 0.0),
+            (0.75, -0.75, 0.0),
+            (-0.75, -0.25, 0.0),
+            (-0.25, -0.25, 0.0),
+            (0.25, -0.25, 0.0),
+            (0.75, -0.25, 0.0),
+            (-0.75, 0.25, 0.0),
+            (-0.25, 0.25, 0.0),
+            (0.25, 0.25, 0.0),
+            (0.75, 0.25, 0.0),
+            (-0.75, 0.75, 0.0),
+            (-0.25, 0.75, 0.0),
+            (0.25, 0.75, 0.0),
+            (0.75, 0.75, 0.0),
+            (-0.75, 1.25, 0.0),
+            (-0.25, 1.25, 0.0),
+            (0.25, 1.25, 0.0),
+            (0.75, 1.25, 0.0),
+            (-0.75, 1.75, 0.0),
+            (-0.25, 1.75, 0.0),
+            (0.25, 1.75, 0.0),
+            (0.75, 1.75, 0.0),
         ];
 
         assert_eq!(expected, verts);
-    } 
+    }
 
 
     #[test]
@@ -732,6 +784,6 @@ mod benches {
             ..Default::default()
         };
         let mut terrain = Procedural::new(config);
-        b.iter(|| terrain.build_mesh()); 
+        b.iter(|| terrain.build_mesh());
     }
 }
