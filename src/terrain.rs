@@ -703,7 +703,7 @@ mod tests {
             ..Default::default()
         };
         let values = Procedural::new(config).coords_for_noise(1.0, 1.0);
-        assert_eq!((0.5, 0.5), values);
+        assert_eq!([0.5, 0.5], values);
 
         let config = config::Terrain {
             rows: 4,
@@ -713,8 +713,8 @@ mod tests {
         };
         let values = Procedural::new(config).coords_for_noise(1.0, 1.0);
 
-        assert!(values.0.fract() - (1505.0) < 1e-10);
-        assert!(values.1.fract() - (69088.0) < 1e-10);
+        assert!(values[0].fract() - (1505.0) < 1e-10);
+        assert!(values[1].fract() - (69088.0) < 1e-10);
     }
 }
 
