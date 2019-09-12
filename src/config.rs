@@ -164,6 +164,9 @@ pub struct Terrain {
 
     // Type of terrain to generate
     pub terrain_type: TerrainType,
+
+    // Seamless modifier
+    pub seamless: Seamless,
 }
 
 
@@ -189,6 +192,7 @@ impl Default for Terrain {
             hills: SmoothHills::default(),
             mountains: Mountainous::default(),
             terrain_type: TerrainType::SmoothHills,
+            seamless: Seamless::default(),
         }
     }
 }
@@ -302,6 +306,13 @@ impl Terrain {
             TerrainType::SmoothHills
         };
 
+
+        let seamless = if get!(params, "seamless") {
+            Seamless { enabled: true }
+        } else {
+            Seamless::default() 
+        };
+
         let config = Terrain {
             seed: get!(params, "seed"),
             rows: get!(params, "rows"),
@@ -322,6 +333,7 @@ impl Terrain {
             hills,
             mountains,
             terrain_type,
+            seamless,
         };
 
         Ok(config)
