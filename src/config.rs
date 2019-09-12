@@ -308,7 +308,10 @@ impl Terrain {
 
 
         let seamless = if get!(params, "seamless") {
-            Seamless { enabled: true }
+            Seamless { 
+                enabled: true,
+                fade: get!(params, "seamless_fade"),
+            }
         } else {
             Seamless::default() 
         };

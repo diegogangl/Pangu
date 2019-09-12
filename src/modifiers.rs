@@ -914,12 +914,19 @@ pub struct Seamless {
     /// Enable the modifier
     pub enabled: bool,
 
+    /// Percentage of column/rows to use to fade 
+    /// the seamless transition
+    pub fade: f64,
+
 }
 
 
 impl Default for Seamless{
     fn default() -> Self {
-        Seamless { enabled: false }
+        Seamless { 
+            enabled: false,
+            fade: 50.0,
+        }
     }
 }
 
@@ -935,8 +942,12 @@ impl Seamless {
         let height = hmap.height();
         let width = hmap.width();
         
-        let fade = 30;
-        let mix_step = 0.99 / (fade - 1) as f64;
+        let min_fade = {
+            let total = (width - 1).min(height - 1) as f64;
+            math::percent_to_value(self.fade, total / 2.0)
+        };
+
+        let fac_step = 0.99 / (min_fade.max(2.0) - 1.0);
         let mut factor = 0.99;
 
         // Set borders to an interpolation of both opposing sides
@@ -958,9 +969,10 @@ impl Seamless {
             }
         }
 
+
         // Fade the change from the borders towards the center
-        for i in 1..=fade {
-            factor -= mix_step;
+        for i in 1..=min_fade as usize {
+            factor -= fac_step;
 
             for x in 0..height {
                 hmap[i + 1][x] = math::lerp(hmap[i][x], 
