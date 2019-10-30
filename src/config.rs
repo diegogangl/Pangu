@@ -113,6 +113,11 @@ pub struct Terrain {
     /// The number of columns to use in the mesh grid
     pub columns: u32,
 
+    /// If rows != columns, then the terrain will have
+    /// to be cut to this size. Otherwise it's value 
+    /// is zero.
+    pub to_cut: (u32, u32),
+
     /// Offsets for the coordinates passed to the noise
     /// function
     pub offset_x: f64,
@@ -175,6 +180,7 @@ impl Default for Terrain {
         Terrain {
             rows: 64,
             columns: 64,
+            to_cut: (0, 0),
             offset_x: 0.0,
             offset_y: 0.0,
             rotation: 0.0,
@@ -207,8 +213,22 @@ impl Terrain {
     /// * `params`: The parameters dictionary
     pub fn from_dict(params: &PyDict) -> Result<Self, PyErr> {
         let height = get!(params, "height");
-        let columns: u32 = get!(params, "columns");
-        let rows: u32 = get!(params, "rows");
+        let mut columns: u32 = get!(params, "columns");
+        let mut rows: u32 = get!(params, "rows");
+
+        let to_cut = if rows != columns {
+            (rows, columns)
+        } else {
+            (0, 0)
+        };
+
+        // Make sure terrains are square
+        if rows != columns {
+            let square = columns.max(rows);
+
+            columns = square;
+            rows = square;
+        };
 
         let terraces = if get!(params, "terraces") {
             let points = get!(params, "terraces_points");
@@ -318,8 +338,9 @@ impl Terrain {
 
         let config = Terrain {
             seed: get!(params, "seed"),
-            rows: get!(params, "rows"),
-            columns: get!(params, "columns"),
+            rows,
+            columns,
+            to_cut,
             size: get!(params, "size"),
             scale: get!(params, "scale"),
             offset_x: get!(params, "offset_x"),
