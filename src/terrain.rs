@@ -129,20 +129,40 @@ impl Procedural {
     fn faces(&self) -> Faces {
         let conf = &self.config;
 
-        let capacity = (conf.columns * conf.rows) as usize;
+        let columns = if self.config.to_cut.1 > 0 {
+            self.config.to_cut.1 - 1 
+        } else {
+            self.config.columns - 1
+        };
+
+        let rows = if self.config.to_cut.0 > 0 {
+            self.config.to_cut.0 - 1
+        } else {
+            self.config.rows - 1
+        };
+
+
+        let multiplier = if self.config.to_cut.0 > 0 {
+            self.config.to_cut.0
+        } else {
+            self.config.rows
+        };
+
+
+        let capacity = (columns * rows) as usize;
         let mut faces: Faces = Vec::with_capacity(capacity);
 
-        for x in 0..conf.columns - 1 {
-            for y in 0..conf.rows - 1 {
+        for x in 0..columns {
+            for y in 0..rows {
                 faces.push((
-                    x * conf.rows + y,
-                    (x + 1) * conf.rows + y,
-                    (x + 1) * conf.rows + 1 + y,
-                    x * conf.rows + 1 + y,
+                        x * multiplier + y,
+                        (x + 1) * multiplier + y,
+                        (x + 1) * multiplier + 1 + y,
+                        x * multiplier + 1 + y,
                 ))
             }
         }
-
+        
         faces
     }
 
@@ -247,23 +267,35 @@ impl Procedural {
     fn vertices(&mut self) -> Vertices {
         let hmap = self.heights();
 
-        let capacity = (self.config.columns * self.config.rows) as usize;
+        let columns = if self.config.to_cut.1 > 0 {
+            self.config.to_cut.1
+        } else {
+            self.config.columns 
+        };
+
+        let rows = if self.config.to_cut.0 > 0 {
+            self.config.to_cut.0
+        } else {
+            self.config.rows 
+        };
+
+        let capacity = (columns * rows) as usize;
         let mut verts: Vertices = Vec::with_capacity(capacity);
 
         debug!("Allocated vertices with capacity: {:?}", capacity);
 
         // Used to scale the mesh
-        let scale = max(self.config.rows, self.config.columns) as f64
+        let scale = max(rows, columns) as f64
             * (1.0 / self.config.size);
         
         debug!("Scale: {:?}", scale);
 
         // Used to center the mesh in the scene
-        let half_x = ((self.config.rows - 1) as f64) / 2.0;
-        let half_y = ((self.config.columns - 1) as f64) / 2.0;
+        let half_x = ((rows - 1) as f64) / 2.0;
+        let half_y = ((columns - 1) as f64) / 2.0;
 
-        for y in 0..self.config.columns as usize {
-            for x in 0..self.config.rows as usize {
+        for y in 0..columns as usize {
+            for x in 0..rows as usize {
                 let scaled_x = ((x as f64) - half_x) / scale;
                 let scaled_y = ((y as f64) - half_y) / scale;
 
@@ -499,7 +531,7 @@ impl Procedural {
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
     pub fn build_mesh(&mut self) -> (Faces, Vertices) {
-        (self.faces(), self.vertices())
+        self.faces(), self.vertices()
     }
 
 
