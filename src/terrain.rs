@@ -531,7 +531,7 @@ impl Procedural {
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
     pub fn build_mesh(&mut self) -> (Faces, Vertices) {
-        self.faces(), self.vertices()
+        (self.faces(), self.vertices())
     }
 
 
