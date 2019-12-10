@@ -14,7 +14,7 @@ use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
-pub type Heightmap = Vec<(f64)>;
+pub type Heightmap = Vec<f64>;
 
 
 /// Macro to scale a point
