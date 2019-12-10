@@ -127,8 +127,6 @@ impl Procedural {
     /// Returns the a vector of tuples containing the indices
     /// for the four vertices of each face.
     fn faces(&self) -> Faces {
-        let conf = &self.config;
-
         let columns = if self.config.to_cut.1 > 0 {
             self.config.to_cut.1 - 1 
         } else {
