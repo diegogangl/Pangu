@@ -42,10 +42,9 @@ fn terrain_vertices(params: &PyDict) -> PyVerts {
 #[pymodule]
 fn pangu(_py: Python, m: &PyModule) -> PyResult<()> {
 
-    if !cfg!(target_os = "macos") || cfg!(debug_assertions) {
-        let log_config = Config {time: Some(Level::Trace),..Default::default() };
-        TermLogger::init(LevelFilter::Debug, log_config).unwrap();
-    }
+    // Ignore silently if we can't find a Term to log
+    let log_config = Config {time: Some(Level::Trace),..Default::default() };
+    let _ = TermLogger::init(LevelFilter::Debug, log_config);
 
     m.add_wrapped(wrap_pyfunction!(terrain_mesh))?;
     m.add_wrapped(wrap_pyfunction!(terrain_vertices))?;
