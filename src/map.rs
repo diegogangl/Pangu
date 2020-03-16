@@ -50,10 +50,10 @@ pub mod neighbors {
 /// all rows stored contiguos in memory. X represents rows,
 /// while Y represents columns.
 ///
-/// ---  y=0    y=1   y=2     
+/// ---  y=0    y=1   y=2
 /// x=0   1      2     3
 /// x=1   4      5     6
-/// x=2   7      8     9       
+/// x=2   7      8     9
 ///
 /// If the struct is constructed with `with_size` it will
 /// be initialized with 0.0.
@@ -67,7 +67,7 @@ pub struct Map2D<T> {
 }
 
 
-impl<T> Index<usize> for Map2D<T> 
+impl<T> Index<usize> for Map2D<T>
 where T: std::clone::Clone
 {
     type Output = [T];
@@ -92,7 +92,7 @@ where T: std::clone::Clone
 }
 
 
-impl<T> IndexMut<usize> for Map2D<T> 
+impl<T> IndexMut<usize> for Map2D<T>
 where T: std::clone::Clone
 {
     /// Mutable index implementation
@@ -107,7 +107,7 @@ where T: std::clone::Clone
 }
 
 
-impl<T> fmt::Debug for Map2D<T> 
+impl<T> fmt::Debug for Map2D<T>
 where T: std::fmt::Debug + std::clone::Clone {
     /// Debug format implementation
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -132,7 +132,7 @@ where T: std::fmt::Debug + std::clone::Clone {
 }
 
 
-impl<T> Map2D<T> 
+impl<T> Map2D<T>
 where T: std::clone::Clone
 {
     /// Return a new Map2D with no size or elements
@@ -222,7 +222,7 @@ where T: std::clone::Clone
     /// * `x` - X coordinate
     /// * `y` - Y coordinate
     pub fn index_1d(&self, x: usize, y: usize) -> usize {
-            (y * self.width + x) 
+            y * self.width + x
     }
 
 
@@ -374,7 +374,7 @@ mod tests {
         let test_map = map2D![0.0, 1.0, 2.0;
                               3.0, 4.0, 5.0;
                               6.0, 7.0, 8.0];
-    
+
         assert_eq!(4, test_map.index_1d(1, 1));
     }
 }

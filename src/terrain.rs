@@ -128,7 +128,7 @@ impl Procedural {
     /// for the four vertices of each face.
     fn faces(&self) -> Faces {
         let columns = if self.config.to_cut.1 > 0 {
-            self.config.to_cut.1 - 1 
+            self.config.to_cut.1 - 1
         } else {
             self.config.columns - 1
         };
@@ -160,7 +160,7 @@ impl Procedural {
                 ))
             }
         }
-        
+
         faces
     }
 
@@ -268,13 +268,13 @@ impl Procedural {
         let columns = if self.config.to_cut.1 > 0 {
             self.config.to_cut.1
         } else {
-            self.config.columns 
+            self.config.columns
         };
 
         let rows = if self.config.to_cut.0 > 0 {
             self.config.to_cut.0
         } else {
-            self.config.rows 
+            self.config.rows
         };
 
         let capacity = (columns * rows) as usize;
@@ -285,7 +285,7 @@ impl Procedural {
         // Used to scale the mesh
         let scale = max(rows, columns) as f64
             * (1.0 / self.config.size);
-        
+
         debug!("Scale: {:?}", scale);
 
         // Used to center the mesh in the scene
@@ -367,8 +367,8 @@ impl Procedural {
         let mut result = {
             let signal = self.noise_fns[0].get(current_point);
 
-            (signal.abs().powf(self.config.hills.flat)
-                * self.config.hills.difference)
+            signal.abs().powf(self.config.hills.flat)
+                * self.config.hills.difference
         };
 
         let persistences = [
