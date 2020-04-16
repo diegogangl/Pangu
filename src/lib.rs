@@ -43,8 +43,12 @@ fn terrain_vertices(params: &PyDict) -> PyVerts {
 fn pangu(_py: Python, m: &PyModule) -> PyResult<()> {
 
     // Ignore silently if we can't find a Term to log
-    let log_config = Config {time: Some(Level::Trace),..Default::default() };
-    let _ = TermLogger::init(LevelFilter::Debug, log_config);
+    let mut config_builder = ConfigBuilder::new();
+    config_builder.set_time_level(LevelFilter::Trace);
+
+    let _ = TermLogger::init(LevelFilter::Debug,
+                             config_builder.build(),
+                             TerminalMode::Mixed);
 
     m.add_wrapped(wrap_pyfunction!(terrain_mesh))?;
     m.add_wrapped(wrap_pyfunction!(terrain_vertices))?;
