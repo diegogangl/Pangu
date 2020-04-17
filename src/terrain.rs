@@ -123,6 +123,10 @@ pub struct Terrain {
     /// Upper bounds for noise coordinates. Used for seamless
     /// calculation. Lower bounds are always zero.
     limits_xy: (f64, f64),
+
+    /// Terrain type. This is passed as an int from Python,
+    /// and transformed into an enum value internally.
+    terrain_type: TerrainType,
 }
 
 
@@ -147,7 +151,31 @@ impl Terrain {
             steps: (0.0, 0.0),
             limits_xy: (0.0, 0.0),
             noise_fns: Vec::with_capacity(6),
+            terrain_type: TerrainType::SmoothHills,
         }
+    }
+
+
+    /// Set the terrain type for this terrain
+    ///
+    /// If the u8 is outside of the known types, it gets
+    /// set to the default.
+    ///
+    /// # Arguments
+    ///
+    /// * `t_type`: integer value of the type in the enum
+    ///
+
+    #[setter(terrain_type)]
+    fn set_terrain_type(&mut self, t_type: u8) -> PyResult<()> {
+
+        self.terrain_type = match t_type {
+                0 => TerrainType::SmoothHills,
+                1 => TerrainType::Mountainous,
+                _ => TerrainType::SmoothHills,
+        };
+
+        Ok(())
     }
 
 
