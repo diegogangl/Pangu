@@ -52,5 +52,8 @@ fn pangu(_py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_wrapped(wrap_pyfunction!(terrain_mesh))?;
     m.add_wrapped(wrap_pyfunction!(terrain_vertices))?;
+
+    m.add_class::<terrain::Terrain>()?;
+
     Ok(())
 }

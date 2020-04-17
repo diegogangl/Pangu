@@ -1,5 +1,9 @@
 #![allow(dead_code)]
 
+use pyo3::prelude::*;
+use pyo3::class::*;
+
+
 /// Terrain generation core
 extern crate noise;
 extern crate test;
@@ -51,6 +55,238 @@ macro_rules! ridge {
     ($signal:ident, $factor:ident) => {
         math::lerp(1.0 - $signal.abs(), $signal, $factor)
     };
+}
+
+
+/// Representation of a terrain
+#[pyclass]
+pub struct Terrain {
+
+    // -------------------------------------------------------------------------
+    // PUBLIC SETTINGS
+    // -------------------------------------------------------------------------
+
+    /// The number of rows to use in the mesh grid
+    #[pyo3(get, set)]
+    rows: u32,
+
+    /// The number of columns to use in the mesh grid
+    #[pyo3(get, set)]
+    columns: u32,
+
+    /// Base seed for the noise function
+    #[pyo3(get, set)]
+    seed: u32,
+
+    /// Scale for the noise function. Larger scales create
+    /// smaller, more detailed noise while smaller values
+    /// create larger, less detailed terrains.
+    #[pyo3(get, set)]
+    realworld_scale: f64,
+
+    /// Size of the mesh object in scene units
+    #[pyo3(get, set)]
+    size: f64,
+
+    /// Maximum Height
+    #[pyo3(get, set)]
+    height: f64,
+
+    /// Offsets for the coordinates passed to the noise
+    /// function
+    #[pyo3(get, set)]
+    offset: (f64, f64),
+
+    /// Z Rotation angle (in radians) for the noise
+    #[pyo3(get, set)]
+    rotation: f64,
+
+    /// Make grid flat. Used for testing
+    pub flat: bool,
+
+
+    // -------------------------------------------------------------------------
+    // PRIVATE PROPERTIES
+    // -------------------------------------------------------------------------
+
+    /// If rows != columns, then the terrain will have
+    /// to be cut to this size. Otherwise it's value
+    /// is zero.
+    to_cut: (u32, u32),
+
+    /// Perlin noises for the main octaves (re-used for the others)
+    noise_fns: Vec<Perlin>,
+
+    /// Steps to scale coordinates for the X and Y axis
+    steps: (f64, f64),
+
+    /// Upper bounds for noise coordinates. Used for seamless
+    /// calculation. Lower bounds are always zero.
+    limits_xy: (f64, f64),
+}
+
+
+/// Implement public functions that can be called from Python
+#[pymethods]
+impl Terrain {
+
+    /// Constructor
+    #[new]
+    fn new() -> Self {
+        Self {
+            rows: 64,
+            columns: 64,
+            to_cut: (0, 0),
+            seed: 0,
+            realworld_scale: 2.0,
+            size: 5.0,
+            height: 5.0,
+            offset: (0.0, 0.0),
+            rotation: 0.0,
+            flat: false,
+            steps: (0.0, 0.0),
+            limits_xy: (0.0, 0.0),
+            noise_fns: Vec::with_capacity(6),
+        }
+    }
+
+
+    /// Setup internal variables for the terrain.
+    ///
+    /// This must be called before generating a terrain for the first time,
+    /// and after all the properties have been set.
+    pub fn setup(&mut self) {
+        let columns = f64::from(self.columns);
+        let rows = f64::from(self.rows);
+
+        // Calculate correct boundaries for the noise. Boundaries are
+        // calculated fromt he ratio between rows and columns as well as
+        // the scale setting.
+        let limit_x = if columns > rows {
+            self.realworld_scale
+        } else {
+            self.realworld_scale * (columns / rows)
+        };
+
+
+        let limit_y = if columns > rows {
+            self.realworld_scale / (columns / rows)
+        } else {
+            self.realworld_scale
+        };
+
+        debug!("Bound limits are x: {:?}, y: {:?}", limit_x, limit_y);
+        self.limits_xy = (limit_x, limit_y);
+
+
+        // Calculate noise coordinates steps. These are used to fit
+        // coordinates inside the boundaries.
+        self.steps = (limit_x / columns, limit_y / rows);
+        debug!("Calculated steps are: {:?}", self.steps);
+
+
+        // Setup Perlin noise functions for the octaves. Each octave
+        // has a different seed based on the seed setting.
+        for i in 0..6 {
+            self.noise_fns.push(Perlin::new().set_seed(self.seed + i));
+        }
+
+    }
+
+    /// Build a terrain mesh.
+    /// Returns a tuple of Faces and Vertices.
+    pub fn build_mesh(&self) -> Faces {
+        self.faces()
+    }
+}
+
+
+/// Implement Python's magic functions
+#[pyproto]
+impl PyObjectProtocol for Terrain {
+    /// Implementation for Python's __repr__
+    ///
+    /// This shows up when printing the terrain object
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(
+            format!("Terrain with seed: {}", self.seed)
+        )
+    }
+}
+
+
+/// Implement private functions
+impl Terrain {
+
+    /// Generate list of faces for the terrain mesh
+    ///
+    /// Returns the a vector of tuples containing the indices
+    /// for the four vertices of each face.
+    fn faces(&self) -> Faces {
+        let columns = if self.to_cut.1 > 0 {
+            self.to_cut.1 - 1
+        } else {
+            self.columns - 1
+        };
+
+        let rows = if self.to_cut.0 > 0 {
+            self.to_cut.0 - 1
+        } else {
+            self.rows - 1
+        };
+
+
+        let multiplier = if self.to_cut.0 > 0 {
+            self.to_cut.0
+        } else {
+            self.rows
+        };
+
+        let capacity = (columns * rows) as usize;
+        let mut faces: Faces = Vec::with_capacity(capacity);
+
+        for x in 0..columns {
+            for y in 0..rows {
+                faces.push((
+                        x * multiplier + y,
+                        (x + 1) * multiplier + y,
+                        (x + 1) * multiplier + 1 + y,
+                        x * multiplier + 1 + y,
+                ))
+            }
+        }
+
+        faces
+    }
+
+
+    /// Adjust X, Y coordinates for the noise function
+    ///
+    /// Takes care of rotating, offsetting and scaling the
+    /// coordinates to the noise bounds.
+    ///
+    /// # Arguments
+    ///
+    /// * `x`: Value for X axis
+    /// * `y`: Value for y axis
+    fn coords_for_noise(&self, x: f64, y: f64) -> [f64; 2] {
+
+        let x2 = if self.rotation != 0.0 {
+            let rotated = x * self.rotation.cos() - y * self.rotation.sin();
+            self.steps.0 * (rotated + self.offset.0)
+        } else {
+            self.steps.0 * (x + self.offset.0)
+        };
+
+        let y2 = if self.rotation != 0.0 {
+            let rotated = x * self.rotation.sin() + y * self.rotation.cos();
+            self.steps.1 * (rotated + self.offset.1)
+        } else {
+            self.steps.1 * (y + self.offset.1)
+        };
+
+        [x2, y2]
+    }
 }
 
 
