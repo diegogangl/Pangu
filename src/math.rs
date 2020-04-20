@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 /// Small math library to make life easier
 
 /// Calculate linear interpolation
@@ -9,6 +11,19 @@
 /// * `x` - "Mask" or control value for interpolation
 pub fn lerp(a: f64, b: f64, x: f64) -> f64 {
     x.mul_add(a - b, b)
+}
+
+
+/// Calculate cosine interpolation
+///
+/// # Arguments
+///
+/// * `a` - First value to interpolate
+/// * `b` - Second value to interpolate
+/// * `x` - "Mask" or control value for interpolation
+pub fn cos_interp(a: f64, b: f64, x: f64) -> f64 {
+    let mu = (1.0 - (x * PI).cos()) / 2.0;
+    a * (1.0 - mu) + b * mu
 }
 
 
@@ -59,24 +74,24 @@ pub fn clamp<T: PartialOrd>(val: T, min: T, max: T) -> T {
 }
 
 
-/// Calculate euclidean distance between two points 
+/// Calculate euclidean distance between two points
 ///
-/// This function returns the *squared* distance. 
+/// This function returns the *squared* distance.
 ///
 /// # Arguments
-/// 
+///
 /// * `p1` - Coordinates of the first point
 /// * `p2` - Coordinates of the second point
 pub fn distance<T>(p1: [T; 2], p2: [T; 2]) -> T
-    where T: std::ops::Add<Output=T> 
-        + std::ops::Mul<Output=T> 
-        + std::ops::Sub<Output=T> 
+    where T: std::ops::Add<Output=T>
+        + std::ops::Mul<Output=T>
+        + std::ops::Sub<Output=T>
         + PartialOrd + Copy {
 
     let dist_x = if p1[0] > p2[0] { p1[0] - p2[0] } else { p2[0] - p1[0] };
     let dist_y = if p1[1] > p2[1] { p1[1] - p2[1] } else { p2[1] - p1[1] };
 
-    (dist_x * dist_x) + (dist_y * dist_y) 
+    (dist_x * dist_x) + (dist_y * dist_y)
 }
 
 
