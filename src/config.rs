@@ -114,7 +114,7 @@ pub struct Terrain {
     pub columns: u32,
 
     /// If rows != columns, then the terrain will have
-    /// to be cut to this size. Otherwise it's value 
+    /// to be cut to this size. Otherwise it's value
     /// is zero.
     pub to_cut: (u32, u32),
 
@@ -161,7 +161,7 @@ pub struct Terrain {
     // Hydraulic Erosion modifier
     pub water: WaterErosion,
 
-    // Settings for Smooth Hills 
+    // Settings for Smooth Hills
     pub hills: SmoothHills,
 
     // Settings for Mountainous terrain
@@ -245,6 +245,8 @@ impl Terrain {
                 enabled: true,
                 style: if get!(params, "smooth_radial") {
                             SmoothStyle::RADIAL
+                        } else if get!(params, "smooth_edges") {
+                            SmoothStyle::EDGES
                         } else {
                             SmoothStyle::LINEAR
                         },
@@ -253,6 +255,8 @@ impl Terrain {
                 linear_fac: get!(params, "smooth_linear_fac"),
                 linear_start: get!(params, "smooth_linear_start"),
                 linear_invert: get!(params, "smooth_linear_invert"),
+                edges_use_x: get!(params, "smooth_edges_x"),
+                edges_use_y: get!(params, "smooth_edges_y"),
                 rows: rows as f64,
                 columns: columns as f64,
             }
@@ -303,7 +307,7 @@ impl Terrain {
                 flat: get!(params, "hills_flat"),
                 detail: get!(params, "hills_detail"),
                 twist: get!(params, "hills_twist"),
-            } 
+            }
         } else {
             SmoothHills::default()
         };
@@ -328,12 +332,12 @@ impl Terrain {
 
 
         let seamless = if get!(params, "seamless") {
-            Seamless { 
+            Seamless {
                 enabled: true,
                 fade: get!(params, "seamless_fade"),
             }
         } else {
-            Seamless::default() 
+            Seamless::default()
         };
 
         let config = Terrain {

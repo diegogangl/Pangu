@@ -95,7 +95,8 @@ impl Terraces {
 #[derive(Clone, Debug)]
 pub enum SmoothStyle {
     RADIAL,
-    LINEAR
+    LINEAR,
+    EDGES
 }
 
 
@@ -134,6 +135,12 @@ pub struct Smooth {
 
     /// Number of columns in terrain
     pub columns: f64,
+
+    /// Apply effect on X axis for edges style
+    pub edges_use_x: bool,
+
+    /// Apply effect on Y axis for edges style
+    pub edges_use_y: bool,
 }
 
 
@@ -147,6 +154,8 @@ impl Default for Smooth {
             linear_fac: (0.0, 0.0),
             linear_start: (0.0, 0.0),
             linear_invert: (false, false),
+            edges_use_x: true,
+            edges_use_y: true,
             rows: 64.0,
             columns: 64.0,
         }
@@ -166,6 +175,7 @@ impl Smooth {
         match self.style {
             SmoothStyle::LINEAR => self.linear(x, y),
             SmoothStyle::RADIAL => self.radial(x, y),
+            SmoothStyle::EDGES => self.from_edges(x, y),
         }
     }
 
@@ -232,6 +242,50 @@ impl Smooth {
         };
 
         multiplier
+    }
+
+
+    /// Create a smooth effect from the edges inwards
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X index of the current height point
+    /// * `y` - Y index of the current height point
+    fn from_edges(&self, x: u32, y: u32) -> f64 {
+
+        let x_multiplier = if self.edges_use_x {
+            let x_float = x as f64;
+            let center_x = self.columns / 2.0;
+
+            let abs_x = if x_float < center_x {
+                x_float / center_x
+            } else {
+                (center_x - (x_float - center_x)) / center_x
+            };
+
+            math::cos_interp(0.0, 1.0, abs_x)
+        } else {
+            1.0
+        };
+
+
+        let y_multiplier = if self.edges_use_y {
+            let y_float = y as f64;
+            let center_y = self.rows / 2.0;
+
+            let abs_y = if y_float < center_y {
+                y_float / center_y
+            } else {
+                (center_y - (y_float - center_y)) / center_y
+            };
+
+            math::cos_interp(0.0, 1.0, abs_y)
+        } else {
+            1.0
+        };
+
+
+        x_multiplier * y_multiplier
     }
 }
 
@@ -748,10 +802,10 @@ impl WaterErosion {
                 y1 = math::clamp(y1, 0, size);
 
                 self.sediment_tmp[x][y] = {
-                  let lerp_1 = math::lerp(self.sediment[x0][y0], 
+                  let lerp_1 = math::lerp(self.sediment[x0][y0],
                                           self.sediment[x1][y0], fx);
 
-                  let lerp_2 = math::lerp(self.sediment[x0][y1], 
+                  let lerp_2 = math::lerp(self.sediment[x0][y1],
                                           self.sediment[x1][y1], fx);
 
                   math::lerp(lerp_1, lerp_2, fy)
@@ -798,7 +852,7 @@ impl WaterErosion {
         for (x, y) in heights.iter_indices() {
                 let xu = x as u32;
                 let yu = y as u32;
-        
+
                 let normal = {
                    let right = if xu < self.size - 1 {
                        heights[x + 1][y]
@@ -905,7 +959,7 @@ impl WaterErosion {
 
 /// Make terrain tileable
 ///
-/// Takes the edges and interpolates them to make the terrain 
+/// Takes the edges and interpolates them to make the terrain
 /// tileable on X and Y. Also transitions from the edge towards
 /// the center fading the change, so it looks more natural.
 #[derive(Clone, Debug)]
@@ -914,7 +968,7 @@ pub struct Seamless {
     /// Enable the modifier
     pub enabled: bool,
 
-    /// Percentage of column/rows to use to fade 
+    /// Percentage of column/rows to use to fade
     /// the seamless transition
     pub fade: f64,
 
@@ -923,7 +977,7 @@ pub struct Seamless {
 
 impl Default for Seamless{
     fn default() -> Self {
-        Seamless { 
+        Seamless {
             enabled: false,
             fade: 50.0,
         }
@@ -941,7 +995,7 @@ impl Seamless {
     pub fn run(&mut self, hmap: &mut Map2D<f64>) {
         let height = hmap.height();
         let width = hmap.width();
-        
+
         let min_fade = {
             let total = (width - 1).min(height - 1) as f64;
             math::percent_to_value(self.fade, total / 2.0)
@@ -975,10 +1029,10 @@ impl Seamless {
             factor -= fac_step;
 
             for x in 0..height {
-                hmap[i + 1][x] = math::lerp(hmap[i][x], 
+                hmap[i + 1][x] = math::lerp(hmap[i][x],
                                             hmap[i + 1][x],
                                             factor);
-                
+
                 let far_side = height - (i + 1);
                 hmap[far_side][x] = math::lerp(hmap[height - i][x],
                                                hmap[far_side][x],
@@ -986,8 +1040,8 @@ impl Seamless {
             }
 
             for y in 0..width {
-                hmap[y][i + 1] = math::lerp(hmap[y][i], 
-                                            hmap[y][i + 1], 
+                hmap[y][i + 1] = math::lerp(hmap[y][i],
+                                            hmap[y][i + 1],
                                             factor);
 
                 let far_side = width - (i + 1);
