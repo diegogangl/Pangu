@@ -10,6 +10,7 @@ mod terrain;
 mod modifiers;
 mod config;
 mod map;
+mod types;
 
 use pyo3::prelude::*;
 use pyo3::types::PyDict;

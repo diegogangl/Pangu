@@ -2,7 +2,7 @@
 
 use pyo3::prelude::*;
 use pyo3::class::*;
-
+use pyo3::types::PyDict;
 
 /// Terrain generation core
 extern crate noise;
@@ -14,6 +14,7 @@ use super::config;
 use super::config::TerrainType;
 use super::map::Map2D;
 use super::math;
+use super::types;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -54,6 +55,23 @@ macro_rules! scale {
 macro_rules! ridge {
     ($signal:ident, $factor:ident) => {
         math::lerp(1.0 - $signal.abs(), $signal, $factor)
+    };
+}
+
+
+/// Macro to extract values from a Python dictionary as
+/// rust types.
+///
+/// # Arguments
+///
+/// * `params` - The parameters dictionary
+/// * `key` - The key to look for in the dictionary
+macro_rules! get {
+    ($params:expr, $key:expr) => {
+        match $params.get_item($key) {
+            Some(v) => v.extract()?,
+            None => panic!("Missing key {}!", $key),
+        }
     };
 }
 
@@ -114,9 +132,6 @@ pub struct Terrain {
     /// is zero.
     to_cut: (u32, u32),
 
-    /// Perlin noises for the main octaves (re-used for the others)
-    noise_fns: Vec<Perlin>,
-
     /// Steps to scale coordinates for the X and Y axis
     steps: (f64, f64),
 
@@ -126,7 +141,7 @@ pub struct Terrain {
 
     /// Terrain type. This is passed as an int from Python,
     /// and transformed into an enum value internally.
-    terrain_type: TerrainType,
+    terrain_type: Box<dyn types::TerrainType>,
 }
 
 
@@ -150,40 +165,69 @@ impl Terrain {
             flat: false,
             steps: (0.0, 0.0),
             limits_xy: (0.0, 0.0),
-            noise_fns: Vec::with_capacity(6),
-            terrain_type: TerrainType::SmoothHills,
+            terrain_type: Box::new(types::SmoothHills::default())
         }
     }
 
 
-    /// Set the terrain type for this terrain
-    ///
-    /// If the u8 is outside of the known types, it gets
-    /// set to the default.
+    /// Set the terrain type and its settings for this terrain
     ///
     /// # Arguments
     ///
-    /// * `t_type`: integer value of the type in the enum
+    /// * `params`: Dictionary with type of terrain and settings
     ///
-
     #[setter(terrain_type)]
-    fn set_terrain_type(&mut self, t_type: u8) -> PyResult<()> {
+    fn set_terrain_type(&mut self, params: &PyDict) -> PyResult<()> {
 
-        self.terrain_type = match t_type {
-                0 => TerrainType::SmoothHills,
-                1 => TerrainType::Mountainous,
-                _ => TerrainType::SmoothHills,
+        self.terrain_type = match get!(params, "type") {
+            0 => Box::new(types::SmoothHills {
+                    difference: get!(params, "difference"),
+                    flat: get!(params, "flat"),
+                    detail: get!(params, "detail"),
+                    twist: get!(params, "twist"),
+                    ..Default::default()
+            }),
+
+            _ => Box::new(types::SmoothHills::default()),
+
         };
 
+        self.terrain_type.set_seed(self.seed);
         Ok(())
     }
 
+
+    /// Build a terrain mesh.
+    /// Returns a tuple of Faces and Vertices.
+    pub fn build_mesh(&mut self) -> (Faces, Vertices) {
+        self.setup();
+        (self.faces(), self.vertices())
+    }
+}
+
+
+/// Implement Python's magic functions
+#[pyproto]
+impl PyObjectProtocol for Terrain {
+    /// Implementation for Python's __repr__
+    ///
+    /// This shows up when printing the terrain object
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(
+            format!("Terrain with seed: {}", self.seed)
+        )
+    }
+}
+
+
+/// Implement private functions
+impl Terrain {
 
     /// Setup internal variables for the terrain.
     ///
     /// This must be called before generating a terrain for the first time,
     /// and after all the properties have been set.
-    pub fn setup(&mut self) {
+    fn setup(&mut self) {
         let columns = f64::from(self.columns);
         let rows = f64::from(self.rows);
 
@@ -211,40 +255,8 @@ impl Terrain {
         // coordinates inside the boundaries.
         self.steps = (limit_x / columns, limit_y / rows);
         debug!("Calculated steps are: {:?}", self.steps);
-
-
-        // Setup Perlin noise functions for the octaves. Each octave
-        // has a different seed based on the seed setting.
-        for i in 0..6 {
-            self.noise_fns.push(Perlin::new().set_seed(self.seed + i));
-        }
-
     }
 
-    /// Build a terrain mesh.
-    /// Returns a tuple of Faces and Vertices.
-    pub fn build_mesh(&self) -> Faces {
-        self.faces()
-    }
-}
-
-
-/// Implement Python's magic functions
-#[pyproto]
-impl PyObjectProtocol for Terrain {
-    /// Implementation for Python's __repr__
-    ///
-    /// This shows up when printing the terrain object
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(
-            format!("Terrain with seed: {}", self.seed)
-        )
-    }
-}
-
-
-/// Implement private functions
-impl Terrain {
 
     /// Generate list of faces for the terrain mesh
     ///
@@ -285,6 +297,94 @@ impl Terrain {
         }
 
         faces
+    }
+
+
+    /// Generate list of vertices for the terrain mesh
+    ///
+    /// Returns the 3D coordinates for the mesh as a vector
+    /// of tuples.
+    fn vertices(&mut self) -> Vertices {
+        let hmap = self.heights();
+
+        let columns = if self.to_cut.1 > 0 {
+            self.to_cut.1
+        } else {
+            self.columns
+        };
+
+        let rows = if self.to_cut.0 > 0 {
+            self.to_cut.0
+        } else {
+            self.rows
+        };
+
+        let capacity = (columns * rows) as usize;
+        let mut verts: Vertices = Vec::with_capacity(capacity);
+
+        debug!("Allocated vertices with capacity: {:?}", capacity);
+
+        // Used to scale the mesh
+        let scale = max(rows, columns) as f64
+            * (1.0 / self.size);
+
+        debug!("Scale: {:?}", scale);
+
+        // Used to center the mesh in the scene
+        let half_x = ((rows - 1) as f64) / 2.0;
+        let half_y = ((columns - 1) as f64) / 2.0;
+
+        for y in 0..columns as usize {
+            for x in 0..rows as usize {
+                let scaled_x = ((x as f64) - half_x) / scale;
+                let scaled_y = ((y as f64) - half_y) / scale;
+
+                verts.push((scaled_x, scaled_y, hmap[x][y]));
+            }
+        }
+
+        verts
+    }
+
+
+    /// Generate the heightmap for the terrain
+    ///
+    /// Returns a flat Vector with values in the range [0..1]
+    fn heights(&mut self) -> Map2D<f64> {
+        // Convenience
+        let columns = self.columns;
+        let rows = self.rows;
+
+        // Keep track of height range for normalization
+        let mut heights_min = 0.0;
+        let mut heights_max = 1.0;
+
+        // Allocation
+        let capacity = (columns * rows) as usize;
+        let mut hmap = Map2D::with_size(columns as usize, rows as usize, 0.0);
+
+        debug!("Allocated heightmap with capacity: {:?}", capacity);
+        debug!("Allocated heightmap with width: {:?} ", hmap.width());
+        debug!("Allocated heightmap with height: {:?}", hmap.height());
+
+        // Initial Generation
+        for (x, y) in hmap.iter_indices() {
+            let co = self.coords_for_noise(x as f64, y as f64);
+            let z = self.terrain_type.height_at(co);
+
+            // Keep track of min/max for normalization
+            if z > heights_max {
+                heights_max = z;
+            }
+
+            if z < heights_min {
+                heights_min = z;
+            }
+
+            hmap[x][y] = z
+        }
+
+        hmap
     }
 
 
