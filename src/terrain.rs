@@ -188,6 +188,15 @@ impl Terrain {
                     ..Default::default()
             }),
 
+            1 => Box::new(types::Mountains {
+                    ridgedness: get!(params, "ridgedness"),
+                    sharpness: get!(params, "sharpness"),
+                    breakup: get!(params, "breakup"),
+                    roughness: get!(params, "roughness"),
+                    twist: get!(params, "twist"),
+                    ..Default::default()
+            }),
+
             _ => Box::new(types::SmoothHills::default()),
 
         };

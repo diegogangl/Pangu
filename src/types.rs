@@ -1,3 +1,4 @@
+use super::math;
 use noise::{NoiseFn, Perlin, Point2, Seedable};
 
 
@@ -18,6 +19,22 @@ macro_rules! scale {
 
     ($var:ident, $fac:expr, $warp:expr) => {
         [$var[0] * $fac + $warp, $var[1] * $fac + $warp]
+    };
+}
+
+
+/// Macro to casue ridgedness (sharpness) on heights
+///
+/// This macro creates an expresion to assign a value.
+///
+/// # Arguments
+///
+/// * `self` - A procedural instance
+/// * `signal` - The signal from the noise function
+/// * `level` - Level at which the ridgedness should be activated
+macro_rules! ridge {
+    ($signal:ident, $factor:ident) => {
+        math::lerp(1.0 - $signal.abs(), $signal, $factor)
     };
 }
 
@@ -159,3 +176,163 @@ impl Default for SmoothHills {
     }
 }
 
+
+/// Mountainous terrain
+///
+/// Generates ridged, rough terrains
+#[derive(Clone)]
+pub struct Mountains {
+
+    // Ridgedness (spikey-ness) of the mountains
+    pub ridgedness: f64,
+
+    // Sharpness of the medium terrain features
+    pub sharpness: f64,
+
+    // Number of mountains (scale at the 3rd octave)
+    pub breakup: f64,
+
+    // Terrain roughness (persistence of higher octaves)
+    pub roughness: f64,
+
+    // Amount of domain warping to apply
+    pub twist: f64,
+
+    /// Perlin noises for the octaves
+    pub perlin: Vec<Perlin>,
+}
+
+
+impl TerrainType for Mountains {
+
+    fn set_seed(&mut self, seed: u32) {
+        for i in 0..6 {
+            self.perlin.push(Perlin::new().set_seed(seed + i));
+        }
+    }
+
+    fn height_at(&self, point: Point2<f64>) -> f64 {
+        //---------------------------------------------------------------------
+        // DOMAIN WARPING
+        //---------------------------------------------------------------------
+
+        let domain_scale = 1.5;
+
+        let mut current_point = scale!(point, domain_scale);
+        let mut domain = self.perlin[0].get(current_point);
+
+        current_point = scale!(current_point, domain_scale);
+        domain += self.perlin[1].get(current_point) * 0.5;
+
+        current_point = scale!(current_point, domain_scale);
+        domain += self.perlin[2].get(current_point) * 0.25;
+
+        domain *= self.twist;
+
+
+        //---------------------------------------------------------------------
+        // FRACTAL NOISE
+        //---------------------------------------------------------------------
+
+        // Aliases for settings
+        let ridgedness = self.ridgedness;
+        let sharpness = self.sharpness;
+        let breakup = 0.5 + self.breakup;
+        let roughness = self.roughness;
+
+        // Amplitude to multiply each octave
+        let mut amp = 1.0;
+
+        // Simple macro to increase amplitude after each octave
+        macro_rules! increase_amp {
+            ($amp:ident, $result:ident) => {
+                $amp *= 0.5 * $result.min(0.01).max(1.0)
+            };
+        }
+
+        // Octave 0
+        current_point = scale!(current_point, 0.2, domain);
+        let mut result = {
+            let signal = self.perlin[0].get(current_point);
+            ridge!(signal, ridgedness) * 0.75
+        };
+
+        increase_amp!(amp, result);
+
+
+        // Octave 1
+        current_point = scale!(current_point, breakup, domain * amp);
+        result += {
+            let signal = self.perlin[1].get(current_point);
+            ridge!(signal, sharpness) * amp * 0.5
+        };
+
+        increase_amp!(amp, result);
+
+
+        // Octave 2
+        current_point = scale!(current_point, 2.0, domain * amp);
+        result += {
+            let signal = self.perlin[2].get(current_point);
+            ridge!(signal, sharpness) * amp * 0.25
+        };
+
+        increase_amp!(amp, result);
+
+
+        // Octave 3
+        current_point = scale!(current_point, 2.0, domain * amp);
+        result += {
+            let signal = self.perlin[3].get(current_point);
+            (1.0 - signal.abs()) * amp * (roughness / 2.0)
+        };
+
+        increase_amp!(amp, result);
+
+
+        // Octave 4
+        current_point = scale!(current_point, 2.0, domain * amp);
+        result += {
+            let signal = self.perlin[4].get(current_point);
+            signal * amp * result * roughness
+        };
+
+        increase_amp!(amp, result);
+
+
+        // Octave 5
+        current_point = scale!(current_point, 2.0);
+        result += {
+            let signal = self.perlin[5].get(current_point);
+            signal * amp * result * roughness
+        };
+
+        increase_amp!(amp, result);
+
+
+        // Octave 6
+        current_point = scale!(current_point, 3.0, domain);
+        result += {
+            let signal = self.perlin[2].get(current_point);
+            signal * amp * roughness / (result.min(0.001).max(1.0))
+        };
+
+        result
+
+
+    }
+}
+
+
+impl Default for Mountains {
+    fn default() -> Self {
+        Mountains {
+            ridgedness: 0.0,
+            sharpness: 0.0,
+            breakup: 0.0,
+            roughness: 0.0,
+            twist: 0.0,
+            perlin: Vec::with_capacity(4),
+        }
+    }
+}
