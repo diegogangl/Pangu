@@ -97,9 +97,13 @@ pub struct Terrain {
     /// calculation. Lower bounds are always zero.
     limits_xy: (f64, f64),
 
+    /// Generated height map
+    hmap: Map2D<f64>,
+
     /// Terrain type. This is passed as an int from Python,
     /// and transformed into an enum value internally.
     terrain_type: Box<dyn types::TerrainType>,
+
 }
 
 
@@ -123,6 +127,7 @@ impl Terrain {
             flat: false,
             steps: (0.0, 0.0),
             limits_xy: (0.0, 0.0),
+            hmap: Map2D::new(),
             terrain_type: Box::new(types::SmoothHills::default())
         }
     }
@@ -168,6 +173,8 @@ impl Terrain {
     /// Returns a tuple of Faces and Vertices.
     pub fn build_mesh(&mut self) -> (Faces, Vertices) {
         self.setup();
+        self.hmap = self.heights();
+
         (self.faces(), self.vertices())
     }
 }
@@ -271,8 +278,7 @@ impl Terrain {
     ///
     /// Returns the 3D coordinates for the mesh as a vector
     /// of tuples.
-    fn vertices(&mut self) -> Vertices {
-        let hmap = self.heights();
+    fn vertices(&self) -> Vertices {
 
         let columns = if self.to_cut.1 > 0 {
             self.to_cut.1
@@ -306,7 +312,7 @@ impl Terrain {
                 let scaled_x = ((x as f64) - half_x) / scale;
                 let scaled_y = ((y as f64) - half_y) / scale;
 
-                verts.push((scaled_x, scaled_y, hmap[x][y]));
+                verts.push((scaled_x, scaled_y, self.hmap[x][y]));
             }
         }
 
@@ -318,6 +324,7 @@ impl Terrain {
     ///
     /// Returns a flat Vector with values in the range [0..1]
     fn heights(&mut self) -> Map2D<f64> {
+
         // Convenience
         let columns = self.columns;
         let rows = self.rows;
