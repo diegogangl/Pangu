@@ -103,7 +103,6 @@ pub struct Terrain {
     /// Terrain type. This is passed as an int from Python,
     /// and transformed into an enum value internally.
     terrain_type: Box<dyn types::TerrainType>,
-
 }
 
 
@@ -143,7 +142,13 @@ impl Terrain {
     fn set_terrain_type(&mut self, params: &PyDict) -> PyResult<()> {
 
         self.terrain_type = match get!(params, "type") {
-            0 => Box::new(types::SmoothHills {
+            0 => Box::new(types::Basic {
+                    breakup: get!(params, "breakup"),
+                    roughness: get!(params, "roughness"),
+                    ..Default::default()
+            }),
+
+            1 => Box::new(types::SmoothHills {
                     difference: get!(params, "difference"),
                     flat: get!(params, "flat"),
                     detail: get!(params, "detail"),
@@ -151,7 +156,7 @@ impl Terrain {
                     ..Default::default()
             }),
 
-            1 => Box::new(types::Mountains {
+            2 => Box::new(types::Mountains {
                     ridgedness: get!(params, "ridgedness"),
                     sharpness: get!(params, "sharpness"),
                     breakup: get!(params, "breakup"),
@@ -160,7 +165,7 @@ impl Terrain {
                     ..Default::default()
             }),
 
-            _ => Box::new(types::SmoothHills::default()),
+            _ => Box::new(types::Basic::default()),
 
         };
 

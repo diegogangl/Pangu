@@ -60,6 +60,62 @@ pub trait TerrainType {
 }
 
 
+/// Basic Terrain Type
+///
+/// A simple generator using fractal sum
+///
+#[derive(Clone)]
+pub struct Basic {
+
+    /// Perlin noises for the octaves
+    pub perlin: Vec<Perlin>,
+
+    /// Large roughness
+    pub breakup: f64,
+
+    /// Detail roughness
+    pub roughness: f64,
+}
+
+
+impl TerrainType for Basic {
+
+    fn set_seed(&mut self, seed: u32) {
+        for i in 0..6 {
+            self.perlin.push(Perlin::new().set_seed(seed + i));
+        };
+    }
+
+    fn height_at(&self, point: Point2<f64>) -> f64 {
+        let mut result = 0.0;
+        let mut current_point = point;
+        let mut amplitude = 1.0;
+
+        for i in 0..6 {
+            result += self.perlin[i].get(current_point) * amplitude;
+            current_point = scale!(current_point, self.breakup);
+            amplitude /= self.roughness;
+        }
+
+        result
+    }
+
+}
+
+
+
+
+impl Default for Basic {
+    fn default() -> Self {
+        Basic {
+            perlin: Vec::with_capacity(7),
+            breakup: 2.0,
+            roughness: 1.5,
+        }
+    }
+}
+
+
 /// Smooth Hills terrain
 ///
 /// Generates smooth, rolling valleys
