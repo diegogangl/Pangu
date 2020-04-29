@@ -10,6 +10,7 @@ extern crate test;
 
 use super::map::Map2D;
 use super::types;
+use super::modifiers;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -103,6 +104,8 @@ pub struct Terrain {
     /// Terrain type. This is passed as an int from Python,
     /// and transformed into an enum value internally.
     terrain_type: Box<dyn types::TerrainType>,
+
+    modifiers: Vec<Box<dyn modifiers::Modifier>>,
 }
 
 
@@ -127,7 +130,8 @@ impl Terrain {
             steps: (0.0, 0.0),
             limits_xy: (0.0, 0.0),
             hmap: Map2D::new(),
-            terrain_type: Box::new(types::SmoothHills::default())
+            terrain_type: Box::new(types::SmoothHills::default()),
+            modifiers: vec![],
         }
     }
 
@@ -170,6 +174,23 @@ impl Terrain {
         };
 
         self.terrain_type.set_seed(self.seed);
+        Ok(())
+    }
+
+
+    /// Push a new modifier into the modifiers vector
+    ///
+    /// # Arguments
+    ///
+    /// * `params`: Dictionary with type of terrain and settings
+    ///
+    fn add_modifier(&mut self, params: &PyDict) -> PyResult<()> {
+
+        self.modifiers.push(Box::new(match get!(params, "type") {
+            "THERMAL_EROSION" => modifiers::ThermalErosion::new(params)?,
+            _ => modifiers::ThermalErosion::new(params)?,
+        }));
+
         Ok(())
     }
 
@@ -361,6 +382,11 @@ impl Terrain {
             }
 
             hmap[x][y] = z
+        }
+
+        // Run all modifiers
+        for modifier in &self.modifiers {
+            modifier.run(&mut hmap);
         }
 
         hmap

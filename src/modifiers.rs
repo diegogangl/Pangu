@@ -5,6 +5,40 @@ use rand::distributions::{Distribution, Uniform};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
+use pyo3::prelude::*;
+use pyo3::types::PyDict;
+
+/// Macro to extract values from a Python dictionary as
+/// rust types.
+///
+/// # Arguments
+///
+/// * `params` - The parameters dictionary
+/// * `key` - The key to look for in the dictionary
+macro_rules! get {
+    ($params:expr, $key:expr) => {
+        match $params.get_item($key) {
+            Some(v) => v.extract()?,
+            None => panic!("Missing key {}!", $key),
+        }
+    };
+}
+
+
+/// Common interface for modifiers
+pub trait Modifier {
+
+    /// Return if the modifier is enabled
+    fn is_enabled(&self) -> bool;
+
+    /// Apply the modifier to the heightmap
+    ///
+    /// # Arguments
+    ///
+    /// * `hmap` - Reference to the heightmap
+    fn run(&self, hmap: &mut Map2D<f64>);
+}
+
 
 /// Terraces modifier
 ///
@@ -296,6 +330,7 @@ impl Smooth {
 /// a slope and piling at the bottom
 #[derive(Clone, Debug)]
 pub struct ThermalErosion {
+
     /// Enable the modifier
     pub enabled: bool,
 
@@ -308,69 +343,66 @@ pub struct ThermalErosion {
     pub iterations: u8,
 }
 
-
-impl Default for ThermalErosion {
-    fn default() -> Self {
-        ThermalErosion {
-            enabled: false,
-            talus: 0.02,
-            iterations: 1,
-        }
+impl ThermalErosion {
+    pub fn new(params: &PyDict) -> PyResult<Self> {
+        Ok(ThermalErosion {
+            enabled: get!(params, "enabled"),
+            talus: get!(params, "talus"),
+            iterations: get!(params, "iterations"),
+        })
     }
 }
 
+impl Modifier for ThermalErosion {
 
-impl ThermalErosion {
+    fn is_enabled(&self) -> bool {
+        self.enabled
+    }
 
-    /// Run the thermal erosion simulation
-    ///
-    /// # Arguments
-    ///
-    /// * `verts` - Reference to the vertices vector
-    pub fn run(&self, hmap: &mut Map2D<f64>) {
+    fn run(&self, hmap: &mut Map2D<f64>) {
         for _ in 0..self.iterations {
             for (x, y) in hmap.iter_indices() {
-                   // Maximum slope found
-                   let mut slope_max = 0.0;
+                // Maximum slope found
+                let mut slope_max = 0.0;
 
-                   // Index of the lowest neighbor
-                   let mut lowest = (0, 0);
+                // Index of the lowest neighbor
+                let mut lowest = (0, 0);
 
-                   // Current height
-                   let center = hmap[x][y];
+                // Current height
+                let center = hmap[x][y];
 
-                   neighbors::VON_NEUMANN.iter().for_each(|target| {
-                        let neighbor = hmap.safe_find((x, y), *target);
+                neighbors::VON_NEUMANN.iter().for_each(|target| {
+                    let neighbor = hmap.safe_find((x, y), *target);
 
-                        if let Some((x1, y1)) = neighbor {
-                            let diff = center - hmap[x1][y1];
+                    if let Some((x1, y1)) = neighbor {
+                        let diff = center - hmap[x1][y1];
 
-                            if diff > slope_max {
-                                slope_max = diff;
-                                lowest = (x1, y1);
-                            }
-                        };
-                    });
+                        if diff > slope_max {
+                            slope_max = diff;
+                            lowest = (x1, y1);
+                        }
+                    };
+                });
 
-                    // Move soil
-                    if slope_max > self.talus {
+                // Move soil
+                if slope_max > self.talus {
 
-                       // According to the algorithm this should be 2.0,
-                       // but it causes oscillations. This value works
-                       // correctly for some reason, who am I to judge?
-                       let magic_number = 4.0;
+                    // According to the algorithm this should be 2.0,
+                    // but it causes oscillations. This value works
+                    // correctly for some reason, who am I to judge?
+                    let magic_number = 4.0;
 
-                       // Remove from current
-                       hmap[x][y] -= slope_max / magic_number;
+                    // Remove from current
+                    hmap[x][y] -= slope_max / magic_number;
 
-                       // Add to neighbor
-                       hmap[lowest.0][lowest.1] += slope_max / magic_number;
-                    }
-
+                    // Add to neighbor
+                    hmap[lowest.0][lowest.1] += slope_max / magic_number;
+                }
             }
         }
     }
- }
+
+}
 
 
 

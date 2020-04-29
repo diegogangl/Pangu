@@ -8,7 +8,6 @@ mod math;
 mod curve;
 mod terrain;
 mod modifiers;
-mod config;
 mod map;
 mod types;
 
