@@ -10,7 +10,7 @@ extern crate test;
 
 use super::map::Map2D;
 use super::types;
-use super::modifiers;
+use super::modifiers as mods;
 use std::cmp::max;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -105,7 +105,7 @@ pub struct Terrain {
     /// and transformed into an enum value internally.
     terrain_type: Box<dyn types::TerrainType>,
 
-    modifiers: Vec<Box<dyn modifiers::Modifier>>,
+    modifiers: Vec<Box<dyn mods::Modifier>>,
 }
 
 
@@ -187,10 +187,10 @@ impl Terrain {
     fn add_modifier(&mut self, params: &PyDict) -> PyResult<()> {
 
         self.modifiers.push(match get!(params, "type") {
-            "THERMAL_EROSION" => Box::new(modifiers::ThermalErosion::new(params)?),
-            "INVERT" => Box::new(modifiers::Invert::new(params)?),
+            "THERMAL" => Box::new(mods::ThermalErosion::new(params)?),
+            "INVERT" => Box::new(mods::Invert::new(params)?),
 
-            _ => Box::new(modifiers::Empty::new(params)?),
+            _ => Box::new(mods::Empty::new(params)?),
         });
 
         Ok(())
