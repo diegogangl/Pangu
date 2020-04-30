@@ -1063,24 +1063,22 @@ pub struct Seamless {
 }
 
 
-impl Default for Seamless{
-    fn default() -> Self {
-        Seamless {
-            enabled: false,
-            fade: 50.0,
-        }
+impl Seamless {
+    pub fn new(params: &PyDict) -> PyResult<Self> {
+        Ok(Seamless {
+            enabled: get!(params, "enabled"),
+            fade: get!(params, "fade"),
+        })
     }
 }
 
 
-impl Seamless {
+impl Modifier for Seamless {
+    fn is_enabled(&self) -> bool {
+        self.enabled
+    }
 
-    /// Make the terrain seamless
-    ///
-    /// # Arguments
-    ///
-    /// * `hmap` - The heightmap
-    pub fn run(&mut self, hmap: &mut Map2D<f64>) {
+    fn run(&self, hmap: &mut Map2D<f64>) {
         let height = hmap.height();
         let width = hmap.width();
 
@@ -1138,8 +1136,5 @@ impl Seamless {
                                                factor);
             }
         }
-
     }
-
 }
-

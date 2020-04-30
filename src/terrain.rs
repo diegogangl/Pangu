@@ -190,6 +190,7 @@ impl Terrain {
             "THERMAL" => Box::new(mods::ThermalErosion::new(params)?),
             "INVERT" => Box::new(mods::Invert::new(params)?),
             "SMOOTH" => Box::new(mods::Smooth::new(params)?),
+            "SEAMLESS" => Box::new(mods::Seamless::new(params)?),
 
             _ => Box::new(mods::Empty::new(params)?),
         });
