@@ -190,7 +190,7 @@ impl Terrain {
             "THERMAL_EROSION" => Box::new(modifiers::ThermalErosion::new(params)?),
             "INVERT" => Box::new(modifiers::Invert::new(params)?),
 
-            _ => Box::new(modifiers::ThermalErosion::new(params)?),
+            _ => Box::new(modifiers::Empty::new(params)?),
         });
 
         Ok(())

@@ -71,6 +71,24 @@ impl Modifier for Invert {
 }
 
 
+/// Empty modifier
+///
+/// A modifier that does nothing. Only here for the _ case in the match arm.
+pub struct Empty {}
+
+impl Empty {
+    pub fn new(params: &PyDict) -> PyResult<Self> {
+        error!("Adding Empty modifier! Params are: {:?}", params);
+        Ok(Empty {})
+    }
+}
+
+impl Modifier for Empty {
+    fn is_enabled(&self) -> bool { false }
+    fn run(&self, _hmap: &mut Map2D<f64>) {}
+}
+
+
 /// Terraces modifier
 ///
 /// Creates a terraces-like effect by flattening certain areas
