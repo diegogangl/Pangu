@@ -40,6 +40,37 @@ pub trait Modifier {
 }
 
 
+/// Invert modifier
+///
+/// Inverts the terrain
+#[derive(Clone, Debug)]
+pub struct Invert {
+
+    /// Enable the modifier
+    pub enabled: bool,
+}
+
+impl Invert {
+    pub fn new(params: &PyDict) -> PyResult<Self> {
+        Ok(Invert {
+            enabled: get!(params, "enabled"),
+        })
+    }
+}
+
+impl Modifier for Invert {
+    fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
+    fn run(&self, hmap: &mut Map2D<f64>) {
+        for (x, y) in hmap.iter_indices() {
+            hmap[x][y] *= -1.0;
+        }
+    }
+}
+
+
 /// Terraces modifier
 ///
 /// Creates a terraces-like effect by flattening certain areas

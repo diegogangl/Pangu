@@ -186,10 +186,12 @@ impl Terrain {
     ///
     fn add_modifier(&mut self, params: &PyDict) -> PyResult<()> {
 
-        self.modifiers.push(Box::new(match get!(params, "type") {
-            "THERMAL_EROSION" => modifiers::ThermalErosion::new(params)?,
-            _ => modifiers::ThermalErosion::new(params)?,
-        }));
+        self.modifiers.push(match get!(params, "type") {
+            "THERMAL_EROSION" => Box::new(modifiers::ThermalErosion::new(params)?),
+            "INVERT" => Box::new(modifiers::Invert::new(params)?),
+
+            _ => Box::new(modifiers::ThermalErosion::new(params)?),
+        });
 
         Ok(())
     }
