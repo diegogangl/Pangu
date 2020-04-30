@@ -213,53 +213,59 @@ pub struct Smooth {
     /// Invert the linear effect on X/Y
     pub linear_invert: (bool, bool),
 
+    /// Apply effect on X axis for edges style
+    pub edges_use_x: bool,
+
+    /// Apply effect on Y axis for edges style
+    pub edges_use_y: bool,
+
     /// Number of rows in terrain
     pub rows: f64,
 
     /// Number of columns in terrain
     pub columns: f64,
 
-    /// Apply effect on X axis for edges style
-    pub edges_use_x: bool,
-
-    /// Apply effect on Y axis for edges style
-    pub edges_use_y: bool,
 }
 
 
-impl Default for Smooth {
-    fn default() -> Self {
-        Smooth {
-            enabled: false,
-            style: SmoothStyle::RADIAL,
-            radial_fac: 0.0,
-            radial_size: (0.0, 0.0),
-            linear_fac: (0.0, 0.0),
-            linear_start: (0.0, 0.0),
-            linear_invert: (false, false),
-            edges_use_x: true,
-            edges_use_y: true,
-            rows: 64.0,
-            columns: 64.0,
+impl Modifier for Smooth {
+    fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
+    fn run(&self, hmap: &mut Map2D<f64>) {
+
+        for (x, y) in hmap.iter_indices() {
+            hmap[x][y] *= match self.style {
+                SmoothStyle::LINEAR => self.linear(x, y),
+                SmoothStyle::RADIAL => self.radial(x, y),
+                SmoothStyle::EDGES => self.from_edges(x, y),
+            }
         }
     }
 }
 
 
 impl Smooth {
-
-    /// Run the smooth modifier effect
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - X index of the current height point
-    /// * `y` - Y index of the current height point
-    pub fn run(&self, x: u32, y:u32) -> f64 {
-        match self.style {
-            SmoothStyle::LINEAR => self.linear(x, y),
-            SmoothStyle::RADIAL => self.radial(x, y),
-            SmoothStyle::EDGES => self.from_edges(x, y),
-        }
+    pub fn new(params: &PyDict) -> PyResult<Self> {
+        Ok(Smooth {
+            enabled: get!(params, "enabled"),
+            radial_fac: get!(params, "radial_fac"),
+            radial_size: get!(params, "radial_size"),
+            linear_fac: get!(params, "linear_fac"),
+            linear_start: get!(params, "linear_start"),
+            linear_invert: get!(params, "linear_invert"),
+            edges_use_x: get!(params, "edges_use_x"),
+            edges_use_y: get!(params, "edges_use_y"),
+            columns: get!(params, "columns"),
+            rows: get!(params, "rows"),
+            style: match get!(params, "style") {
+                "RADIAL" => SmoothStyle::RADIAL,
+                "LINEAR" => SmoothStyle::LINEAR,
+                "EDGES" => SmoothStyle::EDGES,
+                _ => SmoothStyle::RADIAL,
+            }
+        })
     }
 
 
@@ -271,7 +277,7 @@ impl Smooth {
     ///
     /// * `x` - X index of the current height point
     /// * `y` - Y index of the current height point
-    fn radial(&self, x: u32, y: u32) -> f64 {
+    fn radial(&self, x: usize, y: usize) -> f64 {
         let center_x = self.columns / 2.0;
         let center_y = self.rows / 2.0;
 
@@ -293,7 +299,7 @@ impl Smooth {
     ///
     /// * `x` - X index of the current height point
     /// * `y` - Y index of the current height point
-    fn linear(&self, x: u32, y: u32) -> f64 {
+    fn linear(&self, x: usize, y: usize) -> f64 {
         let mut multiplier = 1.0;
 
         if self.linear_fac.0 > 0.0 {
@@ -334,7 +340,7 @@ impl Smooth {
     ///
     /// * `x` - X index of the current height point
     /// * `y` - Y index of the current height point
-    fn from_edges(&self, x: u32, y: u32) -> f64 {
+    fn from_edges(&self, x: usize, y: usize) -> f64 {
 
         let x_multiplier = if self.edges_use_x {
             let x_float = x as f64;
@@ -371,6 +377,7 @@ impl Smooth {
         x_multiplier * y_multiplier
     }
 }
+
 
 
 /// Thermal Erosion modifier

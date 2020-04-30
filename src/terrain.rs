@@ -189,6 +189,7 @@ impl Terrain {
         self.modifiers.push(match get!(params, "type") {
             "THERMAL" => Box::new(mods::ThermalErosion::new(params)?),
             "INVERT" => Box::new(mods::Invert::new(params)?),
+            "SMOOTH" => Box::new(mods::Smooth::new(params)?),
 
             _ => Box::new(mods::Empty::new(params)?),
         });
