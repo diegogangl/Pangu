@@ -194,6 +194,7 @@ impl Terrain {
             "SMOOTH" => Box::new(mods::Smooth::new(params)?),
             "SEAMLESS" => Box::new(mods::Seamless::new(params)?),
             "WATER" => Box::new(mods::WaterErosion::new(params)?),
+            "TERRACES" => Box::new(mods::Terraces::new(params)?),
 
             _ => Box::new(mods::Empty::new(params)?),
         });

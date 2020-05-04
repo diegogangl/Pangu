@@ -106,12 +106,38 @@ pub struct Terraces {
     pub curve: Curve,
 }
 
-impl Default for Terraces {
-    fn default() -> Self {
-        Terraces {
-            enabled: false,
-            invert: false,
-            curve: Curve::new(),
+
+impl Modifier for Terraces {
+    fn is_enabled(&self) -> bool { false }
+
+    fn run(&mut self, hmap: &mut Map2D<f64>) {
+        println!("CURVE {:?}", self.curve);
+
+        for (x, y) in hmap.iter_indices() {
+            let z = hmap[x][y];
+
+            // Get indices of the nearest two points
+            let indexes = self.curve.points_near(z);
+
+            // If some control points are missing get the output value
+            // of the nearest control point and return. This can
+            // happen when value < lowest_point or value > highest_point
+            if indexes.0 == indexes.1 {
+                hmap[x][y] = self.curve.point(indexes.1);
+            } else {
+                // Get values and calculate alpha parameter for lerping
+                let mut input_0 = self.curve.point(indexes.0);
+                let mut input_1 = self.curve.point(indexes.1);
+                let mut alpha = (z - input_0) / (input_1 - input_0);
+
+                if self.invert {
+                    alpha = 1.0 - alpha;
+                    std::mem::swap(&mut input_0, &mut input_1);
+                }
+
+                hmap[x][y] = math::lerp(input_1, input_0, alpha.powi(2));
+            }
+
         }
     }
 }
@@ -119,13 +145,10 @@ impl Default for Terraces {
 
 impl Terraces {
 
-    /// Return a Terrace modifier with points from list
-    ///
-    /// # Arguments
-    ///
-    /// * `points` - A list of control points. Range: [0..100]
-    /// * `height` - The terrain's height
-    pub fn from_list(points: Vec<f64>, height: f64) -> Self {
+    pub fn new(params: &PyDict) -> PyResult<Self> {
+        let height: f64 = get!(params, "height");
+        let points: Vec<f64> = get!(params, "points");
+
         debug!("Adding control points for terrace");
 
         let mut curve = Curve::new();
@@ -135,41 +158,11 @@ impl Terraces {
            curve.add_point(point);
         });
 
-        Terraces {
-            enabled: true,
-            invert: false,
+        Ok(Terraces {
+            enabled: get!(params, "enabled"),
+            invert: get!(params, "invert"),
             curve: curve,
-        }
-    }
-
-
-    /// Calculate the terrace effect
-    ///
-    /// # Arguments
-    /// * `value - A height value from the terrain
-    pub fn run(&self, value: f64) -> f64 {
-
-        // Get indices of the nearest two points
-        let indexes = self.curve.points_near(value);
-
-        // If some control points are missing get the output value
-        // of the nearest control point and return. This can
-        // happen when value < lowest_point or value > highest_point
-        if indexes.0 == indexes.1 {
-            return self.curve.point(indexes.1);
-        }
-
-        // Get values and calculate alpha parameter for lerping
-        let mut input_0 = self.curve.point(indexes.0);
-        let mut input_1 = self.curve.point(indexes.1);
-        let mut alpha = (value - input_0) / (input_1 - input_0);
-
-        if self.invert {
-            alpha = 1.0 - alpha;
-            std::mem::swap(&mut input_0, &mut input_1);
-        }
-
-        math::lerp(input_1, input_0, alpha.powi(2))
+        })
     }
 }
 
