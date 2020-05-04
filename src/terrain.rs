@@ -10,6 +10,7 @@ extern crate test;
 
 use super::map::Map2D;
 use super::types;
+use super::math;
 use super::modifiers as mods;
 use std::cmp::max;
 
@@ -390,6 +391,16 @@ impl Terrain {
             }
 
             hmap[x][y] = z
+        }
+
+        // Normalize
+        for (x, y) in hmap.iter_indices() {
+            hmap[x][y] = math::map_on_zero(
+                hmap[x][y],
+                heights_min,
+                heights_max,
+                self.height,
+            );
         }
 
         // Run all modifiers
