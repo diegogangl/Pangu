@@ -36,7 +36,7 @@ pub trait Modifier {
     /// # Arguments
     ///
     /// * `hmap` - Reference to the heightmap
-    fn run(&self, hmap: &mut Map2D<f64>);
+    fn run(&mut self, hmap: &mut Map2D<f64>);
 }
 
 
@@ -63,7 +63,7 @@ impl Modifier for Invert {
         self.enabled
     }
 
-    fn run(&self, hmap: &mut Map2D<f64>) {
+    fn run(&mut self, hmap: &mut Map2D<f64>) {
         for (x, y) in hmap.iter_indices() {
             hmap[x][y] *= -1.0;
         }
@@ -85,7 +85,7 @@ impl Empty {
 
 impl Modifier for Empty {
     fn is_enabled(&self) -> bool { false }
-    fn run(&self, _hmap: &mut Map2D<f64>) {}
+    fn run(&mut self, _hmap: &mut Map2D<f64>) {}
 }
 
 
@@ -233,7 +233,7 @@ impl Modifier for Smooth {
         self.enabled
     }
 
-    fn run(&self, hmap: &mut Map2D<f64>) {
+    fn run(&mut self, hmap: &mut Map2D<f64>) {
 
         for (x, y) in hmap.iter_indices() {
             hmap[x][y] *= match self.style {
@@ -415,7 +415,7 @@ impl Modifier for ThermalErosion {
         self.enabled
     }
 
-    fn run(&self, hmap: &mut Map2D<f64>) {
+    fn run(&mut self, hmap: &mut Map2D<f64>) {
         for _ in 0..self.iterations {
             for (x, y) in hmap.iter_indices() {
                 // Maximum slope found
@@ -597,7 +597,77 @@ pub struct WaterErosion {
 }
 
 
+
+impl Modifier for WaterErosion {
+    fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
+    fn run(&mut self, hmap: &mut Map2D<f64>) {
+        debug!("Starting Water Erosion Simulation");
+        debug!("Iterations: {:?}", self.iterations);
+        debug!("Rain Rate: {:?}", self.rain_rate);
+        debug!("Evaporation: {:?}", self.evaporation);
+        debug!("Soil Capacity: {:?}", self.soil_capacity);
+
+        for time in 0..self.iterations {
+            self.rain(time as u8);
+            self.add_springs_water();
+            self.flow(hmap);
+            self.erosion(hmap);
+            self.sediment_transport();
+            self.evaporate();
+        }
+    }
+}
+
+
+
 impl WaterErosion {
+    pub fn new(params: &PyDict) -> PyResult<Self> {
+        let rows: usize = get!(params, "rows");
+        let columns: usize = get!(params, "columns");
+        let springs: Vec<&PyDict> = get!(params, "springs");
+        let capacity: usize = rows * columns;
+
+        let mut water = WaterErosion {
+            enabled: get!(params, "enabled"),
+            iterations: get!(params, "iterations"),
+            evaporation: get!(params, "evaporation"),
+            rain_rate: get!(params, "rain_rate"),
+            soil_capacity: get!(params, "soil_capacity"),
+            water: Map2D::with_size(columns, rows, 0.0),
+            sediment: Map2D::with_size(columns, rows, 0.0),
+            sediment_tmp: Map2D::with_size(columns, rows, 0.0),
+            flux: Map2D::with_size(columns, rows, Outflow::default()),
+            velocity: Map2D::with_size(columns, rows, Velocity::default()),
+            size: (capacity as f64).sqrt() as u32,
+            springs: vec![Spring::default(); 0],
+        };
+
+        let _ = water.add_springs(springs);
+        Ok(water)
+    }
+
+
+    /// Add Springs from the springs list
+    ///
+    /// # Arguments
+    ///
+    /// * `springs` - Vector of dictionaries with settings
+    fn add_springs(&mut self, springs: Vec<&PyDict>) -> PyResult<()> {
+        for spring in springs {
+            self.springs.push(Spring {
+                x: get!(spring, "x"),
+                y: get!(spring, "y"),
+                radius: get!(spring, "radius"),
+                amount: get!(spring, "amount"),
+            })
+        };
+
+        Ok(())
+    }
+
 
     /// Rain step
     ///
@@ -992,56 +1062,6 @@ impl WaterErosion {
                 }
         }
     }
-
-
-    /// Constructor
-    ///
-    /// # Arguments
-    ///
-    /// * `capacity` - How much memory to allocate for each map
-    pub fn with_size(rows: usize, columns: usize) -> Self {
-        let capacity = (rows * columns) as usize;
-
-        WaterErosion {
-            enabled: false,
-            iterations: 20,
-            evaporation: 0.00005,
-            rain_rate: 1.0 / 16.0,
-            soil_capacity: 0.1,
-            water: Map2D::with_size(columns, rows, 0.0),
-            sediment: Map2D::with_size(columns, rows, 0.0),
-            sediment_tmp: Map2D::with_size(columns, rows, 0.0),
-            flux: Map2D::with_size(columns, rows, Outflow::default()),
-            velocity: Map2D::with_size(columns, rows, Velocity::default()),
-            size: (capacity as f64).sqrt() as u32,
-            springs: vec![Spring::default(); 0],
-        }
-
-    }
-
-
-    /// Run the Water Erosion simulation
-    ///
-    /// # Arguments
-    ///
-    /// * `heights` - The heightmap
-    pub fn run(&mut self, heights: &mut Map2D<f64>) {
-
-        debug!("Starting Water Erosion Simulation");
-        debug!("Iterations: {:?}", self.iterations);
-        debug!("Rain Rate: {:?}", self.rain_rate);
-        debug!("Evaporation: {:?}", self.evaporation);
-        debug!("Soil Capacity: {:?}", self.soil_capacity);
-
-        for time in 0..self.iterations {
-            self.rain(time as u8);
-            self.add_springs_water();
-            self.flow(heights);
-            self.erosion(heights);
-            self.sediment_transport();
-            self.evaporate();
-        }
-   }
 }
 
 
@@ -1078,7 +1098,7 @@ impl Modifier for Seamless {
         self.enabled
     }
 
-    fn run(&self, hmap: &mut Map2D<f64>) {
+    fn run(&mut self, hmap: &mut Map2D<f64>) {
         let height = hmap.height();
         let width = hmap.width();
 

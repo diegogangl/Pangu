@@ -193,6 +193,7 @@ impl Terrain {
             "INVERT" => Box::new(mods::Invert::new(params)?),
             "SMOOTH" => Box::new(mods::Smooth::new(params)?),
             "SEAMLESS" => Box::new(mods::Seamless::new(params)?),
+            "WATER" => Box::new(mods::WaterErosion::new(params)?),
 
             _ => Box::new(mods::Empty::new(params)?),
         });
@@ -391,7 +392,7 @@ impl Terrain {
         }
 
         // Run all modifiers
-        for modifier in &self.modifiers {
+        for modifier in &mut self.modifiers {
             modifier.run(&mut hmap);
         }
 
