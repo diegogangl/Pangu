@@ -111,8 +111,6 @@ impl Modifier for Terraces {
     fn is_enabled(&self) -> bool { false }
 
     fn run(&mut self, hmap: &mut Map2D<f64>) {
-        println!("CURVE {:?}", self.curve);
-
         for (x, y) in hmap.iter_indices() {
             let z = hmap[x][y];
 
