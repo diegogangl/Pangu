@@ -1,3 +1,5 @@
+use super::get;
+
 use super::math;
 use super::curve::Curve;
 use super::map::{Map2D, neighbors};
@@ -7,22 +9,6 @@ use rand::SeedableRng;
 
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-
-/// Macro to extract values from a Python dictionary as
-/// rust types.
-///
-/// # Arguments
-///
-/// * `params` - The parameters dictionary
-/// * `key` - The key to look for in the dictionary
-macro_rules! get {
-    ($params:expr, $key:expr) => {
-        match $params.get_item($key) {
-            Some(v) => v.extract()?,
-            None => panic!("Missing key {}!", $key),
-        }
-    };
-}
 
 
 /// Common interface for modifiers

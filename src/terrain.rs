@@ -8,6 +8,7 @@ use pyo3::types::PyDict;
 extern crate noise;
 extern crate test;
 
+use super::get;
 use super::map::Map2D;
 use super::types;
 use super::math;
@@ -17,23 +18,6 @@ use std::cmp::max;
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
 pub type Heightmap = Vec<f64>;
-
-
-/// Macro to extract values from a Python dictionary as
-/// rust types.
-///
-/// # Arguments
-///
-/// * `params` - The parameters dictionary
-/// * `key` - The key to look for in the dictionary
-macro_rules! get {
-    ($params:expr, $key:expr) => {
-        match $params.get_item($key) {
-            Some(v) => v.extract()?,
-            None => panic!("Missing key {}!", $key),
-        }
-    };
-}
 
 
 /// Representation of a terrain

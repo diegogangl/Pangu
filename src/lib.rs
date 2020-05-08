@@ -4,6 +4,8 @@ extern crate simplelog;
 
 use simplelog::*;
 
+#[macro_use]
+mod utils;
 mod math;
 mod curve;
 mod terrain;
