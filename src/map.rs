@@ -154,8 +154,13 @@ impl Map2D<f64>
             self.contents[i] = bottom + (self.contents[i] - self.min)
                                * (top - bottom)
                                / (self.max - self.min);
-        }
+        };
+
+        self.max = top;
+        self.min = bottom;
     }
+
+
 }
 
 
