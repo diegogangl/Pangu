@@ -11,7 +11,6 @@ extern crate test;
 use super::get;
 use super::map::Map2D;
 use super::types;
-use super::math;
 use super::modifiers as mods;
 use std::cmp::max;
 
