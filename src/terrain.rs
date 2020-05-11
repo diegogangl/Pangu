@@ -11,8 +11,17 @@ extern crate test;
 use super::get;
 use super::map::Map2D;
 use super::types;
-use super::modifiers as mods;
 use std::cmp::max;
+
+use super::modifiers::Modifier;
+use super::modifiers::empty::Empty;
+use super::modifiers::invert::Invert;
+use super::modifiers::seamless::Seamless;
+use super::modifiers::terraces::Terraces;
+use super::modifiers::smooth::Smooth;
+use super::modifiers::thermal::ThermalErosion;
+use super::modifiers::water::WaterErosion;
+
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
@@ -89,7 +98,7 @@ pub struct Terrain {
     /// and transformed into an enum value internally.
     terrain_type: Box<dyn types::TerrainType>,
 
-    modifiers: Vec<Box<dyn mods::Modifier>>,
+    modifiers: Vec<Box<dyn Modifier>>,
 }
 
 
@@ -173,14 +182,14 @@ impl Terrain {
         debug!("Pushing modifier with params: {:?}", params);
 
         self.modifiers.push(match get!(params, "type") {
-            "THERMAL" => Box::new(mods::ThermalErosion::new(params)?),
-            "INVERT" => Box::new(mods::Invert::new(params)?),
-            "SMOOTH" => Box::new(mods::Smooth::new(params)?),
-            "SEAMLESS" => Box::new(mods::Seamless::new(params)?),
-            "WATER" => Box::new(mods::WaterErosion::new(params)?),
-            "TERRACES" => Box::new(mods::Terraces::new(params)?),
+            "THERMAL" => Box::new(ThermalErosion::new(params)?),
+            "INVERT" => Box::new(Invert::new(params)?),
+            "SMOOTH" => Box::new(Smooth::new(params)?),
+            "SEAMLESS" => Box::new(Seamless::new(params)?),
+            "WATER" => Box::new(WaterErosion::new(params)?),
+            "TERRACES" => Box::new(Terraces::new(params)?),
 
-            _ => Box::new(mods::Empty::new(params)?),
+            _ => Box::new(Empty::new(params)?),
         });
 
         Ok(())
