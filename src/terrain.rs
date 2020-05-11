@@ -348,10 +348,6 @@ impl Terrain {
         let columns = self.columns;
         let rows = self.rows;
 
-        // Keep track of height range for normalization
-        let mut heights_min = 0.0;
-        let mut heights_max = 1.0;
-
         // Allocation
         let capacity = (columns * rows) as usize;
         let mut hmap = Map2D::with_size(columns as usize, rows as usize, 0.0);
@@ -366,26 +362,19 @@ impl Terrain {
             let z = self.terrain_type.height_at(co);
 
             // Keep track of min/max for normalization
-            if z > heights_max {
-                heights_max = z;
+            if z > hmap.max {
+                hmap.max = z;
             }
 
-            if z < heights_min {
-                heights_min = z;
+            if z < hmap.min {
+                hmap.min = z;
             }
 
             hmap[x][y] = z
         }
 
         // Normalize
-        for (x, y) in hmap.iter_indices() {
-            hmap[x][y] = math::map_on_zero(
-                hmap[x][y],
-                heights_min,
-                heights_max,
-                self.height,
-            );
-        }
+        hmap.normalize(0.0, self.height);
 
         // Run all modifiers
         for modifier in &mut self.modifiers {
