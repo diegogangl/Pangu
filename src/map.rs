@@ -138,6 +138,27 @@ where T: std::fmt::Debug + std::clone::Clone + Default {
 }
 
 
+impl Map2D<f64>
+{
+    /// Normalize the values in the map
+    ///
+    /// Values will fall in the range [bottom...top]
+    ///
+    /// # Arguments
+    ///
+    /// * `top` - New highest value
+    /// * `bottom` - New lowest value
+    pub fn normalize(&mut self, bottom: f64, top: f64) {
+
+        for i in 0..self.contents.len() {
+            self.contents[i] = bottom + (self.contents[i] - self.min)
+                               * (top - bottom)
+                               / (self.max - self.min);
+        }
+    }
+}
+
+
 impl<T> Map2D<T>
 where T: std::clone::Clone + Default
 {
