@@ -173,6 +173,12 @@ where T: std::clone::Clone
     }
 
 
+    // Return the size for this map
+    pub fn allocated(&self) -> usize {
+        self.contents.len()
+    }
+
+
     /// Add an entire row to the map
     ///
     /// # Arguments
