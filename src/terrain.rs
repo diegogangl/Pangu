@@ -187,6 +187,14 @@ impl Terrain {
     }
 
 
+    /// Return a heightmap as a flat vector
+    ///
+    /// Values will be in the range [0...1]
+    pub fn heightmap(&self) -> Vec<f64> {
+        self.hmap.normalized_vec(0.0, 1.0)
+    }
+
+
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
     pub fn build_mesh(&mut self) -> (Faces, Vertices) {
