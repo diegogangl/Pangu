@@ -60,7 +60,7 @@ pub mod neighbors {
 #[derive(Clone)]
 pub struct Map2D<T> {
     // The vector containing the elements
-    contents: Vec<T>,
+    pub contents: Vec<T>,
 
     // Width of each row
     width: usize,
