@@ -161,6 +161,25 @@ impl Map2D<f64>
     }
 
 
+    /// Return a normalized map
+    ///
+    /// Values will fall in the range [bottom...top]
+    ///
+    /// # Arguments
+    ///
+    /// * `top` - New highest value
+    /// * `bottom` - New lowest value
+    pub fn normalized_vec(&self, bottom: f64, top: f64) -> Vec<f64> {
+        let mut normalized = self.contents.clone();
+
+        for i in 0..normalized.len() {
+            normalized[i] = bottom + (normalized[i] - self.min)
+                               * (top - bottom)
+                               / (self.max - self.min);
+        };
+
+        normalized
+    }
 }
 
 
