@@ -67,13 +67,20 @@ impl Modifier for Smooth {
 
     fn run(&mut self, hmap: &mut Map2D<f64>) {
 
-        for (x, y) in hmap.iter_indices() {
-            hmap[x][y] *= match self.style {
-                SmoothStyle::LINEAR => self.linear(x, y),
-                SmoothStyle::RADIAL => self.radial(x, y),
-                SmoothStyle::EDGES => self.from_edges(x, y),
-            }
+        match self.style {
+            SmoothStyle::LINEAR => for (x, y) in hmap.iter_indices() {
+                                        hmap[x][y] *= self.linear(x, y);
+                                   },
+
+            SmoothStyle::RADIAL => for (x, y) in hmap.iter_indices() {
+                                        hmap[x][y] *= self.radial(x, y);
+                                   },
+
+            SmoothStyle::EDGES => for (x, y) in hmap.iter_indices() {
+                                        hmap[x][y] *=  self.from_edges(x, y);
+                                   },
         }
+
     }
 }
 
