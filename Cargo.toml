@@ -15,6 +15,8 @@ crate-type = ["cdylib"]
 noise = "0.6.0"
 simplelog = "0.7.5"
 rand = "0.7"
+resize = "0.4.0"
+
 
 [dependencies.log]
 version="0.4.8"
