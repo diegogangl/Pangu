@@ -64,11 +64,17 @@ pub struct Map2D<T> {
 
     // Width of each row
     width: usize,
+
+    // The highest value in this map
+    pub max: T,
+
+    // The lowest value in this map
+    pub min: T,
 }
 
 
 impl<T> Index<usize> for Map2D<T>
-where T: std::clone::Clone
+where T: std::clone::Clone + Default
 {
     type Output = [T];
 
@@ -93,7 +99,7 @@ where T: std::clone::Clone
 
 
 impl<T> IndexMut<usize> for Map2D<T>
-where T: std::clone::Clone
+where T: std::clone::Clone + Default
 {
     /// Mutable index implementation
     ///
@@ -108,7 +114,7 @@ where T: std::clone::Clone
 
 
 impl<T> fmt::Debug for Map2D<T>
-where T: std::fmt::Debug + std::clone::Clone {
+where T: std::fmt::Debug + std::clone::Clone + Default {
     /// Debug format implementation
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -133,13 +139,15 @@ where T: std::fmt::Debug + std::clone::Clone {
 
 
 impl<T> Map2D<T>
-where T: std::clone::Clone
+where T: std::clone::Clone + Default
 {
     /// Return a new Map2D with no size or elements
     pub fn new() -> Self {
         Map2D {
             contents: Vec::new(),
             width: 0,
+            max: T::default(),
+            min: T::default(),
         }
     }
 
@@ -157,6 +165,8 @@ where T: std::clone::Clone
         Map2D {
             contents: vec![initial; width * height],
             width: width,
+            max: T::default(),
+            min: T::default(),
         }
     }
 
