@@ -21,6 +21,7 @@ use super::modifiers::terraces::Terraces;
 use super::modifiers::smooth::Smooth;
 use super::modifiers::thermal::ThermalErosion;
 use super::modifiers::water::WaterErosion;
+use super::modifiers::pixelate::Pixelate;
 
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -188,6 +189,7 @@ impl Terrain {
             "SEAMLESS" => Box::new(Seamless::new(params)?),
             "WATER" => Box::new(WaterErosion::new(params)?),
             "TERRACES" => Box::new(Terraces::new(params)?),
+            "PIXELATE" => Box::new(Pixelate::new(params)?),
 
             _ => Box::new(Empty::new(params)?),
         });

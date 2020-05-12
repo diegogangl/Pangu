@@ -7,6 +7,7 @@ pub mod terraces;
 pub mod smooth;
 pub mod thermal;
 pub mod water;
+pub mod pixelate;
 
 
 /// Common interface for modifiers
