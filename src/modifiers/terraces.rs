@@ -22,6 +22,9 @@ pub struct Terraces {
 
     /// Control points for the terraces
     pub curve: Curve,
+
+    /// Slope for terraces
+    pub slopes: Vec<i32>,
 }
 
 
@@ -45,14 +48,16 @@ impl Modifier for Terraces {
                 let mut input_0 = self.curve.point(indexes.0);
                 let mut input_1 = self.curve.point(indexes.1);
                 let mut alpha = (z - input_0) / (input_1 - input_0);
+                let slope = self.slopes[indexes.1];
 
                 if self.invert {
                     alpha = 1.0 - alpha;
                     std::mem::swap(&mut input_0, &mut input_1);
                 }
 
-                hmap[x][y] = math::lerp(input_1, input_0, alpha.powi(2));
+                hmap[x][y] = math::lerp(input_1, input_0, alpha.powi(slope));
             }
+
 
         }
     }
@@ -64,6 +69,7 @@ impl Terraces {
     pub fn new(params: &PyDict) -> PyResult<Self> {
         let height: f64 = get!(params, "height");
         let points: Vec<f64> = get!(params, "points");
+        let slopes: Vec<i32> = get!(params, "slopes");
 
         debug!("Adding control points for terrace");
 
@@ -78,6 +84,7 @@ impl Terraces {
             enabled: get!(params, "enabled"),
             invert: get!(params, "invert"),
             curve: curve,
+            slopes: slopes,
         })
     }
 }
