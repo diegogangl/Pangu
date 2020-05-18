@@ -3,6 +3,7 @@
 use pyo3::prelude::*;
 use pyo3::class::*;
 use pyo3::types::PyDict;
+use pyo3::types::PyList;
 
 /// Terrain generation core
 extern crate noise;
@@ -27,6 +28,115 @@ use super::modifiers::pixelate::Pixelate;
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<(f64, f64, f64)>;
 pub type Heightmap = Vec<f64>;
+
+
+/// Representation of a terrain generated from an object
+#[pyclass]
+pub struct TerrainFromObject {
+
+    /// The number of rows to use in the mesh grid
+    rows: usize,
+
+    /// The number of columns to use in the mesh grid
+    columns: usize,
+
+    /// Original map from object
+    source_map: Map2D<f64>,
+
+    // Modifiers
+    modifiers: Vec<Box<dyn Modifier>>,
+}
+
+
+/// Implement public functions that can be called from Python
+#[pymethods]
+impl TerrainFromObject {
+
+    /// Constructor
+    #[new]
+    fn new(rows: usize, columns: usize) -> Self {
+        Self {
+            source_map: Map2D::new(),
+            modifiers: vec![],
+            rows: rows,
+            columns: columns,
+        }
+    }
+
+
+    /// Push a new modifier into the modifiers vector
+    ///
+    /// # Arguments
+    ///
+    /// * `params`: Dictionary with type of terrain and settings
+    ///
+    fn add_modifier(&mut self, params: &PyDict) -> PyResult<()> {
+
+        debug!("Pushing modifier with params: {:?}", params);
+
+        self.modifiers.push(match get!(params, "type") {
+            "THERMAL" => Box::new(ThermalErosion::new(params)?),
+            "INVERT" => Box::new(Invert::new(params)?),
+            "SMOOTH" => Box::new(Smooth::new(params)?),
+            "SEAMLESS" => Box::new(Seamless::new(params)?),
+            "WATER" => Box::new(WaterErosion::new(params)?),
+            "TERRACES" => Box::new(Terraces::new(params)?),
+            "PIXELATE" => Box::new(Pixelate::new(params)?),
+
+            _ => Box::new(Empty::new(params)?),
+        });
+
+        Ok(())
+    }
+
+
+
+    /// Set source heightmap
+    ///
+    /// # Arguments
+    ///
+    /// * `heights`: List of heights in order
+    ///
+    #[setter(source_map)]
+    fn set_source_heights(&mut self, heights: &PyList) -> PyResult<()> {
+
+        self.source_map = Map2D::with_size(self.columns, self.rows, 0.0);
+        println!("ALLOCATED  {:?}", self.source_map.allocated());
+
+        for i in 0..self.source_map.allocated() {
+            let z: f64 = heights.get_item(i as isize).extract()?;
+            println!("ADDED {:?} {:?}", i , z);
+            self.source_map.contents[i] = z;
+
+            if z > self.source_map.max {
+                self.source_map.max = z;
+            }
+
+            if z < self.source_map.min {
+                self.source_map.min = z;
+            }
+
+        }
+
+        Ok(())
+    }
+
+
+    /// Return the resulting heightmap as a flat vector
+    pub fn get_heights(&mut self) -> Vec<f64> {
+
+        let mut hmap: Map2D<f64> = self.source_map.clone();
+
+        // Run all modifiers
+        for modifier in &mut self.modifiers {
+            modifier.run(&mut hmap);
+        }
+
+        hmap.contents
+    }
+}
+
+
 
 
 /// Representation of a terrain

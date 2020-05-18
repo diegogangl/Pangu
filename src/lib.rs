@@ -29,6 +29,7 @@ fn pangu(_py: Python, m: &PyModule) -> PyResult<()> {
                              TerminalMode::Mixed);
 
     m.add_class::<terrain::Terrain>()?;
+    m.add_class::<terrain::TerrainFromObject>()?;
 
     Ok(())
 }
