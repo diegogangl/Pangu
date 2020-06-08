@@ -374,6 +374,35 @@ impl Terrain {
     }
 
 
+    /// Set heightmap
+    ///
+    /// # Arguments
+    ///
+    /// * `heights`: List of heights in order
+    ///
+    fn set_hmap(&mut self, heights: &PyList) -> PyResult<()> {
+
+        self.hmap = Map2D::with_size(self.columns as usize,
+                                     self.rows as usize, 0.0);
+
+        for i in 0..self.hmap.allocated() {
+            let z: f64 = heights.get_item(i as isize).extract()?;
+            self.hmap.contents[i] = z;
+
+            if z > self.hmap.max {
+                self.hmap.max = z;
+            }
+
+            if z < self.hmap.min {
+                self.hmap.min = z;
+            }
+
+        }
+
+        Ok(())
+    }
+
+
     /// Generate list of vertices for the terrain mesh
     ///
     /// Returns the 3D coordinates for the mesh as a vector
