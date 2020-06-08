@@ -308,9 +308,20 @@ impl Terrain {
         Ok(())
     }
 
+
     /// Clear the modifiers vector
     fn clear_modifiers(&mut self) {
         self.modifiers.clear()
+    }
+
+
+    /// Apply all modifiers to terrain
+    fn apply_modifiers(&mut self) {
+
+        for modifier in &mut self.modifiers {
+            modifier.run(&mut self.hmap);
+        }
+
     }
 
 
@@ -538,11 +549,6 @@ impl Terrain {
 
         // Normalize
         hmap.normalize(0.0, self.height);
-
-        // Run all modifiers
-        for modifier in &mut self.modifiers {
-            modifier.run(&mut hmap);
-        }
 
         hmap
     }
