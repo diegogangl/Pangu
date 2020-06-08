@@ -304,7 +304,13 @@ impl Terrain {
             _ => Box::new(Empty::new(params)?),
         });
 
+        self.modifiers.shrink_to_fit();
         Ok(())
+    }
+
+    /// Clear the modifiers vector
+    fn clear_modifiers(&mut self) {
+        self.modifiers.clear()
     }
 
 
