@@ -332,67 +332,6 @@ impl Terrain {
     }
 
 
-    /// Build a terrain mesh.
-    /// Returns a tuple of Faces and Vertices.
-    pub fn build_mesh(&mut self) -> (Faces, Vertices) {
-
-        (self.faces(), self.vertices())
-    }
-}
-
-
-/// Implement Python's magic functions
-#[pyproto]
-impl PyObjectProtocol for Terrain {
-    /// Implementation for Python's __repr__
-    ///
-    /// This shows up when printing the terrain object
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(
-            format!("Terrain with seed: {}", self.seed)
-        )
-    }
-}
-
-
-/// Implement private functions
-impl Terrain {
-
-    /// Setup internal variables for the terrain.
-    ///
-    /// This must be called before generating a terrain for the first time,
-    /// and after all the properties have been set.
-    fn setup(&mut self) {
-        let columns = f64::from(self.columns);
-        let rows = f64::from(self.rows);
-
-        // Calculate correct boundaries for the noise. Boundaries are
-        // calculated fromt he ratio between rows and columns as well as
-        // the scale setting.
-        let limit_x = if columns > rows {
-            self.realworld_scale
-        } else {
-            self.realworld_scale * (columns / rows)
-        };
-
-
-        let limit_y = if columns > rows {
-            self.realworld_scale / (columns / rows)
-        } else {
-            self.realworld_scale
-        };
-
-        debug!("Bound limits are x: {:?}, y: {:?}", limit_x, limit_y);
-        self.limits_xy = (limit_x, limit_y);
-
-
-        // Calculate noise coordinates steps. These are used to fit
-        // coordinates inside the boundaries.
-        self.steps = (limit_x / columns, limit_y / rows);
-        debug!("Calculated steps are: {:?}", self.steps);
-    }
-
-
     /// Generate list of faces for the terrain mesh
     ///
     /// Returns the a vector of tuples containing the indices
@@ -478,6 +417,59 @@ impl Terrain {
         }
 
         verts
+    }
+}
+
+
+/// Implement Python's magic functions
+#[pyproto]
+impl PyObjectProtocol for Terrain {
+    /// Implementation for Python's __repr__
+    ///
+    /// This shows up when printing the terrain object
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(
+            format!("Terrain with seed: {}", self.seed)
+        )
+    }
+}
+
+
+/// Implement private functions
+impl Terrain {
+
+    /// Setup internal variables for the terrain.
+    ///
+    /// This must be called before generating a terrain for the first time,
+    /// and after all the properties have been set.
+    fn setup(&mut self) {
+        let columns = f64::from(self.columns);
+        let rows = f64::from(self.rows);
+
+        // Calculate correct boundaries for the noise. Boundaries are
+        // calculated fromt he ratio between rows and columns as well as
+        // the scale setting.
+        let limit_x = if columns > rows {
+            self.realworld_scale
+        } else {
+            self.realworld_scale * (columns / rows)
+        };
+
+
+        let limit_y = if columns > rows {
+            self.realworld_scale / (columns / rows)
+        } else {
+            self.realworld_scale
+        };
+
+        debug!("Bound limits are x: {:?}, y: {:?}", limit_x, limit_y);
+        self.limits_xy = (limit_x, limit_y);
+
+
+        // Calculate noise coordinates steps. These are used to fit
+        // coordinates inside the boundaries.
+        self.steps = (limit_x / columns, limit_y / rows);
+        debug!("Calculated steps are: {:?}", self.steps);
     }
 
 
