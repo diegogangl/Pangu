@@ -322,11 +322,19 @@ impl Terrain {
     }
 
 
+    /// Generate the heightmap
+    ///
+    /// This function must be called before getting verts, faces or
+    /// the heightmap.
+    pub fn generate(&mut self) {
+        self.setup();
+        self.hmap = self.heights();
+    }
+
+
     /// Build a terrain mesh.
     /// Returns a tuple of Faces and Vertices.
     pub fn build_mesh(&mut self) -> (Faces, Vertices) {
-        self.setup();
-        self.hmap = self.heights();
 
         (self.faces(), self.vertices())
     }
