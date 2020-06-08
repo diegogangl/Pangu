@@ -576,22 +576,28 @@ impl Terrain {
     /// * `y`: Value for y axis
     fn coords_for_noise(&self, x: f64, y: f64) -> [f64; 2] {
 
-        let x2 = if self.rotation != 0.0 {
-            let rotated = x * self.rotation.cos() - y * self.rotation.sin();
-            self.steps.0 * (rotated + self.offset.0)
-        } else {
-            self.steps.0 * (x + self.offset.0)
-        };
+        if self.rotation != 0.0 {
+            let cx: f64 = (self.rows / 2).into();
+            let cy: f64 = (self.columns / 2).into();
 
-        let y2 = if self.rotation != 0.0 {
-            let rotated = x * self.rotation.sin() + y * self.rotation.cos();
-            self.steps.1 * (rotated + self.offset.1)
-        } else {
-            self.steps.1 * (y + self.offset.1)
-        };
+            let theta_cos = self.rotation.cos();
+            let theta_sin = self.rotation.sin();
 
-        [x2, y2]
+            let mut rotated_x = (x - cx) * theta_cos - (y - cy) * theta_sin;
+            let mut rotated_y = (x - cx) * theta_sin + (y - cy) * theta_cos;
+
+            rotated_x += self.offset.0;
+            rotated_y += self.offset.1;
+
+            [self.steps.0 * rotated_x, self.steps.1 * rotated_y]
+
+        } else {
+
+            [self.steps.0 * (x + self.offset.0),
+            self.steps.1 * (y + self.offset.1)]
+        }
     }
+
 }
 
 
