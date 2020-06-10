@@ -398,19 +398,20 @@ impl Terrain {
     ///
     fn set_hmap(&mut self, heights: &PyList) -> PyResult<()> {
 
-        self.hmap = Map2D::with_size(self.columns as usize,
-                                     self.rows as usize, 0.0);
+        self.setup();
+        self.base_hmap = Map2D::with_size(self.columns as usize,
+                                          self.rows as usize, 0.0);
 
-        for i in 0..self.hmap.allocated() {
+        for i in 0..self.base_hmap.allocated() {
             let z: f64 = heights.get_item(i as isize).extract()?;
-            self.hmap.contents[i] = z;
+            self.base_hmap.contents[i] = z;
 
             if z > self.hmap.max {
-                self.hmap.max = z;
+                self.base_hmap.max = z;
             }
 
             if z < self.hmap.min {
-                self.hmap.min = z;
+                self.base_hmap.min = z;
             }
 
         }
