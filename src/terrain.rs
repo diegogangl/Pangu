@@ -403,7 +403,9 @@ impl Terrain {
                                           self.rows as usize, 0.0);
 
         for i in 0..self.base_hmap.allocated() {
-            let z: f64 = heights.get_item(i as isize).extract()?;
+            let mut z: f64 = heights.get_item(i as isize).extract()?;
+            z *= self.height;
+
             self.base_hmap.contents[i] = z;
 
             if z > self.hmap.max {
@@ -413,7 +415,6 @@ impl Terrain {
             if z < self.hmap.min {
                 self.base_hmap.min = z;
             }
-
         }
 
         Ok(())
