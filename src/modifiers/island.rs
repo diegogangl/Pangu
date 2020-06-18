@@ -21,9 +21,6 @@ pub struct Island {
     /// Enable the modifier
     pub enabled: bool,
 
-    /// Invert Slope
-    pub invert: bool,
-
     /// Perlin noises
     perlin: Vec<Perlin>,
 
@@ -99,7 +96,6 @@ impl Island {
 
         Ok(Island {
             enabled: get!(params, "enabled"),
-            invert: get!(params, "invert"),
             mask: Map2D::with_size(rows as usize, columns as usize, 0.0),
             center: [center_x, center_y],
             max_dist: max_dist,
