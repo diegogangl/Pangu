@@ -21,6 +21,13 @@ pub struct Island {
     /// Enable the modifier
     pub enabled: bool,
 
+    pub val_a: f64,
+    pub val_b: f64,
+    pub val_c: f64,
+    pub val_d: f64,
+    pub val_e: f64,
+    pub val_f: f64,
+
     /// Perlin noises
     perlin: Vec<Perlin>,
 
@@ -45,33 +52,38 @@ impl Modifier for Island {
         for (x, y) in hmap.iter_indices() {
 
             let mut noise = 0.0;
-            let mut current_point = [x as f64 * 0.015, y as f64 * 0.015];
+            let mut current_point = [x as f64 * self.val_d / 100.0, y as f64 * self.val_d / 100.0];
             let mut amplitude = 1.0;
 
+
             for i in 0..5 {
+                let warp = self.perlin[1].get(current_point) / 10.0;
                 noise += self.perlin[i].get(current_point) * amplitude;
-                current_point = [current_point[0] * 3.0,
-                                 current_point[1] * 3.0];
+                current_point = [current_point[0] * self.val_f + warp,
+                                 current_point[1] * self.val_f + warp];
 
-                amplitude /= 5.0;
+                amplitude /= self.val_e;
             }
-
-            // Adjust resulting noise
-            noise = math::bright_contrast(noise, 2.0, 1.0);
 
             // Generate radial gradient
             let radial = {
                 let dist = math::distance(self.center, [x as f64, y as f64]);
                 let normalized = (dist.sqrt() / self.max_dist.sqrt()).min(1.0);
 
-                math::lerp(0.0, 1.0, normalized.powi(5))
+                math::lerp(0.0, 1.0, normalized.powf(self.val_c))
             };
 
+
+            // Adjust resulting noise
+            noise = math::bright_contrast(noise, self.val_a, self.val_b);
+
             // Substract noise from radial and apply mask
-            self.mask[x][y] = math::clamp(radial - noise, 0.0, 1.0);
+            self.mask[x][y] = math::clamp(noise, 0.0, 1.0);
             hmap[x][y] *= self.mask[x][y];
         }
     }
+
+
 }
 
 
@@ -101,6 +113,12 @@ impl Island {
             center: [center_x, center_y],
             max_dist: max_dist,
             perlin: perlin,
+            val_a: get!(params, "val_a"),
+            val_b: get!(params, "val_b"),
+            val_c: get!(params, "val_c"),
+            val_d: get!(params, "val_d"),
+            val_e: get!(params, "val_e"),
+            val_f: get!(params, "val_f"),
         })
     }
 }
