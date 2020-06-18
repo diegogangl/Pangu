@@ -8,6 +8,7 @@ pub mod smooth;
 pub mod thermal;
 pub mod water;
 pub mod pixelate;
+pub mod island;
 
 
 /// Common interface for modifiers
