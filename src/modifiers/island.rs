@@ -80,6 +80,7 @@ impl Island {
     pub fn new(params: &PyDict) -> PyResult<Self> {
         let rows: f64 = get!(params, "rows");
         let columns: f64 = get!(params, "columns");
+        let seed: u32 = get!(params, "seed");
 
         // Initialize needed values
         let center_x = rows / 2.0;
@@ -91,7 +92,7 @@ impl Island {
         let mut perlin: Vec<Perlin> = Vec::with_capacity(6);
 
         for i in 0..5 {
-            perlin.push(Perlin::new().set_seed(0 + i));
+            perlin.push(Perlin::new().set_seed(seed + i));
         }
 
         Ok(Island {
