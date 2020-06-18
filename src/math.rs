@@ -113,8 +113,8 @@ pub fn normalize(vector: &[f64]) -> [f64; 3] {
 ///
 /// # Arguments
 ///
-/// * `a - The first vector
-/// * `b - The first vector
+/// * `a` - The first vector
+/// * `b` - The first vector
 pub fn dot(a: &[f64], b: &[f64]) -> f64 {
 
     assert_eq!(a.len(), b.len());
@@ -128,3 +128,18 @@ pub fn dot(a: &[f64], b: &[f64]) -> f64 {
     product
 }
 
+
+/// Adjust brighness and contrast for a value
+///
+/// This assumes the value is in the range 0..1,
+/// brighness and contrast however can be any value.
+/// The output is clamped back to 0..1, so it works like
+/// an image editor brightness/contrast filter.
+///
+/// # Arguments
+///
+/// * `a - The first vector
+/// * `b - The first vector
+pub fn bright_contrast(source: f64, contrast: f64, brightness: f64) -> f64 {
+    clamp((source - 0.5) * contrast + 0.5 + brightness, 0.0, 1.0)
+}
