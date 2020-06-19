@@ -143,3 +143,18 @@ pub fn dot(a: &[f64], b: &[f64]) -> f64 {
 pub fn bright_contrast(source: f64, contrast: f64, brightness: f64) -> f64 {
     clamp((source - 0.5) * contrast + 0.5 + brightness, 0.0, 1.0)
 }
+
+
+/// Remap a value
+///
+/// Take a value between src.0 and src.1 and convert
+/// it so it fits between dst.0 and dst.1
+///
+/// # Arguments
+///
+/// * `src` - The original range (min and max)
+/// * `val` - The value to remap
+/// * `dst` - The target range (min and max)
+pub fn remap(src: [f64; 2], val: f64, dst: [f64; 2]) -> f64 {
+    dst[0] + (val - src[0]) * (dst[1] - dst[0]) / (src[1] - src[0])
+}
