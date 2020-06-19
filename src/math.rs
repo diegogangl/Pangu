@@ -138,8 +138,9 @@ pub fn dot(a: &[f64], b: &[f64]) -> f64 {
 ///
 /// # Arguments
 ///
-/// * `a - The first vector
-/// * `b - The first vector
+/// * `source` - The value
+/// * `contrast` - The contrast factor
+/// * `brightness` - The brightness factor
 pub fn bright_contrast(source: f64, contrast: f64, brightness: f64) -> f64 {
     clamp((source - 0.5) * contrast + 0.5 + brightness, 0.0, 1.0)
 }
