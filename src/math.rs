@@ -129,6 +129,7 @@ pub fn dot(a: &[f64], b: &[f64]) -> f64 {
 }
 
 
+#[allow(dead_code)]
 /// Adjust brighness and contrast for a value
 ///
 /// This assumes the value is in the range 0..1,
