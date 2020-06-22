@@ -35,11 +35,6 @@ impl ThermalErosion {
 }
 
 impl Modifier for ThermalErosion {
-
-    fn is_enabled(&self) -> bool {
-        self.enabled
-    }
-
     fn run(&mut self, hmap: &mut Map2D<f64>) {
         for _ in 0..self.iterations {
             for (x, y) in hmap.iter_indices() {

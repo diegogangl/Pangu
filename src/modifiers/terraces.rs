@@ -14,9 +14,6 @@ use pyo3::types::PyDict;
 /// according to the control points in the curve.
 #[derive(Clone, Debug)]
 pub struct Terraces {
-    /// Enable the modifier
-    pub enabled: bool,
-
     /// Invert Slope
     pub invert: bool,
 
@@ -29,8 +26,6 @@ pub struct Terraces {
 
 
 impl Modifier for Terraces {
-    fn is_enabled(&self) -> bool { false }
-
     fn run(&mut self, hmap: &mut Map2D<f64>) {
         for (x, y) in hmap.iter_indices() {
             let z = hmap[x][y];
@@ -81,7 +76,6 @@ impl Terraces {
         });
 
         Ok(Terraces {
-            enabled: get!(params, "enabled"),
             invert: get!(params, "invert"),
             curve: curve,
             slopes: slopes,

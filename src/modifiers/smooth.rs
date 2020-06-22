@@ -23,10 +23,6 @@ pub enum SmoothStyle {
 /// type casts.
 #[derive(Clone, Debug)]
 pub struct Smooth {
-
-    /// Enable the modifier
-    pub enabled: bool,
-
     /// Smoothing style
     pub style: SmoothStyle,
 
@@ -61,10 +57,6 @@ pub struct Smooth {
 
 
 impl Modifier for Smooth {
-    fn is_enabled(&self) -> bool {
-        self.enabled
-    }
-
     fn run(&mut self, hmap: &mut Map2D<f64>) {
 
         match self.style {
@@ -88,7 +80,6 @@ impl Modifier for Smooth {
 impl Smooth {
     pub fn new(params: &PyDict) -> PyResult<Self> {
         Ok(Smooth {
-            enabled: get!(params, "enabled"),
             radial_fac: get!(params, "radial_fac"),
             radial_size: get!(params, "radial_size"),
             linear_fac: get!(params, "linear_fac"),

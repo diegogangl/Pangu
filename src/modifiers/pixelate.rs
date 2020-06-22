@@ -10,9 +10,6 @@ use pyo3::types::PyDict;
 /// Pixelate the terrain, causing it to look "blocky" (like Minecraft)
 pub struct Pixelate {
 
-    /// Enable the modifier
-    pub enabled: bool,
-
     // Size of the blocks. This is the divider for the stride, so
     // bigger sizes mean smaller blocks.
     pub block: usize,
@@ -22,7 +19,6 @@ pub struct Pixelate {
 impl Pixelate {
     pub fn new(params: &PyDict) -> PyResult<Self> {
         Ok(Pixelate {
-            enabled: true,
             block: get!(params, "block"),
         })
     }
@@ -30,10 +26,6 @@ impl Pixelate {
 
 
 impl Modifier for Pixelate {
-    fn is_enabled(&self) -> bool {
-        self.enabled
-    }
-
     fn run(&mut self, hmap: &mut Map2D<f64>) {
         let width = hmap.width();
         let height = hmap.height();

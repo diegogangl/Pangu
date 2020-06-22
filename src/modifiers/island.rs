@@ -14,9 +14,6 @@ use pyo3::types::PyDict;
 /// generating an island in the middle.
 #[derive(Clone, Debug)]
 pub struct Island {
-    /// Enable the modifier
-    pub enabled: bool,
-
     /// Slope for the island
     pub slope: f64,
 
@@ -47,8 +44,6 @@ pub struct Island {
 
 
 impl Modifier for Island {
-    fn is_enabled(&self) -> bool { false }
-
     fn run(&mut self, hmap: &mut Map2D<f64>) {
 
         // Counting on mask and hmap having the same number of
@@ -134,7 +129,6 @@ impl Island {
 
 
         Ok(Island {
-            enabled: get!(params, "enabled"),
             mask: Map2D::with_size(rows as usize, columns as usize, 0.0),
             center: [center_x, center_y],
             max_dist: max_dist,

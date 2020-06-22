@@ -14,9 +14,6 @@ use pyo3::types::PyDict;
 #[derive(Clone, Debug)]
 pub struct Seamless {
 
-    /// Enable the modifier
-    pub enabled: bool,
-
     /// Percentage of column/rows to use to fade
     /// the seamless transition
     pub fade: f64,
@@ -27,7 +24,6 @@ pub struct Seamless {
 impl Seamless {
     pub fn new(params: &PyDict) -> PyResult<Self> {
         Ok(Seamless {
-            enabled: get!(params, "enabled"),
             fade: get!(params, "fade"),
         })
     }
@@ -35,10 +31,6 @@ impl Seamless {
 
 
 impl Modifier for Seamless {
-    fn is_enabled(&self) -> bool {
-        self.enabled
-    }
-
     fn run(&mut self, hmap: &mut Map2D<f64>) {
         let height = hmap.height();
         let width = hmap.width();

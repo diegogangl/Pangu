@@ -18,6 +18,5 @@ impl Empty {
 }
 
 impl Modifier for Empty {
-    fn is_enabled(&self) -> bool { false }
     fn run(&mut self, _hmap: &mut Map2D<f64>) {}
 }

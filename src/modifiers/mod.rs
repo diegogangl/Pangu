@@ -14,9 +14,6 @@ pub mod island;
 /// Common interface for modifiers
 pub trait Modifier {
 
-    /// Return if the modifier is enabled
-    fn is_enabled(&self) -> bool;
-
     /// Apply the modifier to the heightmap
     ///
     /// # Arguments

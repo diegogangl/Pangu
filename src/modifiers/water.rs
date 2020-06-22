@@ -109,9 +109,6 @@ impl Default for Spring {
 #[derive(Clone, Debug)]
 pub struct WaterErosion {
 
-    /// Enable the modifier
-    pub enabled: bool,
-
     /// Number of times to run the algorithm on the terrain
     pub iterations: u8,
 
@@ -147,10 +144,6 @@ pub struct WaterErosion {
 
 
 impl Modifier for WaterErosion {
-    fn is_enabled(&self) -> bool {
-        self.enabled
-    }
-
     fn run(&mut self, hmap: &mut Map2D<f64>) {
         debug!("Starting Water Erosion Simulation");
         debug!("Iterations: {:?}", self.iterations);
@@ -179,7 +172,6 @@ impl WaterErosion {
         let capacity: usize = rows * columns;
 
         let mut water = WaterErosion {
-            enabled: get!(params, "enabled"),
             iterations: get!(params, "iterations"),
             evaporation: get!(params, "evaporation"),
             rain_rate: get!(params, "rain_rate"),
