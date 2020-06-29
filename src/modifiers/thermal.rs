@@ -11,10 +11,6 @@ use pyo3::types::PyDict;
 /// a slope and piling at the bottom
 #[derive(Clone, Debug)]
 pub struct ThermalErosion {
-
-    /// Enable the modifier
-    pub enabled: bool,
-
     /// Talus angle in radians. Soil at the top of a slope whose
     /// inclination is higher than this value will be broken
     /// and moved to its lowest neighbor
@@ -27,7 +23,6 @@ pub struct ThermalErosion {
 impl ThermalErosion {
     pub fn new(params: &PyDict) -> PyResult<Self> {
         Ok(ThermalErosion {
-            enabled: get!(params, "enabled"),
             talus: get!(params, "talus"),
             iterations: get!(params, "iterations"),
         })
