@@ -27,7 +27,7 @@ use super::modifiers::island::Island;
 
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
-pub type Vertices = Vec<(f64, f64, f64)>;
+pub type Vertices = Vec<f64>;
 pub type Heightmap = Vec<f64>;
 
 
@@ -443,7 +443,7 @@ impl Terrain {
         };
 
         let capacity = (columns * rows) as usize;
-        let mut verts: Vertices = Vec::with_capacity(capacity);
+        let mut verts: Vertices = Vec::with_capacity(capacity * 3);
 
         debug!("Allocated vertices with capacity: {:?}", capacity);
 
@@ -468,7 +468,9 @@ impl Terrain {
                 let scaled_x = ((x as f64) - half_x) / scale;
                 let scaled_y = ((y as f64) - half_y) / scale;
 
-                verts.push((scaled_x, scaled_y, hmap[x][y]));
+                verts.push(scaled_x);
+                verts.push(scaled_y);
+                verts.push(hmap[x][y]);
             }
         }
 
