@@ -70,6 +70,14 @@ impl Modifier for Island {
                 math::lerp(0.0, 1.0, normalized.powf(3.0))
             };
 
+            // Second, smaller radial gradient
+            let radial2 = {
+                let max_dist2 = self.max_dist / 1.5;
+                let dist = math::distance(self.center, [x as f64, y as f64]);
+                let normalized = (dist.sqrt() / max_dist2.sqrt()).min(1.0);
+                math::lerp(0.0, 1.0, normalized.powf(3.0))
+            };
+
             // Adjust resulting noise
             noise = math::lerp(0.0, 1.0, noise);
             noise *= self.noise_intensity;
@@ -78,7 +86,7 @@ impl Modifier for Island {
             mask *= self.elevation;
             mask = mask.powf(self.slope);
 
-            self.mask[x][y] = mask;
+            self.mask[x][y] = mask * radial2;
 
             // Substract noise from radial and apply mask
             hmap[x][y] *= self.mask[x][y];
