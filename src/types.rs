@@ -1,5 +1,7 @@
 use super::math;
-use noise::{NoiseFn, Perlin, Point2, Seedable};
+use noise::{NoiseFn, Perlin, Seedable};
+
+pub type Point2<T> = [T; 2];
 
 
 /// Macro to scale a point

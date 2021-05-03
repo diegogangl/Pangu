@@ -26,7 +26,8 @@ fn pangu(_py: Python, m: &PyModule) -> PyResult<()> {
 
     let _ = TermLogger::init(LevelFilter::Debug,
                              config_builder.build(),
-                             TerminalMode::Mixed);
+                             TerminalMode::Mixed,
+                             ColorChoice::Auto);
 
     m.add_class::<terrain::Terrain>()?;
     m.add_class::<terrain::TerrainFromObject>()?;

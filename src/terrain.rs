@@ -45,7 +45,7 @@ pub struct TerrainFromObject {
     source_map: Map2D<f64>,
 
     // Modifiers
-    modifiers: Vec<Box<dyn Modifier>>,
+    modifiers: Vec<Box<dyn Modifier + Send>>,
 }
 
 
@@ -212,9 +212,9 @@ pub struct Terrain {
 
     /// Terrain type. This is passed as an int from Python,
     /// and transformed into an enum value internally.
-    terrain_type: Box<dyn types::TerrainType>,
+    terrain_type: Box<dyn types::TerrainType + Send>,
 
-    modifiers: Vec<Box<dyn Modifier>>,
+    modifiers: Vec<Box<dyn Modifier + Send>>,
 }
 
 
