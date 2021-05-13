@@ -1,11 +1,11 @@
-# select image
-FROM rustlang/rust:nightly-stretch
+FROM ubuntu:18.04
 
-# copy your source tree
+RUN apt-get update && apt-get install -y curl python3
+RUN apt-get install build-essential -y
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 COPY ./ ./
-
-RUN apt-get install -y python3
-
-# build for release
+RUN rustup default nightly
 RUN cargo build --release
-
