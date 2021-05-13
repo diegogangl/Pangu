@@ -160,3 +160,25 @@ pub fn bright_contrast(source: f64, contrast: f64, brightness: f64) -> f64 {
 pub fn remap(src: [f64; 2], val: f64, dst: [f64; 2]) -> f64 {
     dst[0] + (val - src[0]) * (dst[1] - dst[0]) / (src[1] - src[0])
 }
+
+
+/// Performs cubic interpolation between two values bound between two other
+/// values.
+///
+/// * `n0` - The value before the first value.
+/// * `n1` - The first value.
+/// * `n2` - The second value.
+/// * `n3` - The value after the second value.
+/// * `alpha` - The alpha value.
+///
+/// The alpha value should range from 0.0 to 1.0. If the alpha value is
+/// 0.0, this function returns _n1_. If the alpha value is 1.0, this
+/// function returns _n2_.
+#[inline]
+pub fn cubic(n0: f64, n1: f64, n2: f64, n3: f64, alpha: f64) -> f64
+{
+    let p = (n3 - n2) - (n0 - n1);
+    let q = (n0 - n1) - p;
+
+    p * alpha * alpha * alpha + q * alpha * alpha + (n2 - n0) * alpha + n1
+}
