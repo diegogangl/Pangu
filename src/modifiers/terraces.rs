@@ -37,11 +37,11 @@ impl Modifier for Terraces {
             // of the nearest control point and return. This can
             // happen when value < lowest_point or value > highest_point
             if indexes.0 == indexes.1 {
-                hmap[x][y] = self.curve.point(indexes.1);
+                hmap[x][y] = self.curve.point(indexes.1).input;
             } else {
                 // Get values and calculate alpha parameter for lerping
-                let mut input_0 = self.curve.point(indexes.0);
-                let mut input_1 = self.curve.point(indexes.1);
+                let mut input_0 = self.curve.point(indexes.0).input;
+                let mut input_1 = self.curve.point(indexes.1).input;
                 let mut alpha = (z - input_0) / (input_1 - input_0);
                 let slope = self.slopes[indexes.1];
 
@@ -72,7 +72,7 @@ impl Terraces {
 
         points.iter().for_each(|p| {
            let point = math::percent_to_value(*p, height);
-           curve.add_point(point);
+           curve.add_point(point, point);
         });
 
         Ok(Terraces {
