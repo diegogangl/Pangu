@@ -24,6 +24,7 @@ use super::modifiers::thermal::ThermalErosion;
 use super::modifiers::water::WaterErosion;
 use super::modifiers::pixelate::Pixelate;
 use super::modifiers::island::Island;
+use super::modifiers::remap::Remap;
 
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
@@ -84,6 +85,7 @@ impl TerrainFromObject {
             "TERRACES" => Box::new(Terraces::new(params)?),
             "PIXELATE" => Box::new(Pixelate::new(params)?),
             "ISLAND" => Box::new(Island::new(params)?),
+            "REMAP" => Box::new(Remap::new(params)?),
 
             _ => Box::new(Empty::new(params)?),
         });
@@ -307,6 +309,7 @@ impl Terrain {
             "TERRACES" => Box::new(Terraces::new(params)?),
             "PIXELATE" => Box::new(Pixelate::new(params)?),
             "ISLAND" => Box::new(Island::new(params)?),
+            "REMAP" => Box::new(Remap::new(params)?),
 
             _ => Box::new(Empty::new(params)?),
         });

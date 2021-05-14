@@ -9,6 +9,7 @@ pub mod thermal;
 pub mod water;
 pub mod pixelate;
 pub mod island;
+pub mod remap;
 
 
 /// Common interface for modifiers
