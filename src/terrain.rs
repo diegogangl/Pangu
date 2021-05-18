@@ -8,6 +8,7 @@ use pyo3::types::PyList;
 /// Terrain generation core
 extern crate noise;
 extern crate test;
+extern crate rayon;
 
 use super::get;
 use super::map::Map2D;
@@ -26,6 +27,7 @@ use super::modifiers::pixelate::Pixelate;
 use super::modifiers::island::Island;
 use super::modifiers::remap::Remap;
 
+use rayon::prelude::*;
 
 pub type Faces = Vec<(u32, u32, u32, u32)>;
 pub type Vertices = Vec<f64>;
@@ -378,19 +380,20 @@ impl Terrain {
             self.rows
         };
 
-        let capacity = (columns * rows) as usize;
-        let mut faces: Faces = Vec::with_capacity(capacity);
+        let capacity = columns * rows;
+        let faces: Faces = (0..capacity)
+                            .into_par_iter()
+                            .map(|i| {
+                                   let x = i / columns;
+                                   let y = i % columns;
 
-        for x in 0..columns {
-            for y in 0..rows {
-                faces.push((
-                        x * multiplier + y,
-                        (x + 1) * multiplier + y,
-                        (x + 1) * multiplier + 1 + y,
-                        x * multiplier + 1 + y,
-                ))
-            }
-        }
+                                    (x * multiplier + y,
+                                    (x + 1) * multiplier + y,
+                                    (x + 1) * multiplier + 1 + y,
+                                    x * multiplier + 1 + y)
+
+                            })
+                            .collect();
 
         faces
     }
