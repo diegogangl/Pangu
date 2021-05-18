@@ -150,6 +150,19 @@ impl Map2D<f64>
     /// * `bottom` - New lowest value
     pub fn normalize(&mut self, bottom: f64, top: f64) {
 
+        let max = 0.0;
+        let min = 0.0;
+
+        for v in &self.contents {
+            if *v > self.max {
+                self.max = *v;
+            }
+
+            if *v < self.min {
+                self.min = *v;
+            }
+        }
+
         for i in 0..self.contents.len() {
             self.contents[i] = bottom + (self.contents[i] - self.min)
                                * (top - bottom)

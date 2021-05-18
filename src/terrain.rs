@@ -216,9 +216,9 @@ pub struct Terrain {
 
     /// Terrain type. This is passed as an int from Python,
     /// and transformed into an enum value internally.
-    terrain_type: Box<dyn types::TerrainType + Send>,
+    terrain_type: Box<dyn types::TerrainType + Send + Sync>,
 
-    modifiers: Vec<Box<dyn Modifier + Send>>,
+    modifiers: Vec<Box<dyn Modifier + Send + Sync>>,
 }
 
 
@@ -555,25 +555,15 @@ impl Terrain {
         debug!("Allocated heightmap with height: {:?}", hmap.height());
 
         // Initial Generation
-        for (x, y) in hmap.iter_indices() {
-            let co = self.coords_for_noise(x as f64, y as f64);
-            let z = self.terrain_type.height_at(co);
-
-            // Keep track of min/max for normalization
-            if z > hmap.max {
-                hmap.max = z;
-            }
-
-            if z < hmap.min {
-                hmap.min = z;
-            }
-
-            hmap[x][y] = z
-        }
+        hmap.contents.par_iter_mut().enumerate().for_each(|(i, val)|{
+                let x = i as u32 / columns;
+                let y = i as u32 % columns;
+                let co = self.coords_for_noise(x as f64, y as f64);
+                *val = self.terrain_type.height_at(co);
+        });
 
         // Normalize
         hmap.normalize(0.0, self.height);
-
         hmap
     }
 
