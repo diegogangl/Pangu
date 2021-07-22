@@ -5,6 +5,8 @@ use super::super::curve::Curve;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+extern crate rayon;
+use rayon::prelude::*;
 
 /// Remap modifier
 ///
@@ -18,11 +20,9 @@ pub struct Remap {
 
 impl Modifier for Remap {
     fn run(&mut self, hmap: &mut Map2D<f64>) {
-        for (x, y) in hmap.iter_indices() {
-            let z = hmap[x][y];
-
-            hmap[x][y] = self.curve.interpolate(z);
-        }
+        hmap.contents.par_iter_mut().for_each(|value| {
+            *value = self.curve.interpolate(*value);
+        });
     }
 
 }
