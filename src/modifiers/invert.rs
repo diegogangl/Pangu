@@ -5,6 +5,9 @@ use super::super::math;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+extern crate rayon;
+use rayon::prelude::*;
+
 
 /// Invert modifier
 ///
@@ -37,9 +40,9 @@ impl Modifier for Invert {
             0.0
         };
 
-        for i in 0..hmap.contents.len() {
-            hmap.contents[i] *= self.factor;
-            hmap.contents[i] += recover;
-        }
+        hmap.contents.par_iter_mut().for_each(|value| {
+            *value *= self.factor;
+            *value += recover;
+        });
     }
 }
