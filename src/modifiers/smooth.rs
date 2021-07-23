@@ -5,6 +5,8 @@ use super::super::math;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+extern crate rayon;
+use rayon::prelude::*;
 
 /// Style of smoothing effect to apply
 #[derive(Clone, Debug)]
@@ -58,20 +60,18 @@ pub struct Smooth {
 
 impl Modifier for Smooth {
     fn run(&mut self, hmap: &mut Map2D<f64>) {
+        let columns = self.columns as usize;
 
-        match self.style {
-            SmoothStyle::LINEAR => for (x, y) in hmap.iter_indices() {
-                                        hmap[x][y] *= self.linear(x, y);
-                                   },
+        hmap.contents.par_iter_mut().enumerate().for_each(|(i, value)|{
+            let x = i / columns;
+            let y = i % columns;
+            match self.style {
+                SmoothStyle::LINEAR => *value *= self.linear(x, y),
+                SmoothStyle::RADIAL => *value *= self.radial(x, y),
+                SmoothStyle::EDGES => *value *=  self.from_edges(x, y),
+            }
+        })
 
-            SmoothStyle::RADIAL => for (x, y) in hmap.iter_indices() {
-                                        hmap[x][y] *= self.radial(x, y);
-                                   },
-
-            SmoothStyle::EDGES => for (x, y) in hmap.iter_indices() {
-                                        hmap[x][y] *=  self.from_edges(x, y);
-                                   },
-        }
 
     }
 }
