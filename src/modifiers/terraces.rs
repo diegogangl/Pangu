@@ -6,6 +6,8 @@ use super::super::curve::Curve;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
+extern crate rayon;
+use rayon::prelude::*;
 
 /// Terraces modifier
 ///
@@ -27,22 +29,20 @@ pub struct Terraces {
 
 impl Modifier for Terraces {
     fn run(&mut self, hmap: &mut Map2D<f64>) {
-        for (x, y) in hmap.iter_indices() {
-            let z = hmap[x][y];
-
+        hmap.contents.par_iter_mut().enumerate().for_each(|(i, value)|{
             // Get indices of the nearest two points
-            let indexes = self.curve.points_near(z);
+            let indexes = self.curve.points_near(*value);
 
             // If some control points are missing get the output value
             // of the nearest control point and return. This can
             // happen when value < lowest_point or value > highest_point
             if indexes.0 == indexes.1 {
-                hmap[x][y] = self.curve.point(indexes.1).input;
+                *value = self.curve.point(indexes.1).input;
             } else {
                 // Get values and calculate alpha parameter for lerping
                 let mut input_0 = self.curve.point(indexes.0).input;
                 let mut input_1 = self.curve.point(indexes.1).input;
-                let mut alpha = (z - input_0) / (input_1 - input_0);
+                let mut alpha = (*value - input_0) / (input_1 - input_0);
                 let slope = self.slopes[indexes.1];
 
                 if self.invert {
@@ -50,11 +50,10 @@ impl Modifier for Terraces {
                     std::mem::swap(&mut input_0, &mut input_1);
                 }
 
-                hmap[x][y] = math::lerp(input_1, input_0, alpha.powi(slope));
+                *value = math::lerp(input_1, input_0, alpha.powi(slope));
             }
 
-
-        }
+        })
     }
 }
 
