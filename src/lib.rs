@@ -30,7 +30,6 @@ fn pangu(_py: Python, m: &PyModule) -> PyResult<()> {
                              ColorChoice::Auto);
 
     m.add_class::<terrain::Terrain>()?;
-    m.add_class::<terrain::TerrainFromObject>()?;
 
     Ok(())
 }
