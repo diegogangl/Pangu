@@ -171,10 +171,6 @@ pub struct Terrain {
     #[pyo3(get, set)]
     realworld_scale: f64,
 
-    /// Size of the mesh object in scene units
-    #[pyo3(get, set)]
-    size: f64,
-
     /// Maximum Height
     #[pyo3(get, set)]
     height: f64,
@@ -235,7 +231,6 @@ impl Terrain {
             to_cut: (0, 0),
             seed: 0,
             realworld_scale: 2.0,
-            size: 5.0,
             height: 5.0,
             offset: (0.0, 0.0),
             rotation: 0.0,
@@ -453,12 +448,6 @@ impl Terrain {
 
         debug!("Allocated vertices with capacity: {:?}", capacity);
 
-        // Used to scale the mesh
-        let scale = max(rows, columns) as f64
-            * (1.0 / self.size);
-
-        debug!("Scale: {:?}", scale);
-
         let hmap = if self.hmap.contents.len() == 0 {
             &self.base_hmap
         } else {
@@ -471,8 +460,8 @@ impl Terrain {
 
         for y in 0..columns as usize {
             for x in 0..rows as usize {
-                let scaled_x = ((x as f64) - half_x) / scale;
-                let scaled_y = ((y as f64) - half_y) / scale;
+                let scaled_x = (x as f64) - half_x;
+                let scaled_y = (y as f64) - half_y;
 
                 verts.push(scaled_x);
                 verts.push(scaled_y);
